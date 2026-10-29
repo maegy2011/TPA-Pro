@@ -8,6 +8,7 @@ const DATA_STORE_KEY = 'tpa_pro_data_store';
 const SESSIONS_KEY = 'tpa_pro_sessions';
 const LAST_BACKUP_KEY = 'tpa_last_backup';
 const PWD_HASH_KEY = 'tpa_pwd_hash';
+const ONBOARDING_KEY = 'tpa_onboarding_done';
 const DATA_VERSION = 1;
 const fmt = n => Number(n || 0).toLocaleString('en-US');
 const fmtC = n => fmt(n) + ' ر.س';
