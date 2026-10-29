@@ -20,6 +20,7 @@ function bindOnboarding(){
     saveAppSettings();
     (async () => {
       try { const h = await hashPassword(pwd); localStorage.setItem(PWD_HASH_KEY, h); } catch(e){}
+      try { localStorage.setItem(ONBOARDING_KEY, '1'); localStorage.setItem(AUTH_KEY, '1'); } catch(e){}
       document.getElementById('onbStep1').style.display = 'none';
       document.getElementById('onbStep2').style.display = 'block';
     })();

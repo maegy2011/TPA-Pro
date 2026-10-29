@@ -17,7 +17,7 @@ function afterLoading(){
   applyAppSettingsToUI();
   if(localStorage.getItem(ONBOARDING_KEY) !== '1'){
     go('onboarding');
-    setTimeout(() => { const el = document.getElementById('onbReviewerName'); if(el) el.focus(); }, 350);
+    setTimeout(() => { try { if(typeof bindOnboarding === 'function') bindOnboarding(); } catch(e){} const el = document.getElementById('onbReviewerName'); if(el) el.focus(); }, 350);
     return;
   }
   if(localStorage.getItem(AUTH_KEY) === '1'){ go('app'); initApp(); setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 100); }
