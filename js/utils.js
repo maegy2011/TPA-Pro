@@ -12,7 +12,7 @@ const DATA_VERSION = 1;
 const fmt = n => Number(n || 0).toLocaleString('en-US');
 const fmtC = n => fmt(n) + ' ر.س';
 let appSettings = {
-  reviewer: { name: 'أحمد المراجع', role: 'مراجع مالي معتمد' },
+  reviewer: { name: 'المراجع', role: 'مراجع مالي معتمد' },
   company: { name: 'TPA', brand: 'TPA Pro', tagline: 'نظام المراجعة المالية للمطالبات الطبية', version: 'v1.0' }
 };
 function loadAppSettings(){

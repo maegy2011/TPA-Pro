@@ -27,10 +27,4 @@ function invoiceTotals(inv){
   const approved = lines.reduce((a,l)=> a + (Number(l.approved)||0), 0);
   return { billed, approved, deduction: Math.max(0, billed-approved) };
 }
-function labLines(n, base){
-  const out=[];
-  for(let i=1;i<=n;i++){
-    out.push(mkLine('LAB-'+String(i).padStart(3,'0'), 'تحليل مخبري #'+i, 'مختبر', 1, base + (i%5)*20, base + (i%4)*15));
-  }
-  return out;
-}
+

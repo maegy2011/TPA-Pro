@@ -63,8 +63,7 @@ const I18N = {
     'lang.ar': 'العربية', 'lang.en': 'English', 'lang.switch': 'تبديل اللغة',
     // Auth
     'auth.title': 'تسجيل الدخول', 'auth.password': 'كلمة المرور', 'auth.hint': 'أدخل كلمة المرور الخاصة بالمراجع للوصول إلى النظام',
-    'auth.login': 'دخول النظام', 'auth.wrong': 'كلمة المرور غير صحيحة',
-    'auth.testPwd': 'كلمة المرور التجريبية',
+    'auth.login': 'دخول النظام',     'auth.wrong': 'كلمة المرور غير صحيحة',
     // Splash/Loading
     'splash.title': 'TPA Pro', 'splash.sub': 'نظام المراجعة المالية للمطالبات الطبية',
     'loading': 'جارٍ تهيئة النظام', 'loading.start': 'بدء التشغيل...',

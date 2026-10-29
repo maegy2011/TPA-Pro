@@ -28,7 +28,7 @@ const SHELL_LOCK = `
         <span data-i18n="auth.login">دخول النظام</span>
       </button>
     </form>
-    <div class="lock-foot">TPA Pro v1.0 — نظام المراجعة المالية<br>كلمة المرور التجريبية: <b>TPA2025</b></div>
+    <div class="lock-foot">TPA Pro v1.0 — نظام المراجعة المالية</div>
   </div>
 </div>
 `;

@@ -60,7 +60,7 @@ function initApp(){
     });
     if(resetSet) resetSet.addEventListener('click', () => {
       openDialog({ type:'warning', title:'استعادة', message:'سيتم إعادة التعيين.', confirmText:'استعادة', cancelText:'إلغاء',
-        onConfirm: () => { appSettings = { reviewer:{ name:'أحمد المراجع', role:'مراجع مالي معتمد' }, company:{ name:'TPA', brand:'TPA Pro', tagline:'نظام المراجعة المالية', version:'v1.0' } }; saveAppSettings(); applyAppSettingsToUI(); updateBackupStats(); showSuccess('تم','تم'); } });
+        onConfirm: () => { appSettings = { reviewer:{ name:'المراجع', role:'مراجع مالي معتمد' }, company:{ name:'TPA', brand:'TPA Pro', tagline:'نظام المراجعة المالية', version:'v1.0' } }; saveAppSettings(); applyAppSettingsToUI(); updateBackupStats(); showSuccess('تم','تم'); } });
     });
 
     // كلمة المرور

@@ -3,7 +3,7 @@ const PAGE_SETTINGS = `
       <div class="grid-2">
         <div class="panel"><div class="panel-head"><div><h2>بيانات المراجع</h2><p>الحساب النشط</p></div></div>
           <div class="panel-body"><div class="info-list">
-            <div class="info-row"><span class="k">الاسم</span><span class="v" id="settingsReviewerName">أحمد المراجع</span></div>
+            <div class="info-row"><span class="k">الاسم</span><span class="v" id="settingsReviewerName">المراجع</span></div>
             <div class="info-row"><span class="k">الدور</span><span class="v" id="settingsReviewerRole">مراجع مالي معتمد</span></div>
             <div class="info-row"><span class="k">الصلاحية</span><span class="v">مراجع واحد (كامل)</span></div>
             <div class="info-row"><span class="k">الحالة</span><span class="v" style="color:var(--ok)">نشط</span></div>
