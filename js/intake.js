@@ -1,5 +1,12 @@
 let intakeMonthFilter = 'all', intakeStatusFilter = 'all', intakeSearch = '', editingBatchId = null;
-let workingBatchClaims = [];
+let workingBatchClaim = null;
+function renderProviderOptions(filter){
+  const sel = $('#btProvider'); if(!sel) return;
+  const q = (filter||'').trim().toLowerCase();
+  const list = q ? providers.filter(p => (p.name||'').toLowerCase().includes(q) || (p.city||'').toLowerCase().includes(q)) : providers;
+  sel.innerHTML = list.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${p.city?' — '+escapeHtml(p.city):''}</option>`).join('');
+  if(!list.length) sel.innerHTML = '<option value="">لا نتائج</option>';
+}
 function bindIntakeControls(){
   $('#intakeSearch').addEventListener('input', e => { intakeSearch = e.target.value.trim().toLowerCase(); renderIntake(); });
   $('#intakeStatusChips').addEventListener('click', e => {
@@ -21,17 +28,19 @@ function bindIntakeControls(){
   $('#saveBatch').addEventListener('click', () => saveBatch(false));
   $('#saveBatchAnother').addEventListener('click', () => saveBatch(true));
   $('#deleteBatch').addEventListener('click', () => { if(editingBatchId) deleteBatchWithDialog(editingBatchId); });
-  $('#qaAddBtn').addEventListener('click', quickAddClaim);
-  ['#qaRecNum','#qaPatient','#qaDate','#qaRecDate','#qaBilled'].forEach(sel => { $(sel).addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); quickAddClaim(); } }); });
-  $('#btReceivedDate').addEventListener('change', () => { if(!editingBatchId) $('#qaRecDate').value = $('#btReceivedDate').value; });
-  $('#btClaimsList').addEventListener('input', handleBatchClaimInput);
-  $('#btClaimsList').addEventListener('click', handleBatchClaimAction);
+  $('#btProviderSearch').addEventListener('input', e => renderProviderOptions(e.target.value));
+  $('#btAddProviderBtn').addEventListener('click', () => {
+    const name = (prompt('اسم الجهة')||'').trim(); if(!name) return;
+    const id = 'PRV-'+String(providers.length+1).padStart(3,'0');
+    providers.push({ id, name, type:'', city:'', contact:'', phone:'', email:'', notes:'' });
+    persistData(true); renderProviderOptions(name); $('#btProvider').value = id;
+  });
 }
 function renderIntake(){
   const total = batches.length;
   const tc = batches.reduce((s,b)=>s+b.claimsCount,0);
   const tv = batches.reduce((s,b)=>s+b.totalBilled,0);
-  const rc = batches.filter(b=>b.status==='received').length;
+  const rc = batches.filter(b=>b.status==='received' || b.status==='new').length;
   const uc = batches.filter(b=>b.status==='under-review').length;
   const cc = batches.filter(b=>b.status==='completed').length;
   $('#intakeKpi').innerHTML = `
@@ -41,14 +50,14 @@ function renderIntake(){
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">بحاجة إجراء</div><div class="kpi-val">${rc+uc} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">لم تكتمل</div></div>`;
   const months = [...new Set(batches.map(b=>b.month))].sort().reverse();
   const mHtml = ['<button class="month-chip '+(intakeMonthFilter==='all'?'active':'')+'" data-month="all">الكل <span class="mc-count">'+total+'</span></button>']
-    .concat(months.map(m => { const cnt = batches.filter(b=>b.month===m).length; return `<button class="month-chip ${intakeMonthFilter===m?'active':''}" data-month="${m}">${formatMonth(m)} <span class="mc-count">${cnt}</span></button>`; }));
+    .concat(months.map(m => { const cnt = batches.filter(b=>b.month===m).length; return `<button class="month-chip ${intakeMonthFilter===m?'active':''}" data-month="${m}">${formatMonth(String(m).split(',')[0])} <span class="mc-count">${cnt}</span></button>`; }));
   $('#monthChips').innerHTML = mHtml.join('');
   const list = batches.filter(b => {
-    if(intakeMonthFilter !== 'all' && b.month !== intakeMonthFilter) return false;
+    if(intakeMonthFilter !== 'all' && String(b.month) !== intakeMonthFilter && !(String(b.month).split(',').includes(intakeMonthFilter))) return false;
     if(intakeStatusFilter !== 'all' && b.status !== intakeStatusFilter) return false;
     if(intakeSearch){ const p = getProviderById(b.providerId); const q = intakeSearch; return b.id.toLowerCase().includes(q) || (p && p.name.toLowerCase().includes(q)); }
     return true;
-  }).sort((a,b) => b.receivedDate.localeCompare(a.receivedDate));
+  }).sort((a,b) => (b.receivedDate||'').localeCompare(a.receivedDate||''));
   const body = $('#batchesBody');
   if(!list.length){ body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--muted)">لا دفعات</td></tr>'; return; }
   body.innerHTML = list.map(b => {
@@ -58,7 +67,7 @@ function renderIntake(){
     return `<tr>
       <td data-label="رقم"><span class="clm-id">${escapeHtml(b.id)}</span></td>
       <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar alt">${pName.charAt(0)}</div><div><div class="prov-name">${escapeHtml(pName)}</div><div class="prov-city">${escapeHtml(p?p.city:'' )}</div></div></div></td>
-      <td data-label="الشهر"><span class="mono">${formatMonth(b.month)}</span></td>
+      <td data-label="الشهر"><span class="mono">${escapeHtml(String(b.month))}</span></td>
       <td data-label="الاستلام" class="hide-sm mono">${formatDate(b.receivedDate)}</td>
       <td data-label="المطالبات" class="mono">${fmt(b.claimsCount)}</td>
       <td data-label="القيمة" class="mono big">${fmt(b.totalBilled)}</td>
@@ -72,59 +81,80 @@ function openBatchModal(id){
   const b = isEdit ? getBatchById(id) : null; if(isEdit && !b) return;
   $('#btModalTitle').textContent = isEdit ? 'تعديل الدفعة' : 'استلام دفعة';
   $('#btModalSub').textContent = isEdit ? b.id : 'بيانات جديدة';
-  $('#btProvider').innerHTML = providers.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');
-  workingBatchClaims = [];
+  renderProviderOptions('');
+  $('#btProviderSearch').value = '';
+  workingBatchClaim = null;
   if(isEdit){
-    $('#btProvider').value = b.providerId; $('#btMonth').value = b.month; $('#btReceivedDate').value = b.receivedDate;
-    $('#btStatus').value = b.status; $('#btNumber').value = b.id; $('#btNotes').value = b.notes||'';
+    $('#btProvider').value = b.providerId;
+    $('#btPeriodType').value = b.periodType || 'single';
+    $('#btMonth').value = b.month;
+    $('#btReceivedDate').value = b.receivedDate;
+    $('#btStatus').value = b.status;
+    $('#btNumber').value = b.id;
+    $('#btNotes').value = b.notes||'';
+    $('#btPatient').value = b.patient||'';
+    $('#btClaimDate').value = b.claimDate||'';
+    $('#btClaimReceivedDate').value = b.claimReceivedDate||'';
+    $('#btBilled').value = b.totalBilled||0;
     $('#deleteBatch').style.display = 'block';
-    workingBatchClaims = claims.filter(c => c.batchId === id).map(c => ({ receivedNumber:c.receivedNumber||'', patient:c.patient||'', date:c.date||'', receivedDate:c.receivedDate||'', billed:c.billed||0 }));
   } else {
     const today = daysFromNow(0);
-    $('#btMonth').value = today.slice(0,7); $('#btReceivedDate').value = today;
-    $('#btStatus').value = 'received'; $('#btNumber').value = nextBatchNumber(today.slice(0,7));
-    $('#btNotes').value = ''; $('#deleteBatch').style.display = 'none';
+    $('#btPeriodType').value = 'single';
+    $('#btMonth').value = today.slice(0,7);
+    $('#btReceivedDate').value = today;
+    $('#btStatus').value = 'new';
+    $('#btNumber').value = nextReceivedNumber();
+    $('#btNotes').value = '';
+    $('#btPatient').value = '';
+    $('#btClaimDate').value = today;
+    $('#btClaimReceivedDate').value = today;
+    $('#btBilled').value = '';
+    $('#deleteBatch').style.display = 'none';
   }
-  $('#btMonth').onchange = () => { if(!isEdit) $('#btNumber').value = nextBatchNumber($('#btMonth').value); };
-  renderBatchClaims(); resetQuickAddForm();
+  $('#btMonth').onchange = () => { if(!isEdit) $('#btNumber').value = nextReceivedNumber(); };
   $('#batchModal').classList.add('open'); document.body.style.overflow = 'hidden';
-  setTimeout(() => $('#qaPatient').focus(), 200);
+  setTimeout(() => $('#btPatient').focus(), 200);
 }
-function closeBatchModal(){ if(!$('#batchModal').classList.contains('open')) return; $('#batchModal').classList.remove('open'); _unlockBodyScroll(); editingBatchId = null; workingBatchClaims = []; }
-function resetQuickAddForm(){
-  $('#qaRecNum').value = nextReceivedNumber();
-  $('#qaPatient').value = ''; $('#qaBilled').value = '';
-  $('#qaDate').value = daysFromNow(0);
-  $('#qaRecDate').value = $('#btReceivedDate').value || daysFromNow(0);
+function closeBatchModal(){ if(!$('#batchModal').classList.contains('open')) return; $('#batchModal').classList.remove('open'); _unlockBodyScroll(); editingBatchId = null; workingBatchClaim = null; }
+function saveBatch(another){
+  const providerId = $('#btProvider').value;
+  const periodType = $('#btPeriodType').value;
+  const month = $('#btMonth').value.trim();
+  const receivedDate = $('#btReceivedDate').value;
+  const status = $('#btStatus').value;
+  const patient = $('#btPatient').value.trim();
+  const claimDate = $('#btClaimDate').value;
+  const claimReceivedDate = $('#btClaimReceivedDate').value;
+  const billed = Number($('#btBilled').value);
+  const notes = $('#btNotes').value.trim();
+  if(!providerId){ showWarning('تنبيه','اختر الجهة'); return; }
+  if(!month){ showWarning('تنبيه','أدخل الشهر'); return; }
+  if(!receivedDate){ showWarning('تنبيه','أدخل تاريخ الاستلام'); return; }
+  if(!patient){ showWarning('تنبيه','أدخل اسم المريض'); return; }
+  if(!claimDate){ showWarning('تنبيه','أدخل تاريخ المطالبة'); return; }
+  if(!billed || billed <= 0){ showWarning('تنبيه','أدخل القيمة الإجمالية'); return; }
+  const p = getProviderById(providerId);
+  const batchId = editingBatchId || ('BTH-'+month.split(',')[0]+'-'+$('#btNumber').value);
+  if(editingBatchId){
+    const b = getBatchById(editingBatchId);
+    if(b){ b.providerId = providerId; b.month = month; b.periodType = periodType; b.receivedDate = receivedDate; b.status = status; b.notes = notes; b.patient = patient; b.claimDate = claimDate; b.claimReceivedDate = claimReceivedDate; b.totalBilled = billed; b.claimsCount = 1; }
+  } else {
+    batches.push({ id: batchId, providerId, month, periodType, receivedDate, status, notes, patient, claimDate, claimReceivedDate, claimsCount:1, totalBilled:billed });
+    // create a claim with status 'new' and total billed
+    const claimId = generateClaimId();
+    claims.push({ id: claimId, patient, provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber: $('#btNumber').value, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed });
+    // set billed on claim
+    const c = claims[claims.length-1]; c.billed = billed; c.approved = 0; c.eligible = billed;
+  }
+  persistData(true); renderIntake(); updateBackupStats();
+  if(another){ openBatchModal(null); }
+  else { closeBatchModal(); showSuccess('تم','تم الحفظ'); }
 }
-function quickAddClaim(){
-  const rn = $('#qaRecNum').value.trim(), p = $('#qaPatient').value.trim();
-  const d = $('#qaDate').value, rd = $('#qaRecDate').value;
-  const b = Number($('#qaBilled').value);
-  if(!rn){ showWarning('تنبيه','أدخل الوارد'); $('#qaRecNum').focus(); return; }
-  if(!p){ showWarning('تنبيه','أدخل المريض'); $('#qaPatient').focus(); return; }
-  if(!d){ showWarning('تنبيه','أدخل التاريخ'); $('#qaDate').focus(); return; }
-  if(!rd){ showWarning('تنبيه','أدخل تاريخ الوارد'); $('#qaRecDate').focus(); return; }
-  if(!b || b <= 0){ showWarning('تنبيه','أدخل المبلغ'); $('#qaBilled').focus(); return; }
-  if(workingBatchClaims.some(c => c.receivedNumber === rn)){ showWarning('تنبيه','رقم وارد مكرر'); $('#qaRecNum').focus(); return; }
-  workingBatchClaims.push({ receivedNumber:rn, patient:p, date:d, receivedDate:rd, billed:b });
-  resetQuickAddForm(); renderBatchClaims(); $('#qaPatient').focus();
+function deleteBatchWithDialog(id){
+  const b = getBatchById(id); if(!b) return;
+  showDelete('حذف الدفعة', `سيتم حذف ${escapeHtml(b.id)}.`, () => {
+    batches = batches.filter(x => x.id !== id);
+    claims = claims.filter(c => c.batchId !== id);
+    persistData(true); renderIntake(); updateBackupStats(); showSuccess('تم','تم');
+  });
 }
-function renderBatchClaims(){
-  const list = $('#btClaimsList');
-  if(!workingBatchClaims.length) list.innerHTML = '<div class="batch-claims-empty">لا مطالبات بعد</div>';
-  else list.innerHTML = workingBatchClaims.map((c,i) => `<div class="batch-claim-row" data-idx="${i}"><input class="bc-rec-num" value="${escapeHtml(c.receivedNumber||'')}" placeholder="IN-XXXX"><input class="bc-patient" value="${escapeHtml(c.patient||'')}" placeholder="المريض"><input type="date" class="bc-date" value="${escapeHtml(c.date||'')}"><input type="date" class="bc-rec-date" value="${escapeHtml(c.receivedDate||'')}"><input type="number" class="bc-billed" value="${escapeHtml(c.billed||'')}" placeholder="المبلغ" min="0"><button class="del-claim" data-del-claim="${i}">×</button></div>`).join('');
-  const total = workingBatchClaims.reduce((s,c)=>s+(Number(c.billed)||0), 0);
-  $('#btSummaryCount').textContent = workingBatchClaims.length;
-  $('#btSummaryTotal').textContent = fmt(total)+' ر.س';
-}
-function handleBatchClaimInput(e){
-  const row = e.target.closest('.batch-claim-row'); if(!row) return;
-  const idx = parseInt(row.dataset.idx, 10); const c = workingBatchClaims[idx]; if(!c) return;
-  if(e.target.classList.contains('bc-rec-num')) c.receivedNumber = e.target.value;
-  else if(e.target.classList.contains('bc-patient')) c.patient = e.target.value;
-  else if(e.target.classList.contains('bc-date')) c.date = e.target.value;
-  else if(e.target.classList.contains('bc-rec-date')) c.receivedDate = e.target.value;
-  else if(e.target.classList.contains('bc-billed')){ c.billed = Number(e.target.value)||0; const total = workingBatchClaims.reduce((s,x)=>s+(Number(x.billed)||0),0); $('#btSummaryTotal').textContent = fmt(total)+' ر.س'; }
-}
-function handleBatchClaimAction(e){ const btn = e.target.closest('[data-del-claim]'); if(!btn) return; workingBatchClaims.splice(parseInt(btn.dataset.delClaim, 10),1); renderBatchClaims(); }

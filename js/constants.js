@@ -1,4 +1,4 @@
-const STATUS = { pending:{label:'قيد المراجعة',cls:'warn'}, approved:{label:'معتمدة',cls:'ok'}, partial:{label:'معتمدة جزئياً',cls:'info'}, rejected:{label:'مرفوضة',cls:'bad'} };
+const STATUS = { new:{label:'جديدة',cls:'info'}, pending:{label:'قيد المراجعة',cls:'warn'}, approved:{label:'معتمدة',cls:'ok'}, partial:{label:'معتمدة جزئياً',cls:'info'}, rejected:{label:'مرفوضة',cls:'bad'} };
 const CONTRACT_STATUS = { active:{label:'نشط',cls:'ok'}, expiring:{label:'قريب الانتهاء',cls:'warn'}, upcoming:{label:'لم يبدأ',cls:'info'}, expired:{label:'منتهي',cls:'bad'}, cancelled:{label:'ملغى',cls:'bad'} };
 const TARIFF_TYPES = { general:{label:'لائحة عامة',cls:'t-general'}, private:{label:'لائحة خاصة',cls:'t-private'}, supplementary:{label:'لائحة مكملة',cls:'t-supplementary'} };
 const TARIFF_STATUS = { active:{label:'نشطة',cls:'ok'}, pending:{label:'قيد الاعتماد',cls:'warn'}, expired:{label:'منتهية',cls:'bad'}, cancelled:{label:'ملغاة',cls:'bad'} };

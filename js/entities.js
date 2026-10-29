@@ -75,10 +75,15 @@ function nextBatchNumber(month){
   return pre + String(m+1).padStart(3,'0');
 }
 function nextReceivedNumber(){
-  const pre = 'IN-2025-';
+  const y = new Date().getFullYear();
   let m = 0;
-  claims.forEach(c=>{ if(c.receivedNumber && c.receivedNumber.startsWith(pre)){ const n = parseInt(c.receivedNumber.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
-  return pre + String(m+1).padStart(5,'0');
+  claims.forEach(c => {
+    const rd = c.receivedDate || c.date;
+    if(!rd || new Date(rd).getFullYear() !== y) return;
+    const n = parseInt(String(c.receivedNumber), 10);
+    if(!isNaN(n)) m = Math.max(m, n);
+  });
+  return String(m + 1);
 }
 function generateClaimId(){
   const maxNum = claims.reduce((m,c)=>{ const n = parseInt(c.id.split('-').pop(), 10); return Math.max(m, isNaN(n)?0:n); }, 0);
