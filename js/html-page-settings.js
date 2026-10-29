@@ -14,9 +14,11 @@ const PAGE_SETTINGS = `
             <div class="info-row"><span class="k">اسم الشركة</span><span class="v" id="settingsCompanyName">TPA</span></div>
             <div class="info-row"><span class="k">العلامة</span><span class="v" id="settingsCompanyBrand">TPA Pro</span></div>
             <div class="info-row"><span class="k">الإصدار</span><span class="v" id="settingsVersion">v1.0</span></div>
-            <div class="info-row"><span class="k">المحذوفات</span><span class="v" id="settingsTrashCount">0</span></div>
-          </div>
-          <button class="btn out" style="width:100%;margin-top:20px" id="logoutBtn2">تسجيل الخروج</button></div>
+           <div class="info-row"><span class="k">المحذوفات</span><span class="v" id="settingsTrashCount">0</span></div>
+           <div class="info-row"><div style="flex:1"><div class="k">تثبيت التطبيق</div><div style="font-size:11px;color:var(--muted);margin-top:4px">PWA على Android</div></div>
+             <button class="btn-sm" id="installAppBtn" style="flex:0 0 auto;display:none" onclick="installApp()">تثبيت</button></div>
+           </div>
+           <button class="btn out" style="width:100%;margin-top:20px" id="logoutBtn2">تسجيل الخروج</button></div>
         </div>
       </div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>تخصيص الهوية</h2></div></div>
@@ -41,8 +43,7 @@ const PAGE_SETTINGS = `
             <div class="fg"><label>الجديدة</label><input type="password" id="newPwd" autocomplete="new-password"></div>
             <div class="fg"><label>التأكيد</label><input type="password" id="confirmPwd" autocomplete="new-password"></div>
           </div>
-          <button class="btn solid" id="changePwdBtn" style="width:100%;margin-top:16px">تغيير كلمة المرور</button>
-          <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center">الافتراضية: <b style="color:var(--teal)">TPA2025</b></div>
+           <button class="btn solid" id="changePwdBtn" style="width:100%;margin-top:16px">تغيير كلمة المرور</button>
         </div>
       </div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>إدارة البيانات</h2></div></div>

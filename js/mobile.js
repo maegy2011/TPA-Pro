@@ -14,6 +14,11 @@ function closeSidebar(){
   document.body.classList.remove('sidebar-open');
   _unlockBodyScroll();
 }
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; updateInstallBtn(); });
+function updateInstallBtn(){ const b = document.getElementById('installAppBtn'); if(b) b.style.display = deferredInstallPrompt ? 'inline-flex' : 'none'; }
+function installApp(){ if(!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; updateInstallBtn(); }); }
+window.installApp = installApp;
 function bindMobile(){
   const hb = document.getElementById('hamburgerBtn');
   const ov = document.getElementById('sidebarOverlay');

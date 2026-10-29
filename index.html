@@ -18,6 +18,14 @@
 <link rel="stylesheet" href="css/modals-4.css">
 <link rel="stylesheet" href="css/responsive.css">
 <link rel="stylesheet" href="css/ltr.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TPA Pro">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="TPA Pro">
+<meta name="msapplication-TileColor" content="#0B2545">
 </head>
 <body>
 <div id="root"></div>
@@ -118,5 +126,8 @@
 <script src="js/mobile.js"></script>
 <script src="js/app.js"></script>
 <script src="js/init.js"></script>
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(e){ console.warn('SW register failed', e); }); }); }
+</script>
 </body>
 </html>
