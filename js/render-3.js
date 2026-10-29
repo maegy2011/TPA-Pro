@@ -26,7 +26,7 @@ function buildClaimTimeline(claim){
 function renderTimeline(){
   if(!currentTimelineClaimId) return;
   const claim = getClaimById(currentTimelineClaimId); if(!claim) return;
-  $('#pageSub').textContent = `${claim.patient} • ${claim.provider}`;
+  const _pd = document.getElementById('pageDesc'); if(_pd) _pd.textContent = `${claim.patient} • ${claim.provider}`;
   $('#tlHeaderTitle').textContent = `${claim.id} — ${claim.patient}`;
   $('#tlHeaderSub').textContent = claim.provider;
   const st = STATUS[claim.status] || STATUS.pending;

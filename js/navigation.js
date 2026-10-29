@@ -6,12 +6,12 @@ const PAGE_META = {
   claims:['إدارة المطالبات','عرض، مراجعة، وتصدير جميع المطالبات'],
   timeline:['الخط الزمني','تتبع جميع أحداث مراجعة المطالبة'],
   view:['تفاصيل المطالبة','عرض تفاصيل المطالبة وفواتيرها'],
-  search:['البحث في اللوائح','بحث متقدم في لوائح الأسعار والخدمات'],
-  intake:['استلام الدفعات (الوارد)','استلام وإدارة الدفعات الشهرية من الجهات'],
-  providers:['مقدمو الخدمات (الجهات)','إدارة جهات تقديم الخدمات الطبية وعقودها'],
-  contracts:['العقود والاتفاقيات','متابعة وإدارة عقود الجهات الطبية'],
-  tariffs:['اللوائح والأسعار','إدارة لوائح الأسعار والخدمات الطبية'],
-  'deduction-rules':['قواعد الخصم والتحمل','إنشاء وإدارة قواعد الخصم (سقف، تحمل، مخصص، سوبر)'],
+  search:['بحث اللوائح','بحث متقدم في لوائح الأسعار والخدمات'],
+  intake:['استلام الدفعات','استلام وإدارة الدفعات الشهرية من الجهات'],
+  providers:['مقدمو الخدمات','إدارة جهات تقديم الخدمات الطبية وعقودها'],
+  contracts:['العقود','متابعة وإدارة عقود الجهات الطبية'],
+  tariffs:['اللوائح','إدارة لوائح الأسعار والخدمات الطبية'],
+  'deduction-rules':['قواعد الخصم','إنشاء وإدارة قواعد الخصم (سقف، تحمل، مخصص، سوبر)'],
   reports:['التقارير والتحليلات','تحليل مالي شامل للمطالبات'],
   trash:['سلة المحذوفات','استعادة أو حذف نهائي للعناصر المحذوفة'],
   sessions:['جلسات المراجعة','متابعة وإدارة مراجعات المطالبات المفتوحة'],
@@ -42,7 +42,7 @@ function applyPage(page){
   const tTitle = (typeof t === 'function') ? t('page.'+page) : null;
   const tSub = (typeof t === 'function') ? t('page.'+page+'.sub') : null;
   $('#pageTitle').textContent = (tTitle && tTitle !== 'page.'+page) ? tTitle : meta[0];
-  $('#pageSub').textContent = (tSub && tSub !== 'page.'+page+'.sub') ? tSub : meta[1];
+  const pd = document.getElementById('pageDesc'); if(pd) pd.textContent = (tSub && tSub !== 'page.'+page+'.sub') ? tSub : meta[1];
   const backBtn = $('#smartBackBtn');
   if(page === 'dashboard' || navHistory.length === 0) backBtn.classList.remove('show');
   else backBtn.classList.add('show');

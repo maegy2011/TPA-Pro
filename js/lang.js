@@ -46,7 +46,7 @@ function applyTopbarTranslations(){
 function applyPageTitleTranslations(){
   if(!currentPage) return;
   const el = document.getElementById('pageTitle');
-  const sub = document.getElementById('pageSub');
+  const sub = document.getElementById('pageDesc');
   const k = 'page.'+currentPage;
   const kt = t(k);
   if(el && kt && kt !== k) el.textContent = kt;

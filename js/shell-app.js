@@ -119,7 +119,6 @@ const SHELL_APP = `
         <button class="back-btn" id="smartBackBtn" title="رجوع"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
         <div class="tb-title-wrap">
           <h1 id="pageTitle">لوحة التحكم</h1>
-          <div class="tb-sub" id="pageSub">ملخص الأداء المالي</div>
         </div>
         <div class="tb-right">
           <button class="tb-action-btn" id="tbSearchBtn" title="بحث سريع">
@@ -141,8 +140,9 @@ const SHELL_APP = `
         </div>
       </header>
 
-      <div class="content">
-        <div id="pagesContainer"></div>
+       <div class="page-desc" id="pageDesc">ملخص الأداء المالي</div>
+       <div class="content">
+         <div id="pagesContainer"></div>
       </div>
     </div>
   </div>
