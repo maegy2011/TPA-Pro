@@ -76,6 +76,7 @@ function saveProvider(){
   if(editingProviderId){ const p = getProviderById(editingProviderId); if(!p) return; const old = p.name; Object.assign(p, data); if(old !== name) renameProviderClaims(old, name); showSuccess('تم','تم التحديث'); }
   else { const maxN = providers.reduce((m,p)=>{ const n = parseInt(p.id.split('-')[1], 10); return Math.max(m, isNaN(n)?0:n); }, 0); providers.push({ id:'PRV-'+String(maxN+1).padStart(3,'0'), ...data }); showSuccess('تم','تمت الإضافة'); }
   closeProviderModal(); renderAll();
+  if(document.getElementById('batchModal')?.classList.contains('open')){ const sel = document.getElementById('btProvider'); if(sel && providers.length){ sel.innerHTML = providers.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${p.city?' — '+escapeHtml(p.city):''}</option>`).join(''); sel.value = providers[providers.length-1].id; } }
 }
 function deleteProviderWithDialog(id){
   const p = getProviderById(id); if(!p) return;

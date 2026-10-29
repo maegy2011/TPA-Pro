@@ -30,10 +30,7 @@ function bindIntakeControls(){
   $('#deleteBatch').addEventListener('click', () => { if(editingBatchId) deleteBatchWithDialog(editingBatchId); });
   $('#btProviderSearch').addEventListener('input', e => renderProviderOptions(e.target.value));
   $('#btAddProviderBtn').addEventListener('click', () => {
-    const name = (prompt('اسم الجهة')||'').trim(); if(!name) return;
-    const id = 'PRV-'+String(providers.length+1).padStart(3,'0');
-    providers.push({ id, name, type:'', city:'', contact:'', phone:'', email:'', notes:'' });
-    persistData(true); renderProviderOptions(name); $('#btProvider').value = id;
+    if(typeof openProviderModal === 'function'){ openProviderModal(); }
   });
 }
 function renderIntake(){
