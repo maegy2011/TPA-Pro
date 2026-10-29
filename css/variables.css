@@ -1,0 +1,18 @@
+/* ============================================================
+   TPA Pro v1.0 — أنماط شاملة
+   ============================================================ */
+:root{
+  --navy:#0B2545;--navy-600:#123A63;--navy-400:#1E4E86;
+  --teal:#0E7C7B;--teal-400:#14A3A1;--gold:#C8A24A;
+  --bg:#F1F5F9;--card:#FFFFFF;--text:#0F172A;--muted:#64748B;--line:#E2E8F0;
+  --ok:#059669;--bad:#DC2626;--warn:#D97706;--info:#2563EB;--purple:#7C3AED;
+  --r:16px;--shadow:0 4px 24px rgba(11,37,69,.07);--shadow-lg:0 20px 50px rgba(11,37,69,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Tajawal',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}

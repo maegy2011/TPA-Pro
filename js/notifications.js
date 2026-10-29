@@ -1,0 +1,12 @@
+let toastTimer;
+function showToast(msg){
+  $('#toastMsg').textContent = msg;
+  const t = $('#toast'); t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function updateTrashBadge(){
+  const b = $('#trashCount');
+  if(trash.length > 0){ b.textContent = trash.length; b.style.display = 'grid'; } else b.style.display = 'none';
+  const st = $('#settingsTrashCount'); if(st) st.textContent = trash.length;
+}

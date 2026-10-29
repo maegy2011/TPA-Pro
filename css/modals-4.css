@@ -1,0 +1,12 @@
+/* ============================================================
+   Drag & Drop — Animations
+   ============================================================ */
+.drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:scale(.95);box-shadow:0 8px 24px rgba(11,37,69,.25);transition:transform 50ms linear;border-radius:9px;overflow:hidden}
+.drop-indicator{height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);animation:slideIn .15s ease;transform-origin:left}
+@keyframes slideIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.flash{animation:flash .4s ease}
+@keyframes flash{0%{background:rgba(14,124,123,.25)}100%{background:transparent}}
+@keyframes dropPulse{0%{box-shadow:0 0 0 0 rgba(14,124,123,.4)}70%{box-shadow:0 0 0 8px rgba(14,124,123,0)}100%{box-shadow:0 0 0 0 rgba(14,124,123,0)}}
+.cond-group.drop-into{animation:dropPulse .6s ease}
+.cond-drag-handle:focus{outline:2px solid var(--teal);outline-offset:2px}
+.cond-item,.cond-group{transition:opacity .15s,transform .15s,box-shadow .15s,border-color .15s}

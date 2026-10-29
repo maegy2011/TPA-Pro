@@ -1,0 +1,1 @@
+document.getElementById('root').innerHTML = SHELL_SPLASH + SHELL_LOADING + SHELL_LOCK + SHELL_APP + SHELL_MODALS;
