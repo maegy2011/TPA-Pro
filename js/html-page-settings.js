@@ -1,26 +1,9 @@
 const PAGE_SETTINGS = `
 <section class="page" id="page-settings">
-      <div class="grid-2">
-        <div class="panel"><div class="panel-head"><div><h2>بيانات المراجع</h2><p>الحساب النشط</p></div></div>
-          <div class="panel-body"><div class="info-list">
-            <div class="info-row"><span class="k">الاسم</span><span class="v" id="settingsReviewerName">المراجع</span></div>
-            <div class="info-row"><span class="k">الدور</span><span class="v" id="settingsReviewerRole">مراجع مالي معتمد</span></div>
-            <div class="info-row"><span class="k">الصلاحية</span><span class="v">مراجع واحد (كامل)</span></div>
-            <div class="info-row"><span class="k">الحالة</span><span class="v" style="color:var(--ok)">نشط</span></div>
-          </div></div>
-        </div>
-        <div class="panel"><div class="panel-head"><div><h2>معلومات النظام</h2></div></div>
-          <div class="panel-body"><div class="info-list">
-            <div class="info-row"><span class="k">اسم الشركة</span><span class="v" id="settingsCompanyName">TPA</span></div>
-            <div class="info-row"><span class="k">العلامة</span><span class="v" id="settingsCompanyBrand">TPA Pro</span></div>
-            <div class="info-row"><span class="k">الإصدار</span><span class="v" id="settingsVersion">v1.0</span></div>
-           <div class="info-row"><span class="k">المحذوفات</span><span class="v" id="settingsTrashCount">0</span></div>
-           <div class="info-row"><div style="flex:1"><div class="k">تثبيت التطبيق</div><div style="font-size:11px;color:var(--muted);margin-top:4px">PWA على Android</div></div>
-             <button class="btn-sm" id="installAppBtn" style="flex:0 0 auto;display:none" onclick="installApp()">تثبيت</button></div>
-           </div>
-           <button class="btn out" style="width:100%;margin-top:20px" id="logoutBtn2">تسجيل الخروج</button></div>
-        </div>
-      </div>
+      <div class="panel" style="margin-bottom:18px"><div class="panel-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div><div class="k" style="font-weight:700">تسجيل الخروج</div><div style="font-size:11px;color:var(--muted);margin-top:4px">إنهاء الجلسة الحالية</div></div>
+        <button class="btn out" id="logoutBtn2">تسجيل الخروج</button>
+      </div></div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div><h2>تخصيص الهوية</h2><p>تحديث بياناتك وبيانات الشركة</p></div></div></div>
         <div class="panel-body">
           <div class="form-grid">
