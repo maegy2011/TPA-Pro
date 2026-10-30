@@ -51,7 +51,7 @@ function applyPage(page){
   if(page === 'search') renderSearch();
   if(page === 'trash') renderTrash();
   if(page === 'deduction-rules') renderDeductionRules();
-  if(page === 'sessions') renderSessions();
+  if(page === 'settings') { if(typeof bindSettingsPassword === 'function') bindSettingsPassword(); }
 }
 function goBack(){
   if(navHistory.length === 0){ navigateTo('dashboard', {noPush:true}); return; }

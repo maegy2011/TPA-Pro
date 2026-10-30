@@ -18,7 +18,33 @@ function confirmLogoutWithoutBackup(){
       onConfirm: () => { localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); } });
   }, 200);
 }
-function logout(){ logoutWithReminder(); }
+function bindSettingsPassword(){
+  document.querySelectorAll('#page-settings .onb-eye').forEach(btn => {
+    if(btn.dataset.bound) return; btn.dataset.bound='1';
+    btn.addEventListener('click', () => {
+      const inp = document.getElementById(btn.dataset.target);
+      if(!inp) return;
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-label', show ? 'إخفاء' : 'إظهار');
+    });
+  });
+  const newPwd = document.getElementById('newPwd');
+  const bar = document.getElementById('setPwdBar');
+  if(newPwd && bar && !newPwd.dataset.bound){ newPwd.dataset.bound='1';
+    newPwd.addEventListener('input', () => {
+      const v = newPwd.value; let score = 0;
+      if(v.length > 0) score = 1;
+      if(v.length >= 6) score = 2;
+      if(v.length >= 10) score = 3;
+      if(/[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = Math.max(score, 3);
+      if(v.length >= 6 && /[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = 4;
+      if(/[^A-Za-z0-9\u0600-\u06FF]/.test(v)) score = Math.min(4, score+1);
+      bar.style.width = (score*25)+'%';
+      bar.className = 'pw-bar s'+score;
+    });
+  }
+}
 function applyAppSettingsToUI(){
   try {
     const brandH3 = document.querySelector('.brand h3'), brandSpan = document.querySelector('.brand span');
