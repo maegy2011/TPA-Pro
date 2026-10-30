@@ -33,5 +33,13 @@ $('#lockForm').addEventListener('submit', async e => {
 });
 $('#pwd').addEventListener('input', () => $('#lockErr').classList.remove('show'));
 setTimeout(() => { if(typeof applyAllTranslations === 'function') applyAllTranslations(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); go('loading'); startLoading(); }, 2400);
-window.addEventListener('error', e => { try { console.error('Global error:', e.message, e.filename, e.lineno); } catch(err){} });
+document.addEventListener('click', e => {
+  const btn = e.target.closest && e.target.closest('.onb-eye');
+  if(!btn) return;
+  const inp = document.getElementById(btn.dataset.target);
+  if(!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.setAttribute('aria-label', show ? 'إخفاء' : 'إظهار');
+});
 window.addEventListener('unhandledrejection', e => { try { console.error('Unhandled rejection:', e.reason && (e.reason.message||e.reason)); } catch(err){} });
