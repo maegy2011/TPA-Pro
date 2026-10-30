@@ -19,7 +19,7 @@
 .fg input,.fg select,.fg textarea{width:100%;height:46px;border-radius:11px;border:1.5px solid var(--line);background:#F8FAFC;padding:0 14px;font-size:13.5px;transition:.2s}
 .fg textarea{height:auto;padding:12px 14px;resize:vertical;min-height:80px;line-height:1.7}
 .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(14,124,123,.1)}
-.fg input[readonly],.fg select:disabled{background:#F1F5F9;color:var(--muted);cursor:not-allowed}
+.fg-ico{width:14px;height:14px;vertical-align:-2px;margin-inline-end:6px;opacity:.7}
 .check-row{display:flex;align-items:center;gap:9px;padding:11px 14px;background:#F8FAFC;border:1.5px solid var(--line);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;color:#334155;transition:.2s}
 .check-row:hover{background:#EFF6F6;border-color:var(--teal)}
 .check-row input{width:18px;height:18px;accent-color:var(--teal);cursor:pointer;flex:none}

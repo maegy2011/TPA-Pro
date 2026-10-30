@@ -55,6 +55,33 @@
 .btn-primary:hover{transform:translateY(-1px)}
 .btn-primary svg{width:18px;height:18px;stroke:#fff}
 .lock-foot{text-align:center;margin-top:22px;font-size:12px;color:#94a3b8;line-height:1.9}
-.lock-foot b{color:var(--teal);font-weight:700;letter-spacing:1px}
-.shake{animation:shake .42s}
+/* onboarding responsive */
+.onb-card{max-width:560px;width:100%;margin:auto}
+.onb-grid{grid-template-columns:1fr 1fr}
+.onb-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.onb-actions .btn{flex:1;min-width:140px}
+@media(max-width:520px){
+  .onb-card{max-width:100%;border-radius:0;box-shadow:none;padding:24px 18px 20px}
+  .onb-grid{grid-template-columns:1fr}
+  .lock-icon{width:56px;height:56px;border-radius:16px;margin-bottom:14px}
+  .lock-icon svg{width:26px;height:26px}
+  .lock-card h1{font-size:19px}
+  .lock-card .hint{font-size:12.5px;margin-bottom:18px}
+  .fg input{height:44px;font-size:14px}
+  .btn-primary{height:46px;font-size:14.5px}
+  .onb-actions{flex-direction:column}
+  .onb-actions .btn{width:100%}
+}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+.onb-progress{display:flex;gap:8px;justify-content:center;margin:0 0 18px}
+.onb-dot{width:10px;height:10px;border-radius:50%;background:var(--line);transition:.3s}
+.onb-dot.active{background:var(--teal);box-shadow:0 0 8px rgba(14,124,123,.6)}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-inline-end:44px}
+.pw-strength{height:4px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.pw-bar{height:100%;width:0%;border-radius:99px;transition:.25s;background:#ef4444}
+.pw-bar.s1{background:#ef4444}
+.pw-bar.s2{background:#f59e0b}
+.pw-bar.s3{background:#22c55e}
+.pw-bar.s4{background:#16a34a}
