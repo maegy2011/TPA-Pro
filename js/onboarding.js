@@ -37,7 +37,6 @@ function bindOnboarding(){
     if(confIn.value && confIn.value !== pwdIn.value){ showOnboardingError('التأكيد لا يطابق'); } else { clearOnboardingError(); }
   }); }
   if(next) next.addEventListener('click', () => {
-  if(next) next.addEventListener('click', () => {
     clearOnboardingError();
     const name = (document.getElementById('onbReviewerName')?.value||'').trim();
     const role = (document.getElementById('onbReviewerRole')?.value||'').trim() || 'مراجع مالي معتمد';
