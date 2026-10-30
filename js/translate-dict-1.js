@@ -5,7 +5,7 @@ Object.assign(window.TRANSLATE_DICT = window.TRANSLATE_DICT || {}, {
   '+ شرط': '+ Condition',
   '+ شريحة': '+ Tier',
   '+ مجموعة': '+ Group',
-  '0 ر.س': '0 SAR',
+  '0 ج.م': '0 EGP',
   '30 يوم': '30 days',
   '45 يوم': '45 days',
   '60 يوم': '60 days',

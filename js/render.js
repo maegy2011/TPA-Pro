@@ -21,9 +21,9 @@ function renderKPIs(){
   const paCount = claims.filter(c => c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved').length;
   const cards = [
     {cls:'', icon:'file', label:t('kpi.totalClaims') || 'إجمالي المطالبات', val:s.total, unit:'مطالبة', foot:`${s.pending} قيد · ${paCount} تحتاج موافقة`},
-    {cls:'k2', icon:'money', label:t('kpi.billed') || 'المطالب به', val:fmt(s.billed), unit:'ر.س', foot:'إجمالي'},
-    {cls:'k3', icon:'cut', label:t('kpi.deductions') || 'الاستقطاعات', val:fmt(s.deduction), unit:'ر.س', foot:'الفروقات'},
-    {cls:'k4', icon:'check', label:t('kpi.approved') || 'المعتمد', val:fmt(s.approved), unit:'ر.س', foot:`${(100-s.rate).toFixed(1)}% اعتماد`}
+    {cls:'k2', icon:'money', label:t('kpi.billed') || 'المطالب به', val:fmt(s.billed), unit:'ج.م', foot:'إجمالي'},
+    {cls:'k3', icon:'cut', label:t('kpi.deductions') || 'الاستقطاعات', val:fmt(s.deduction), unit:'ج.م', foot:'الفروقات'},
+    {cls:'k4', icon:'check', label:t('kpi.approved') || 'المعتمد', val:fmt(s.approved), unit:'ج.م', foot:`${(100-s.rate).toFixed(1)}% اعتماد`}
   ];
   $('#kpiGrid').innerHTML = cards.map(c => `<div class="kpi ${c.cls}"><div class="kpi-top"><div><div class="kpi-label">${c.label}</div><div class="kpi-val">${c.val} <small>${c.unit}</small></div></div><div class="kpi-ico">${kpiIcon(c.icon)}</div></div><div class="kpi-foot">${c.foot}</div></div>`).join('');
 }

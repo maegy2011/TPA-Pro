@@ -53,7 +53,7 @@ function bindLineAutocomplete(){
     if(!val || val.length < 1){ suggest.innerHTML = ''; return; }
     const results = searchTariffServices(val, lnApplicableTariffs);
     if(!results.length){ suggest.innerHTML = '<div class="ln-sug-empty">لا نتائج</div>'; return; }
-    suggest.innerHTML = `<div class="ln-suggest-list">${results.map((s,i)=>`<div class="ln-sug-item" data-sug-idx="${i}"><span class="s-code">${escapeHtml(s.code)}</span><div class="s-info"><div class="s-name">${escapeHtml(s.name)}${s.requiresPriorApproval?' ⚠':''}</div><div class="s-cat">${escapeHtml(s.category)} · ${escapeHtml(s.tariffName)}</div></div><div class="s-price">${fmt(s.currentPrice)}<small>ر.س</small></div></div>`).join('')}</div>`;
+    suggest.innerHTML = `<div class="ln-suggest-list">${results.map((s,i)=>`<div class="ln-sug-item" data-sug-idx="${i}"><span class="s-code">${escapeHtml(s.code)}</span><div class="s-info"><div class="s-name">${escapeHtml(s.name)}${s.requiresPriorApproval?' ⚠':''}</div><div class="s-cat">${escapeHtml(s.category)} · ${escapeHtml(s.tariffName)}</div></div><div class="s-price">${fmt(s.currentPrice)}<small>ج.م</small></div></div>`).join('')}</div>`;
     suggest.querySelectorAll('[data-sug-idx]').forEach(el => el.addEventListener('click', () => { const s = results[Number(el.dataset.sugIdx)]; if(s) applyServiceToLine(s); }));
   };
   const deb = val => { clearTimeout(lnDebounceTimer); lnDebounceTimer = setTimeout(()=>run(val), 160); };

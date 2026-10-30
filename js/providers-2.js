@@ -8,7 +8,7 @@ function renderContracts(){
   $('#contractKpi').innerHTML = `
     <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">العقود</div><div class="kpi-val">${contracts.length} <small>عقد</small></div></div><div class="kpi-ico">${kpiIcon('contract')}</div></div><div class="kpi-foot">${providers.length} جهة</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">السارية</div><div class="kpi-val">${activeN} <small>عقد</small></div></div><div class="kpi-ico">${kpiIcon('check')}</div></div><div class="kpi-foot">${expN} قريب · ${expdN} منتهي</div></div>
-    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">التغطية</div><div class="kpi-val">${fmt(tm)} <small>ر.س</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">مجموع</div></div>
+    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">التغطية</div><div class="kpi-val">${fmt(tm)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">مجموع</div></div>
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">متوسط الخصم</div><div class="kpi-val">${avg.toFixed(1)}<small>%</small></div></div><div class="kpi-ico">${kpiIcon('cut')}</div></div><div class="kpi-foot">عبر العقود</div></div>`;
   const urgent = contracts.filter(c => ['expiring','expired'].includes(effectiveContractStatus(c)));
   const al = $('#contractAlert');

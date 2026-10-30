@@ -11,7 +11,7 @@ const PWD_HASH_KEY = 'tpa_pwd_hash';
 const ONBOARDING_KEY = 'tpa_onboarding_done';
 const DATA_VERSION = 1;
 const fmt = n => Number(n || 0).toLocaleString('en-US');
-const fmtC = n => fmt(n) + ' ر.س';
+const fmtC = n => fmt(n) + ' ج.م';
 let appSettings = {
   reviewer: { name: 'المراجع', role: 'مراجع مالي معتمد' },
   company: { name: 'TPA', brand: 'TPA Pro', tagline: 'نظام المراجعة المالية للمطالبات الطبية', version: 'v1.0' }

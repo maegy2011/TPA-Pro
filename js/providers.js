@@ -28,7 +28,7 @@ function renderProviders(){
   $('#providerKpi').innerHTML = `
     <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الجهات</div><div class="kpi-val">${providers.length} <small>جهة</small></div></div><div class="kpi-ico">${kpiIcon('building')}</div></div><div class="kpi-foot">${activeN} نشط · ${expN} قريب</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">العقود</div><div class="kpi-val">${contracts.length} <small>عقد</small></div></div><div class="kpi-ico">${kpiIcon('contract')}</div></div><div class="kpi-foot">${providers.length} جهة</div></div>
-    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">المطالبات</div><div class="kpi-val">${fmt(tb)} <small>ر.س</small></div></div><div class="kpi-ico">${kpiIcon('link')}</div></div><div class="kpi-foot">${tc} مطالبة</div></div>
+    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">المطالبات</div><div class="kpi-val">${fmt(tb)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('link')}</div></div><div class="kpi-foot">${tc} مطالبة</div></div>
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">متوسط الاستقطاع</div><div class="kpi-val">${avg.toFixed(1)}<small>%</small></div></div><div class="kpi-ico">${kpiIcon('cut')}</div></div><div class="kpi-foot">عبر الجهات</div></div>`;
   const list = providers.filter(p => {
     if(providerStatusFilter !== 'all' && getEffectiveProviderStatus(p) !== providerStatusFilter) return false;

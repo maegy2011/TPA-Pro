@@ -21,7 +21,7 @@ const MODAL_BATCH = `
             <div class="fg"><label>اسم المريض *</label><input id="btPatient" placeholder="اسم المريض"></div>
             <div class="fg"><label>تاريخ المطالبة *</label><input id="btClaimDate" type="date"></div>
             <div class="fg"><label>تاريخ وارد المطالبة</label><input id="btClaimReceivedDate" type="date"></div>
-            <div class="fg"><label>القيمة الإجمالية (ر.س) *</label><input id="btBilled" type="number" min="0" placeholder="0"></div>
+            <div class="fg"><label>القيمة الإجمالية (ج.م) *</label><input id="btBilled" type="number" min="0" placeholder="0"></div>
             <div class="fg full"><label>ملاحظات</label><textarea id="btNotes"></textarea></div>
           </div>
         </div>
