@@ -2,7 +2,8 @@ function showOnboardingError(msg){ const e = document.getElementById('onbErr'); 
 function clearOnboardingError(){ const e = document.getElementById('onbErr'); if(e){ e.classList.remove('show'); } }
 function bindOnboarding(){
   const next = document.getElementById('onbNextBtn');
-  // autofocus first field
+  const langBtn = document.getElementById('onbLangBtn');
+  if(langBtn){ langBtn.textContent = currentLang === 'ar' ? 'EN' : 'AR'; langBtn.addEventListener('click', () => { setLang(currentLang === 'ar' ? 'en' : 'ar'); langBtn.textContent = currentLang === 'ar' ? 'EN' : 'AR'; if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); }); }
   setTimeout(() => { document.getElementById('onbReviewerName')?.focus(); }, 50);
   // eye toggles
   document.querySelectorAll('.onb-eye').forEach(btn => {

@@ -1,5 +1,6 @@
 const SHELL_ONBOARDING = `
 <div id="onboarding" class="screen">
+  <button class="onb-lang" id="onbLangBtn" type="button">EN</button>
   <div class="lock-card onb-card" id="onbCard">
     <div class="lock-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
