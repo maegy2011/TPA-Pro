@@ -20,10 +20,12 @@ function bindOnboarding(){
   if(pwdIn && bar){ pwdIn.addEventListener('input', () => {
     const v = pwdIn.value;
     let score = 0;
-    if(v.length >= 6) score++;
-    if(v.length >= 10) score++;
-    if(/[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score++;
-    if(/[^A-Za-z0-9\u0600-\u06FF]/.test(v)) score++;
+    if(v.length > 0) score = 1;
+    if(v.length >= 6) score = 2;
+    if(v.length >= 10) score = 3;
+    if(/[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = Math.max(score, 3);
+    if(v.length >= 6 && /[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = 4;
+    if(/[^A-Za-z0-9\u0600-\u06FF]/.test(v)) score = Math.min(4, score+1);
     bar.style.width = (score*25)+'%';
     bar.className = 'pw-bar s'+score;
   }); }
