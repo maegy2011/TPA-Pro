@@ -67,7 +67,7 @@ const SHELL_APP = `
 
         <!-- الأدوات -->
         <div class="nav-section">
-          <div class="nav-section-title" data-i18n="nav.tools">الأدوات</div>
+          <div class="nav-section-title" data-i18n="nav.reports">التقارير</div>
           <button class="nav-item" data-page="reports">
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.reports">التقارير</span><span class="nav-sub" data-i18n="nav.reports.sub">تحليل مالي</span></span>
