@@ -12,7 +12,6 @@ const MODAL_CONTRACT = `
           <div class="fg"><label>النهاية *</label><input id="ctrEnd" type="date"></div>
           <div class="fg"><label>الخصم %</label><input id="ctrDiscount" type="number" min="0" max="100"></div>
           <div class="fg"><label>الدفع</label><select id="ctrPayment"><option>30 يوم</option><option>45 يوم</option><option>60 يوم</option><option>90 يوم</option><option>الدفع الفوري</option></select></div>
-          <div class="fg"><label>الحد الأقصى</label><input id="ctrMaxCoverage" type="number" min="0" step="1000"></div>
           <div class="fg"><label>الخدمات</label><select id="ctrServices"><option>جميع الخدمات</option><option>الخدمات الأساسية</option><option>الطوارئ</option><option>العلاج الطبيعي</option></select></div>
           <div class="fg full"><label>ملاحظات</label><textarea id="ctrNotes"></textarea></div>
         </div></div>

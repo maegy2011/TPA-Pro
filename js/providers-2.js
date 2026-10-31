@@ -3,12 +3,11 @@ function renderContracts(){
   const expN = contracts.filter(c=>effectiveContractStatus(c)==='expiring').length;
   const expdN = contracts.filter(c=>effectiveContractStatus(c)==='expired').length;
   let tm = 0, td = 0;
-  contracts.forEach(c => { tm += (c.maxCoverage||0); td += (c.discountRate||0); });
+  contracts.forEach(c => { td += (c.discountRate||0); });
   const avg = contracts.length ? td/contracts.length : 0;
   $('#contractKpi').innerHTML = `
     <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">العقود</div><div class="kpi-val">${contracts.length} <small>عقد</small></div></div><div class="kpi-ico">${kpiIcon('contract')}</div></div><div class="kpi-foot">${providers.length} جهة</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">السارية</div><div class="kpi-val">${activeN} <small>عقد</small></div></div><div class="kpi-ico">${kpiIcon('check')}</div></div><div class="kpi-foot">${expN} قريب · ${expdN} منتهي</div></div>
-    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">التغطية</div><div class="kpi-val">${fmt(tm)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">مجموع</div></div>
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">متوسط الخصم</div><div class="kpi-val">${avg.toFixed(1)}<small>%</small></div></div><div class="kpi-ico">${kpiIcon('cut')}</div></div><div class="kpi-foot">عبر العقود</div></div>`;
   const urgent = contracts.filter(c => ['expiring','expired'].includes(effectiveContractStatus(c)));
   const al = $('#contractAlert');
@@ -58,12 +57,12 @@ function openContractModal(id){
     $('#ctrNumber').value = c.id; $('#ctrStatus').value = c.status||'active';
     $('#ctrStart').value = c.startDate; $('#ctrEnd').value = c.endDate;
     $('#ctrDiscount').value = c.discountRate; $('#ctrPayment').value = c.paymentTerms||'30 يوم';
-    $('#ctrMaxCoverage').value = c.maxCoverage||0; $('#ctrServices').value = c.coveredServices||'جميع الخدمات';
+    $('#ctrServices').value = c.coveredServices||'جميع الخدمات';
     $('#ctrNotes').value = c.notes||''; (el => { if (el) el.style.display = 'block'; })($('#deleteContract'));
   } else {
     const today = daysFromNow(0);
     $('#ctrStatus').value = 'active'; $('#ctrStart').value = today; $('#ctrEnd').value = daysFromNow(365);
-    $('#ctrDiscount').value = 10; $('#ctrPayment').value = '30 يوم'; $('#ctrMaxCoverage').value = 200000;
+    $('#ctrDiscount').value = 10; $('#ctrPayment').value = '30 يوم';
     $('#ctrServices').value = 'جميع الخدمات'; $('#ctrNotes').value = ''; $('#ctrNumber').value = nextContractNumber(today);
     (el => { if (el) el.style.display = 'none'; })($('#deleteContract'));
   }
@@ -77,7 +76,7 @@ function saveContract(){
   const s = $('#ctrStart').value, e = $('#ctrEnd').value;
   if(!s || !e){ showWarning('تنبيه','أدخل التواريخ'); return; }
   if(new Date(e) <= new Date(s)){ showWarning('تنبيه','النهاية بعد البداية'); return; }
-  const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), paymentTerms:$('#ctrPayment').value, maxCoverage:Number($('#ctrMaxCoverage').value)||0, coveredServices:$('#ctrServices').value, autoRenew:true, status:$('#ctrStatus').value||'active', notes:$('#ctrNotes').value.trim() };
+  const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), paymentTerms:$('#ctrPayment').value, coveredServices:$('#ctrServices').value, autoRenew:true, status:$('#ctrStatus').value||'active', notes:$('#ctrNotes').value.trim() };
   if(editingContractId){ const c = getContractById(editingContractId); if(!c) return; Object.assign(c, data); syncContractToProvider(c); showSuccess('تم','تم التحديث'); }
   else { const nid = nextContractNumber(s); contracts.push({ id:nid, ...data }); syncContractToProvider({ id:nid, ...data }); showSuccess('تم','تمت الإضافة'); }
   closeContractModal(); renderAll();
