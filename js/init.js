@@ -34,6 +34,14 @@ $('#lockForm').addEventListener('submit', async e => {
 $('#pwd').addEventListener('input', () => $('#lockErr').classList.remove('show'));
 setTimeout(() => { if(typeof applyAllTranslations === 'function') applyAllTranslations(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); go('loading'); startLoading(); }, 2400);
 document.addEventListener('click', e => {
+  const btn = e.target.closest && e.target.closest('.onb-lang');
+  if(!btn) return;
+  setLang(currentLang === 'ar' ? 'en' : 'ar');
+  btn.textContent = currentLang === 'ar' ? 'EN' : 'AR';
+  if(typeof translateDOMMulti === 'function') translateDOMMulti();
+  else if(typeof translateDOM === 'function') translateDOM(document.body);
+});
+document.addEventListener('click', e => {
   const btn = e.target.closest && e.target.closest('.onb-eye');
   if(!btn) return;
   const inp = document.getElementById(btn.dataset.target);
