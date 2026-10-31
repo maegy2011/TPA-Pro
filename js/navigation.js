@@ -63,5 +63,10 @@ function goBack(){
   applyPage(prev.page);
 }
 function bindNav(){
-  $$('.nav-item').forEach(b => b.addEventListener('click', () => { navHistory = []; navigateTo(b.dataset.page, {noPush:true}); }));
+  $$('.nav-item').forEach(b => b.addEventListener('click', () => {
+    if(currentPage && currentPage !== b.dataset.page){
+      navHistory.push({ page: currentPage, viewType: viewState.type, viewId: viewState.id });
+    }
+    navigateTo(b.dataset.page, {noPush:true});
+  }));
 }

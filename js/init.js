@@ -45,6 +45,7 @@ document.addEventListener('click', e => {
 document.addEventListener('click', e => {
   const btn = e.target.closest && e.target.closest('#tbTrashBtn');
   if(!btn) return;
+  if(currentPage && currentPage !== 'trash') navHistory.push({ page: currentPage, viewType: viewState.type, viewId: viewState.id });
   if(typeof navigateTo === 'function') navigateTo('trash', {noPush:true});
 });
 document.addEventListener('click', e => {
@@ -63,8 +64,8 @@ document.addEventListener('click', e => {
   if(!item) return;
   const action = item.dataset.action;
   const m = document.getElementById('tbUserMenu'); if(m) m.style.display = 'none';
-  if(action === 'help' && typeof navigateTo === 'function') navigateTo('help', {noPush:true});
-  if(action === 'settings' && typeof navigateTo === 'function') navigateTo('settings', {noPush:true});
+  if(action === 'help' && typeof navigateTo === 'function'){ if(currentPage && currentPage !== 'help') navHistory.push({ page: currentPage, viewType: viewState.type, viewId: viewState.id }); navigateTo('help', {noPush:true}); }
+  if(action === 'settings' && typeof navigateTo === 'function'){ if(currentPage && currentPage !== 'settings') navHistory.push({ page: currentPage, viewType: viewState.type, viewId: viewState.id }); navigateTo('settings', {noPush:true}); }
   if(action === 'lang' && typeof setLang === 'function'){ setLang(currentLang === 'ar' ? 'en' : 'ar'); item.textContent = currentLang === 'ar' ? 'اللغة: EN' : 'Language: AR'; if(typeof translateDOMMulti === 'function') translateDOMMulti(); }
 });
 document.addEventListener('click', e => {

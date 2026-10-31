@@ -85,7 +85,7 @@ function initApp(){
     // شريط علوي
     const tbB = document.getElementById('tbBackupBtn'), tbU = document.getElementById('tbUserBtn'), tbT = document.getElementById('tbTrashBtn');
     if(tbB) tbB.addEventListener('click', () => doExportBackup(false));
-    if(tbT) tbT.addEventListener('click', () => { navHistory = []; navigateTo('trash', {noPush:true}); });
+    if(tbT) tbT.addEventListener('click', () => { if(currentPage && currentPage !== 'trash') navHistory.push({ page: currentPage, viewType: viewState.type, viewId: viewState.id }); navigateTo('trash', {noPush:true}); });
     const sb = document.getElementById('smartBackBtn');
     if(sb) sb.addEventListener('click', goBack);
     document.addEventListener('click', (e) => { const m = document.getElementById('tbUserMenu'); if(m && !e.target.closest('#tbUserWrap')) m.style.display = 'none'; });
