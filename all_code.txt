@@ -3338,7 +3338,10 @@ function renderFinalSummary(){
       counts[r] = (counts[r]||0) + ((Number(l.qty)||0)*(Number(l.billedUnit)||0) - (Number(l.approved)||0));
     })));
     const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
-    rb.innerHTML = '<div class="rv-section-title">توزيع الأسباب</div>' + Object.entries(counts).map(([k,v]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span>${escapeHtml(k)}</span><span>${fmt(v)} (${Math.round(v/total*100)}%)</span></div>`).join('');
+    rb.innerHTML = '<div class="rv-section-title">توزيع أسباب الاستقطاع</div>' + Object.entries(counts).map(([k,v]) => {
+      const pct = Math.round(v/total*100);
+      return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${escapeHtml(k)}</span><span>${fmt(v)} (${pct}%)</span></div><div style="height:6px;background:var(--border,#e5e7eb);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--bad,#dc2626);border-radius:3px"></div></div></div>`;
+    }).join('') + (Object.keys(counts).length?'': '<div style="font-size:12px;color:var(--muted)">لا توجد استقطاعات</div>');
   }
   // checklist
   const cb = document.getElementById('rvFinalChecklist');
@@ -3352,12 +3355,18 @@ function renderFinalSummary(){
     const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
     const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
     const items = [
-      { ok: !mismatch, text: `الإجمالي مُطابق (${fmt(billed)} = ${fmt(entered)})` },
-      { ok: excs.length === 0, text: `كل الاستثناءات معالجة (${excs.length} متبقٍ)` },
-      { ok: paPending === 0, text: `لا توجد بنود بانتظار موافقة PA (${paPending})` },
-      { ok: missingDocs === 0, text: `المستندات مكتملة (${missingDocs} ناقصة)` },
+      { key:'match', ok: !mismatch, text: `الإجمالي مُطابق (${fmt(billed)} = ${fmt(entered)})` },
+      { key:'exc', ok: excs.length === 0, text: `كل الاستثناءات معالجة (${excs.length} متبقٍ)` },
+      { key:'pa', ok: paPending === 0, text: `لا توجد بنود بانتظار موافقة PA (${paPending})` },
+      { key:'docs', ok: missingDocs === 0, text: `المستندات مكتملة (${missingDocs} ناقصة)` },
     ];
-    cb.innerHTML = '<div class="rv-section-title">قائمة الفحوصات</div>' + items.map(it => `<div style="font-size:12px;padding:4px 0;color:${it.ok?'var(--ok)':'var(--bad)'}">${it.ok?'☑':'☐'} ${escapeHtml(it.text)}</div>`).join('');
+    cb.innerHTML = '<div class="rv-section-title">قائمة التحقق الإلزامية</div>' + items.map(it => `<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;cursor:pointer"><input type="checkbox" class="final-check" data-final-check="${it.key}" ${it.ok?'checked':''} ${it.ok?'':'disabled'}> <span style="color:${it.ok?'var(--text,#111)':'var(--bad,#dc2626)'}">${escapeHtml(it.text)}</span></label>`).join('');
+    // gate finalize button
+    const finBtn = document.getElementById('finalizeReviewBtn');
+    if (finBtn) {
+      const allChecked = items.every(it => it.ok);
+      finBtn.disabled = !allChecked;
+    }
   }
   // default decision
   const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
@@ -3369,6 +3378,7 @@ function renderFinalSummary(){
   if (r) r.checked = true;
 }
 function recalcReview(){
+  if(typeof clearValidationCache === 'function') clearValidationCache();
   let billed = 0, eligible = 0, finalApproved = 0;
   workingInvoices.forEach(inv => (inv.patients||[]).forEach(pat => {
     computePatient(pat, activeClaim, inv.date, inv);
@@ -3539,6 +3549,7 @@ function computePatient(pat, claim, refDate, invoice){
   return pat;
 }
 function recalcClaim(c){
+  if(typeof clearValidationCache === 'function') clearValidationCache();
   if(!c.invoices) c.invoices = [];
   let billed = 0, eligible = 0, approved = 0, cap = 0, copay = 0;
   c.invoices.forEach(inv => {
@@ -3730,6 +3741,61 @@ function testDeductionRule(id){
 }
 
 
+function simulateRule(id){
+  const rule = deductionRules.find(r => r.id === id);
+  if(!rule){ showWarning('تنبيه','القاعدة غير موجودة'); return; }
+  if(!claims.length){ showWarning('تنبيه','لا مطالبات للاختبار'); return; }
+  const sample = claims.slice(0, 50);
+  let totalLines = 0, affected = 0;
+  let totalBefore = 0, totalAfter = 0, totalExtraDed = 0;
+  const affectedSamples = [];
+  const isPatientLevel = ['apply_cap','apply_copay'].includes(rule.action);
+
+  sample.forEach(claim => {
+    const refDate = claim.date || claim.receivedDate || daysFromNow(0);
+    if(isPatientLevel){
+      (claim.invoices||[]).forEach(inv => {
+        (inv.patients||[]).forEach(pat => {
+          const subtotal = (pat.lines||[]).reduce((s,l) => s + (Number(l.approved)|| (Number(l.qty)||0)*(Number(l.billedUnit)||0)), 0);
+          const ctx = { claim, patient: pat, invoice: inv };
+          const matched = ruleMatchesContext(rule, ctx, refDate);
+          if(!matched){ totalBefore += subtotal; totalAfter += subtotal; return; }
+          const res = evaluateRuleAction(rule, ctx, subtotal);
+          const deduct = res.deduct !== undefined ? res.deduct : (subtotal - (res.newApproved !== undefined ? res.newApproved : subtotal));
+          const after = Math.max(0, subtotal - deduct);
+          totalLines += (pat.lines||[]).length;
+          totalBefore += subtotal; totalAfter += after;
+          if(deduct > 0){ affected++; totalExtraDed += deduct; if(affectedSamples.length < 8) affectedSamples.push({ claim: claim.id, service: (pat.lines||[]).map(l=>l.name||l.code).join(', ').slice(0,40), before: subtotal, after }); }
+        });
+      });
+    } else {
+      (claim.invoices||[]).forEach(inv => {
+        (inv.patients||[]).forEach(pat => {
+          (pat.lines||[]).forEach(line => {
+            totalLines++;
+            const base = line.qty * (line.tariffUnit != null ? Math.min(line.billedUnit, line.tariffUnit) : line.billedUnit);
+            const ctx = { claim, patient: pat, invoice: inv, line: { ...line, lineBase: base } };
+            const matched = ruleMatchesContext(rule, ctx, refDate);
+            if(!matched){ totalBefore += base; totalAfter += base; return; }
+            const res = rule.isComposite ? evaluateCompositeRule(rule, ctx, refDate) : evaluateRuleAction(rule, ctx, base);
+            const newVal = res && res.newApproved !== undefined ? res.newApproved : (base - (res && res.deduct ? res.deduct : 0));
+            totalBefore += base; totalAfter += newVal;
+            if(newVal < base){ affected++; totalExtraDed += (base - newVal); if(affectedSamples.length < 8) affectedSamples.push({ claim: claim.id, service: line.name || line.code, before: base, after: newVal }); }
+          });
+        });
+      });
+    }
+  });
+
+  const pct = totalBefore ? ((totalExtraDed/totalBefore)*100).toFixed(1) : '0';
+  let msg = `القاعدة: ${rule.name}<br>المطالبات المختبرة: ${sample.length}<br>البنود: ${totalLines}<br>البنود/المرضى المتأثرون: ${affected}<br>إجمالي قبل: ${fmt(totalBefore)}<br>إجمالي بعد: ${fmt(totalAfter)}<br>استقطاع إضافي: ${fmt(totalExtraDed)} (${pct}%)`;
+  if(affectedSamples.length){
+    msg += '<br><br><b>عينة من البنود المتأثرة:</b><br>';
+    affectedSamples.forEach(s => { msg += `${escapeHtml(s.claim)} — ${escapeHtml(s.service)}: ${fmt(s.before)} → ${fmt(s.after)}<br>`; });
+  }
+  showInfo('محاكاة قاعدة الخصم', msg);
+}
+
 ================================================================================
 FILE: /home/administrator/TPA/js/deduction-rules.js
 ================================================================================
@@ -3752,6 +3818,7 @@ function bindDeductionRulesControls(){
     const ed = e.target.closest('[data-edit-dr]'); if(ed) openDrModal(ed.dataset.editDr);
     const del = e.target.closest('[data-del-dr]'); if(del) deleteDr(del.dataset.delDr);
     const ts = e.target.closest('[data-test-dr]'); if(ts) testDeductionRule(ts.dataset.testDr);
+    const sm = e.target.closest('[data-sim-dr]'); if(sm) simulateRule(sm.dataset.simDr);
   });
   $$('[data-close-dr]').forEach(el => el.addEventListener('click', closeDrModal));
   $('#saveDrBtn').addEventListener('click', saveDr);
@@ -3806,7 +3873,7 @@ function renderDeductionRules(){
       <td data-label="النطاق"><div class="dr-scope-tags">${tags.join('')}</div></td>
       <td data-label="السريان" style="font-size:11px;line-height:1.6"><div>${escapeHtml(r.effectiveFrom||'—')}</div><div style="color:var(--muted)">${escapeHtml(r.effectiveTo||'—')}</div></td>
       <td data-label="الحالة"><span class="dr-status-pill ${st.cls}">${st.label}</span></td>
-      <td class="act"><div style="display:flex;gap:3px"><button class="btn-xs" data-test-dr="${escapeHtml(r.id)}">اختبار</button><button class="btn-xs" data-edit-dr="${escapeHtml(r.id)}">تحرير</button><button class="btn-xs danger" data-del-dr="${escapeHtml(r.id)}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:3px"><button class="btn-xs" data-test-dr="${escapeHtml(r.id)}">اختبار</button><button class="btn-xs" data-sim-dr="${escapeHtml(r.id)}">محاكاة</button><button class="btn-xs" data-edit-dr="${escapeHtml(r.id)}">تحرير</button><button class="btn-xs danger" data-del-dr="${escapeHtml(r.id)}">×</button></div></td>
     </tr>`;
   }).join('');
   renderPaProcedures();
@@ -4018,6 +4085,39 @@ function evaluateCondition(cond, ctx){
   if(mode === 'any'){ if(!cond.subField || !cond.subOp) return true; return items.some(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
   if(mode === 'all'){ if(!cond.subField || !cond.subOp) return true; if(!items.length) return false; return items.every(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
   if(mode === 'count'){ if(!cond.subField || !cond.subOp) return true; const n = items.filter(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)).length; return compareValues(n, cond.compareOp||'gt', cond.compareValue||0, ctx); }
+  if(mode === 'frequency'){
+    // count occurrences of same field value within windowDays in the given scope
+    const f = cond.field || 'line.code';
+    const windowDays = Number(cond.windowDays) || 0;
+    const items = getScopeItems(scope, ctx);
+    const myVal = resolveFieldPath(f, ctx);
+    const myDate = ctx.invoice?.date || ctx.claim?.date || ctx.line?.date;
+    let cnt = 0;
+    items.forEach(it => {
+      if(String(resolveFieldPath(f, it)) !== String(myVal)) return;
+      const d = it.invoice?.date || it.claim?.date || it.line?.date;
+      if(windowDays > 0 && myDate && d){
+        const diff = Math.abs(new Date(myDate) - new Date(d)) / (1000*60*60*24);
+        if(diff <= windowDays) cnt++;
+      } else { cnt++; }
+    });
+    return compareValues(cnt, cond.compareOp || 'gt', cond.compareValue || 1, ctx);
+  }
+  if(mode === 'bundle'){
+    // true if all component codes are present in the scope
+    const comps = Array.isArray(cond.components) ? cond.components : String(cond.components||'').split(',').map(x=>x.trim()).filter(Boolean);
+    if(!comps.length) return true;
+    const items = getScopeItems(scope, ctx);
+    const codes = items.map(it => String(resolveFieldPath(cond.field || 'line.code', it)));
+    return comps.every(c => codes.includes(String(c)));
+  }
+  if(mode === 'diagnosis_match'){
+    // verify claim diagnosis is compatible with the service (allowed list)
+    const allowed = String(cond.value || '').split(',').map(x=>x.trim()).filter(Boolean);
+    const dx = resolveFieldPath(cond.field || 'claim.diagnosis', ctx);
+    if(!allowed.length) return true;
+    return allowed.includes(String(dx));
+  }
   if(['sum','avg','max','min'].includes(mode)){
     const vals = items.map(it => Number(resolveFieldPath(cond.aggField||'line.billedTotal', it))||0);
     let res = 0;
@@ -4293,6 +4393,71 @@ function patientBeneficiaryType(pat, claim){ return pat.beneficiaryType || claim
 function hasValidPriorApproval(claim){ return claim.priorApproval && claim.priorApproval.required && claim.priorApproval.status === 'approved'; }
 function lineRequiresPA(line){ if(line.requiresPriorApproval) return true; return paProcedures.some(p => (p.code || p.id) === line.code); }
 
+/* ---------- كشف التعارضات (Conflict Detection) ---------- */
+function _scopeOverlaps(a, b){
+  const aProv = (a.scope?.providerIds||[]), bProv = (b.scope?.providerIds||[]);
+  const aCon = (a.scope?.contractIds||[]), bCon = (b.scope?.contractIds||[]);
+  const aCt = (a.scope?.claimTypes||[]), bCt = (b.scope?.claimTypes||[]);
+  const provOverlap = (!aProv.length || !bProv.length) || aProv.some(x => bProv.includes(x));
+  const conOverlap = (!aCon.length || !bCon.length) || aCon.some(x => bCon.includes(x));
+  const ctOverlap = (!aCt.length || !bCt.length) || aCt.some(x => bCt.includes(x));
+  return provOverlap && conOverlap && ctOverlap;
+}
+function _conditionsEqual(a, b){
+  try { return JSON.stringify(a||{}) === JSON.stringify(b||{}); } catch(e){ return false; }
+}
+function detectRuleConflicts(newRule, existingRules){
+  existingRules = existingRules || (typeof deductionRules !== 'undefined' ? deductionRules : []);
+  const conflicts = [];
+  // 1. broken dependencies
+  const reqIds = (newRule.requires && newRule.requires.ruleIds) ? newRule.requires.ruleIds : [];
+  reqIds.forEach(rid => {
+    if(!existingRules.some(r => r.id === rid)){
+      conflicts.push({ type:'REQUIRES_MISSING', severity:'error', message:`القاعدة تعتمد على قاعدة غير موجودة: ${rid}` });
+    }
+  });
+  // 2. circular dependencies
+  reqIds.forEach(rid => {
+    const dep = existingRules.find(r => r.id === rid);
+    if(dep && dep.requires && Array.isArray(dep.requires.ruleIds)){
+      if(dep.requires.ruleIds.includes(newRule.id)){
+        conflicts.push({ type:'CIRCULAR_DEPENDENCY', severity:'error', message:`حلقة دائرية محتملة بين القاعدة الجديدة والقاعدة ${rid}` });
+      }
+      // mutual among required
+      if(dep.requires.ruleIds.some(x => reqIds.includes(x) && x !== rid)){
+        conflicts.push({ type:'CIRCULAR_DEPENDENCY', severity:'warning', message:`اعتماد متبادل بين القواعد المطلوبة (${rid})` });
+      }
+    }
+  });
+  existingRules.forEach(ex => {
+    // 3. redundant exact duplicate
+    if(ex.id !== newRule.id && ex.action && newRule.action && ex.action === newRule.action && ex.rate === newRule.rate && _scopeOverlaps(ex, newRule) && _conditionsEqual(ex.conditions, newRule.conditions)){
+      conflicts.push({ type:'REDUNDANT', severity:'warning', message:`القاعدة مطابقة (أو شبه مطابقة) للقاعدة السارية: ${ex.id} — ${ex.name}` });
+    }
+    // 4. contradictory intent on same scope+conditions
+    const rejectIntent = (r) => r.action === 'reject_line' || (['reduce_by_percent','cap_to_amount','set_to_percent'].includes(r.action) && (Number(r.rate)||0) >= 99);
+    const allowIntent = (r) => r.action === 'cap_to_amount' && (Number(r.rate)||0) > 0 && (Number(r.rate)||0) < 99;
+    if(_scopeOverlaps(ex, newRule) && _conditionsEqual(ex.conditions, newRule.conditions)){
+      if(rejectIntent(newRule) && allowIntent(ex)){
+        conflicts.push({ type:'CONTRADICTORY', severity:'warning', message:`القاعدة الجديدة (رفض) تتعارض مع القاعدة السارية ${ex.id} (سماح)` });
+      }
+      if(allowIntent(newRule) && rejectIntent(ex)){
+        conflicts.push({ type:'CONTRADICTORY', severity:'warning', message:`القاعدة الجديدة (سماح) تتعارض مع القاعدة السارية ${ex.id} (رفض)` });
+      }
+    }
+    const exHasCond = !!(ex.conditions && Array.isArray(ex.conditions.rules) && ex.conditions.rules.length);
+    const newHasCond = !!(newRule.conditions && Array.isArray(newRule.conditions.rules) && newRule.conditions.rules.length);
+    // 5. double-deduction risk: same scope+conditions, both line-level, different rules
+    if(ex.id !== newRule.id && exHasCond && newHasCond && _scopeOverlaps(ex, newRule) && _conditionsEqual(ex.conditions, newRule.conditions) && isLineLevelAction(ex.action) && isLineLevelAction(newRule.action) && ex.action !== newRule.action){
+      conflicts.push({ type:'OVERLAP', severity:'info', message:`خطر استقطاع مزدوج: ${ex.id} و القاعدة الجديدة تطبقان على نفس الشروط` });
+    }
+  });
+  // de-duplicate by message
+  const seen = new Set();
+  const uniq = conflicts.filter(c => { if(seen.has(c.message)) return false; seen.add(c.message); return true; });
+  return { hasConflicts: uniq.length > 0, conflicts: uniq };
+}
+
 ================================================================================
 FILE: /home/administrator/TPA/js/engine-validate.js
 ================================================================================
@@ -4362,7 +4527,22 @@ function isServiceCovered(ctx, code) {
   return true;
 }
 
+/* ---------- التخزين المؤقت لنتائج الفحص ---------- */
+const VALIDATION_CACHE = new Map();
+function _validationCacheKey(line, ctx){
+  try {
+    return JSON.stringify({
+      code: line.code, qty: line.qty, billedUnit: line.billedUnit, manual: !!line._manualEntry,
+      claim: ctx.claim && ctx.claim.id, inv: ctx.invoice && ctx.invoice.id, pat: ctx.patient && ctx.patient.id,
+      contract: ctx.contract && ctx.contract.id, tariff: ctx.tariff && ctx.tariff.id,
+    });
+  } catch(e){ return null; }
+}
+function clearValidationCache(){ VALIDATION_CACHE.clear(); }
+
 function validateLine(line, ctx) {
+  const _ck = _validationCacheKey(line, ctx);
+  if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }
   const { claim, patient, invoice, contract, tariff, serviceOverrides } = ctx;
   const ctxFull = { claim, patient, invoice, contract, tariff, serviceOverrides: serviceOverrides || (contract?.serviceOverrides || {}) };
   const passed = [];
@@ -4456,7 +4636,7 @@ function validateLine(line, ctx) {
   const lesser = tariffTotal !== null ? Math.min(billedTotal, tariffTotal) : billedTotal;
   const afterContract = covered ? Math.round(lesser * (1 - contractRate / 100)) : 0;
 
-  return {
+  const _res = {
     passed,
     failed,
     reductions,
@@ -4471,9 +4651,13 @@ function validateLine(line, ctx) {
     covered,
     afterContract,
   };
+  if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_res)));
+  return _res;
 }
 
 function validateInvoice(inv, ctx) {
+  const _ck = inv && inv.id ? ('VINV:'+inv.id+':'+(ctx.contract&&ctx.contract.id)) : null;
+  if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }
   const passed = [];
   const failed = [];
   const missingDocs = [];
@@ -4486,7 +4670,9 @@ function validateInvoice(inv, ctx) {
   } else {
     passed.push('docs-present');
   }
-  return { passed, failed, missingDocs };
+  const _vires = { passed, failed, missingDocs };
+  if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_vires)));
+  return _vires;
 }
 
 function validateClaim(claim) {
@@ -8345,6 +8531,19 @@ function bindReviewModal(){
     });
   }
 
+  // gating finalize button on checklist checkboxes
+  const finalPanel = document.getElementById('rvTabFinal');
+  if (finalPanel && !finalPanel.dataset.checkBound) {
+    finalPanel.dataset.checkBound = '1';
+    finalPanel.addEventListener('change', e => {
+      if (!e.target.classList.contains('final-check')) return;
+      const checks = finalPanel.querySelectorAll('.final-check');
+      const all = Array.from(checks).every(c => c.checked);
+      const btn = document.getElementById('finalizeReviewBtn');
+      if (btn) btn.disabled = !all;
+    });
+  }
+
   const finBtn = document.getElementById('finalizeReviewBtn');
   if (finBtn && !finBtn.dataset.bound) {
     finBtn.dataset.bound = '1';
@@ -8572,6 +8771,9 @@ function wizConditionRowHTML(cond, idPrefix, inGroup, parentPath){
   else if(mode === 'count') inner = fSel(cond.subField||'line.category') + oSel(cond.subOp||'eq','subOp') + vInp(cond.subValue,'subValue','subOp') + oSel(cond.compareOp||'gt','compareOp') + `<input type="number" data-cond-compareValue="${idPrefix}" value="${cond.compareValue||0}">`;
   else if(['sum','avg','max','min'].includes(mode)) inner = fSel(cond.aggField||'line.billedTotal') + oSel(cond.compareOp||'gt','compareOp') + `<input type="number" data-cond-compareValue="${idPrefix}" value="${cond.compareValue||0}">`;
   else if(mode === 'duplicate' || mode === 'unique') inner = fSel(cond.field||'line.code');
+  else if(mode === 'frequency') inner = fSel(cond.field||'line.code') + oSel(cond.compareOp||'gt','compareOp') + '<input type="number" data-cond-compareValue="' + idPrefix + '" value="' + (cond.compareValue||1) + '" placeholder="حد">' + '<input type="number" data-cond-windowDays="' + idPrefix + '" value="' + (cond.windowDays||14) + '" placeholder="أيام">';
+  else if(mode === 'bundle') inner = '<input type="text" data-cond-components="' + idPrefix + '" value="' + (cond.components||[]).join(',') + '" placeholder="أكواد مفصولة بفواصل">' + fSel(cond.field||'line.code');
+  else if(mode === 'diagnosis_match') inner = fSel(cond.field||'claim.diagnosis') + oSel(cond.op||'in','op') + '<input type="text" data-cond-value="' + idPrefix + '" value="' + (cond.value||'') + '" placeholder="أكواد ICD-10 مفصولة بفواصل">';
   return `<div class="cond-item mode-${mode}" data-drag-path="${idPrefix}" data-drop-container="${parentPath}">
     <span class="cond-drag-handle" draggable="true" aria-grabbed="false" tabindex="0" title="سحب">⠿</span>
     ${scopeSel}${modeSel}${inner}
@@ -8631,7 +8833,7 @@ function wizBindConditionHandlers(){
   const root = $('#condList');
   root.querySelectorAll('[data-cond-scope]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condScope); const n = getNodeByPath(p); if(!n) return; n.scope = e.target.value; n.field = null; n.op = null; n.value = null; wizRenderConditions(); }));
   root.querySelectorAll('[data-cond-mode]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condMode); const n = getNodeByPath(p); if(!n) return; n.mode = e.target.value; n.field = null; n.op = null; n.value = null; wizRenderConditions(); }));
-  root.querySelectorAll('[data-cond-field]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condField); const n = getNodeByPath(p); if(!n) return; const mode = n.mode || 'expr'; if(mode === 'expr' || mode === 'duplicate' || mode === 'unique') n.field = e.target.value; else if(mode === 'any' || mode === 'all' || mode === 'count') n.subField = e.target.value; else n.aggField = e.target.value; }));
+  root.querySelectorAll('[data-cond-field]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condField); const n = getNodeByPath(p); if(!n) return; const mode = n.mode || 'expr'; if(mode === 'expr' || mode === 'duplicate' || mode === 'unique' || mode === 'frequency' || mode === 'diagnosis_match') n.field = e.target.value; else if(mode === 'any' || mode === 'all' || mode === 'count') n.subField = e.target.value; else n.aggField = e.target.value; }));
   root.querySelectorAll('[data-cond-op]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condOp); const n = getNodeByPath(p); if(!n) return; n.op = e.target.value; wizRenderConditions(); }));
   root.querySelectorAll('[data-cond-subOp]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condSubop); const n = getNodeByPath(p); if(!n) return; n.subOp = e.target.value; wizRenderConditions(); }));
   root.querySelectorAll('[data-cond-compareOp]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condCompareop); const n = getNodeByPath(p); if(!n) return; n.compareOp = e.target.value; }));
@@ -8644,7 +8846,9 @@ function wizBindConditionHandlers(){
       }));
     });
   });
-  root.querySelectorAll('[data-cond-del]').forEach(el => el.addEventListener('click', e => { const p = parsePath(e.target.dataset.condDel); if(!p) return; const g = getParentByPath(p); if(!g) return; g.parent.rules.splice(g.idx,1); wizRenderConditions(); }));
+  root.querySelectorAll('[data-cond-windowDays]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condWindowdays); const n = getNodeByPath(p); if(!n) return; n.windowDays = Number(e.target.value)||0; }));
+  root.querySelectorAll('[data-cond-components]').forEach(el => el.addEventListener('change', e => { const p = parsePath(e.target.dataset.condComponents); const n = getNodeByPath(p); if(!n) return; n.components = String(e.target.value||'').split(',').map(function(x){return x.trim();}).filter(Boolean); }));
+    root.querySelectorAll('[data-cond-del]').forEach(el => el.addEventListener('click', e => { const p = parsePath(e.target.dataset.condDel); if(!p) return; const g = getParentByPath(p); if(!g) return; g.parent.rules.splice(g.idx,1); wizRenderConditions(); }));
   root.querySelectorAll('[data-group-del]').forEach(el => el.addEventListener('click', e => { const path = parsePath(e.target.dataset.groupDel); if(!path) return; const g = getParentByPath(path); if(!g) return; g.parent.rules.splice(g.idx,1); wizRenderConditions(); }));
   root.querySelectorAll('[data-group-logic]').forEach(el => el.addEventListener('change', e => { const path = parsePath(e.target.dataset.groupLogic); const g = getNodeByPath(path); if(g){ g.logic = e.target.value; } }));
   root.querySelectorAll('[data-group-add-cond]').forEach(el => el.addEventListener('click', e => { const path = parsePath(e.target.dataset.groupAddCond); const g = getNodeByPath(path); if(g && g.rules) g.rules.push({ field:'line.category', op:'eq', value:'مختبر' }); wizRenderConditions(); }));
@@ -8676,7 +8880,9 @@ const WIZ_FIELDS = [
   { path:'line.category', label:'فئة' },
   { path:'line.qty', label:'كمية' },
   { path:'line.billedUnit', label:'سعر' },
-  { path:'line.billedTotal', label:'إجمالي البند' }
+  { path:'line.billedTotal', label:'إجمالي البند' },
+  { path:'claim.diagnosis', label:'تشخيص (ICD-10)' },
+  { path:'claim.diagnosisSecondary', label:'تشخيص ثانوي' }
 ];
 const WIZ_OPS = {
   eq:{label:'يساوي'}, ne:{label:'لا يساوي'}, in:{label:'ضمن'}, not_in:{label:'ليس ضمن'},
@@ -8709,7 +8915,7 @@ const WIZ_OP_GROUPS = [
   { label:'نصية', ops:['normalize_eq','normalize_contains','similar_to','exists','is_empty','is_not_empty','is_true','is_false'] },
   { label:'تاريخية', ops:['before','after','on_or_before','on_or_after','between_dates','not_between_dates','same_day','same_month','same_year','same_quarter','same_week_as','is_today','is_weekend','is_weekday','is_business_day','is_not_business_day','in_last_n_days','in_next_n_days','is_this_month','is_this_quarter','is_this_year','is_last_month','is_last_quarter','is_last_year','is_first_day_of_month','is_last_day_of_month','before_field','after_field','on_same_day_as','between_fields','within_days','within_days_of','working_days_since','before_field_days','after_field_days'] },
 ];
-const WIZ_MODES = { expr:{label:'شرط'}, any:{label:'يوجد'}, all:{label:'كل'}, count:{label:'عدد'}, sum:{label:'مجموع'}, avg:{label:'متوسط'}, max:{label:'أقصى'}, min:{label:'أدنى'}, duplicate:{label:'مكرر'}, unique:{label:'فريد'} };
+const WIZ_MODES = { expr:{label:'شرط'}, any:{label:'يوجد'}, all:{label:'كل'}, count:{label:'عدد'}, sum:{label:'مجموع'}, avg:{label:'متوسط'}, max:{label:'أقصى'}, min:{label:'أدنى'}, duplicate:{label:'مكرر'}, unique:{label:'فريد'}, frequency:{label:'تكرار'}, bundle:{label:'حزمة'}, diagnosis_match:{label:'تشخيص'} };
 
 const WIZ_SCOPES = { self:{label:'البند'}, patient:{label:'المريض'}, invoice:{label:'الفاتورة'}, claim:{label:'المطالبة'} };
 
@@ -9203,6 +9409,19 @@ function wizGoTo(step){
 }
 function wizNext(){ wizSyncInputs(); if(!wizValidate(wizState.step)) return; if(wizState.step === 6){ wizSave(); return; } wizState.step++; wizRenderStep(); }
 function wizBack(){ wizSyncInputs(); if(wizState.step > 1){ wizState.step--; wizRenderStep(); } }
+function _wizBuildRule(){
+  const y = new Date(wizState.from).getFullYear(), pre = 'DR-'+y+'-';
+  let m = 0;
+  deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
+  return { id:pre+String(m+1).padStart(3,'0'), name:wizState.name, type:wizState.type, action:wizState.action, rate:wizState.type === 'composite' ? 0 : wizState.rate, isComposite:wizState.type === 'composite', compositeConfig:wizState.type === 'composite' ? JSON.parse(JSON.stringify(wizState.compositeConfig)) : null, requires:(wizState.requires.ruleIds && wizState.requires.ruleIds.length) ? JSON.parse(JSON.stringify(wizState.requires)) : null, scope:{ providerIds:[...wizState.providerIds], contractIds:[...wizState.contractIds], claimTypes:[...wizState.ctypes] }, conditions:JSON.parse(JSON.stringify(wizState.conditions)), effectiveFrom:wizState.from, effectiveTo:wizState.to||'', active:true, enabled:true, notes:wizState.notes, tiers: (wizState.tiersEnabled && wizState.tiers && wizState.tiers.length) ? JSON.parse(JSON.stringify(wizState.tiers)) : null, tiersEnabled: !!wizState.tiersEnabled };
+}
+function _wizDoSave(){
+  const rule = _wizBuildRule();
+  deductionRules.push(rule); closeDrWizard(); renderDeductionRules(); showSuccess('تم', rule.id);
+  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+  if (typeof persistData === 'function') persistData(true);
+  if (typeof renderAll === 'function') renderAll();
+}
 function wizSave(){
   wizSyncInputs();
   // tiers overlap check
@@ -9213,14 +9432,15 @@ function wizSave(){
     }
   }
   for (const s of [1,2,3,4,5]) { if (!wizValidate(s)) { wizState.step = s; wizRenderStep(); return; } }
-  const y = new Date(wizState.from).getFullYear(), pre = 'DR-'+y+'-';
-  let m = 0;
-  deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
-  const rule = { id:pre+String(m+1).padStart(3,'0'), name:wizState.name, type:wizState.type, action:wizState.action, rate:wizState.type === 'composite' ? 0 : wizState.rate, isComposite:wizState.type === 'composite', compositeConfig:wizState.type === 'composite' ? JSON.parse(JSON.stringify(wizState.compositeConfig)) : null, requires:(wizState.requires.ruleIds && wizState.requires.ruleIds.length) ? JSON.parse(JSON.stringify(wizState.requires)) : null, scope:{ providerIds:[...wizState.providerIds], contractIds:[...wizState.contractIds], claimTypes:[...wizState.ctypes] }, conditions:JSON.parse(JSON.stringify(wizState.conditions)), effectiveFrom:wizState.from, effectiveTo:wizState.to||'', active:true, enabled:true, notes:wizState.notes, tiers: (wizState.tiersEnabled && wizState.tiers && wizState.tiers.length) ? JSON.parse(JSON.stringify(wizState.tiers)) : null, tiersEnabled: !!wizState.tiersEnabled };
-  deductionRules.push(rule); closeDrWizard(); renderDeductionRules(); showSuccess('تم', rule.id);
-  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
-  if (typeof persistData === 'function') persistData(true);
-  if (typeof renderAll === 'function') renderAll();
+  // conflict detection
+  const draftRule = _wizBuildRule();
+  const cd = (typeof detectRuleConflicts === 'function') ? detectRuleConflicts(draftRule, deductionRules) : { hasConflicts:false, conflicts:[] };
+  if(cd.hasConflicts){
+    const msg = cd.conflicts.map(c => `• [${c.severity}] ${c.message}`).join('\n');
+    openDialog({ type:'warning', title:'تعارضات محتملة في القاعدة', message: msg + '\n\nهل تريد المتابعة والحفظ رغم التعارضات؟', confirmText:'حفظ رغم ذلك', cancelText:'إلغاء', onConfirm: () => { _wizDoSave(); }, onCancel: () => {} });
+    return;
+  }
+  _wizDoSave();
 }
 
 

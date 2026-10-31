@@ -17,6 +17,7 @@ function bindDeductionRulesControls(){
     const ed = e.target.closest('[data-edit-dr]'); if(ed) openDrModal(ed.dataset.editDr);
     const del = e.target.closest('[data-del-dr]'); if(del) deleteDr(del.dataset.delDr);
     const ts = e.target.closest('[data-test-dr]'); if(ts) testDeductionRule(ts.dataset.testDr);
+    const sm = e.target.closest('[data-sim-dr]'); if(sm) simulateRule(sm.dataset.simDr);
   });
   $$('[data-close-dr]').forEach(el => el.addEventListener('click', closeDrModal));
   $('#saveDrBtn').addEventListener('click', saveDr);
@@ -71,7 +72,7 @@ function renderDeductionRules(){
       <td data-label="النطاق"><div class="dr-scope-tags">${tags.join('')}</div></td>
       <td data-label="السريان" style="font-size:11px;line-height:1.6"><div>${escapeHtml(r.effectiveFrom||'—')}</div><div style="color:var(--muted)">${escapeHtml(r.effectiveTo||'—')}</div></td>
       <td data-label="الحالة"><span class="dr-status-pill ${st.cls}">${st.label}</span></td>
-      <td class="act"><div style="display:flex;gap:3px"><button class="btn-xs" data-test-dr="${escapeHtml(r.id)}">اختبار</button><button class="btn-xs" data-edit-dr="${escapeHtml(r.id)}">تحرير</button><button class="btn-xs danger" data-del-dr="${escapeHtml(r.id)}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:3px"><button class="btn-xs" data-test-dr="${escapeHtml(r.id)}">اختبار</button><button class="btn-xs" data-sim-dr="${escapeHtml(r.id)}">محاكاة</button><button class="btn-xs" data-edit-dr="${escapeHtml(r.id)}">تحرير</button><button class="btn-xs danger" data-del-dr="${escapeHtml(r.id)}">×</button></div></td>
     </tr>`;
   }).join('');
   renderPaProcedures();

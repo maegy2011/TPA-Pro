@@ -104,3 +104,68 @@ function evaluateCompositeRule(rule, ctx, refDate){
 function patientBeneficiaryType(pat, claim){ return pat.beneficiaryType || claim.type || 'employee'; }
 function hasValidPriorApproval(claim){ return claim.priorApproval && claim.priorApproval.required && claim.priorApproval.status === 'approved'; }
 function lineRequiresPA(line){ if(line.requiresPriorApproval) return true; return paProcedures.some(p => (p.code || p.id) === line.code); }
+
+/* ---------- كشف التعارضات (Conflict Detection) ---------- */
+function _scopeOverlaps(a, b){
+  const aProv = (a.scope?.providerIds||[]), bProv = (b.scope?.providerIds||[]);
+  const aCon = (a.scope?.contractIds||[]), bCon = (b.scope?.contractIds||[]);
+  const aCt = (a.scope?.claimTypes||[]), bCt = (b.scope?.claimTypes||[]);
+  const provOverlap = (!aProv.length || !bProv.length) || aProv.some(x => bProv.includes(x));
+  const conOverlap = (!aCon.length || !bCon.length) || aCon.some(x => bCon.includes(x));
+  const ctOverlap = (!aCt.length || !bCt.length) || aCt.some(x => bCt.includes(x));
+  return provOverlap && conOverlap && ctOverlap;
+}
+function _conditionsEqual(a, b){
+  try { return JSON.stringify(a||{}) === JSON.stringify(b||{}); } catch(e){ return false; }
+}
+function detectRuleConflicts(newRule, existingRules){
+  existingRules = existingRules || (typeof deductionRules !== 'undefined' ? deductionRules : []);
+  const conflicts = [];
+  // 1. broken dependencies
+  const reqIds = (newRule.requires && newRule.requires.ruleIds) ? newRule.requires.ruleIds : [];
+  reqIds.forEach(rid => {
+    if(!existingRules.some(r => r.id === rid)){
+      conflicts.push({ type:'REQUIRES_MISSING', severity:'error', message:`القاعدة تعتمد على قاعدة غير موجودة: ${rid}` });
+    }
+  });
+  // 2. circular dependencies
+  reqIds.forEach(rid => {
+    const dep = existingRules.find(r => r.id === rid);
+    if(dep && dep.requires && Array.isArray(dep.requires.ruleIds)){
+      if(dep.requires.ruleIds.includes(newRule.id)){
+        conflicts.push({ type:'CIRCULAR_DEPENDENCY', severity:'error', message:`حلقة دائرية محتملة بين القاعدة الجديدة والقاعدة ${rid}` });
+      }
+      // mutual among required
+      if(dep.requires.ruleIds.some(x => reqIds.includes(x) && x !== rid)){
+        conflicts.push({ type:'CIRCULAR_DEPENDENCY', severity:'warning', message:`اعتماد متبادل بين القواعد المطلوبة (${rid})` });
+      }
+    }
+  });
+  existingRules.forEach(ex => {
+    // 3. redundant exact duplicate
+    if(ex.id !== newRule.id && ex.action && newRule.action && ex.action === newRule.action && ex.rate === newRule.rate && _scopeOverlaps(ex, newRule) && _conditionsEqual(ex.conditions, newRule.conditions)){
+      conflicts.push({ type:'REDUNDANT', severity:'warning', message:`القاعدة مطابقة (أو شبه مطابقة) للقاعدة السارية: ${ex.id} — ${ex.name}` });
+    }
+    // 4. contradictory intent on same scope+conditions
+    const rejectIntent = (r) => r.action === 'reject_line' || (['reduce_by_percent','cap_to_amount','set_to_percent'].includes(r.action) && (Number(r.rate)||0) >= 99);
+    const allowIntent = (r) => r.action === 'cap_to_amount' && (Number(r.rate)||0) > 0 && (Number(r.rate)||0) < 99;
+    if(_scopeOverlaps(ex, newRule) && _conditionsEqual(ex.conditions, newRule.conditions)){
+      if(rejectIntent(newRule) && allowIntent(ex)){
+        conflicts.push({ type:'CONTRADICTORY', severity:'warning', message:`القاعدة الجديدة (رفض) تتعارض مع القاعدة السارية ${ex.id} (سماح)` });
+      }
+      if(allowIntent(newRule) && rejectIntent(ex)){
+        conflicts.push({ type:'CONTRADICTORY', severity:'warning', message:`القاعدة الجديدة (سماح) تتعارض مع القاعدة السارية ${ex.id} (رفض)` });
+      }
+    }
+    const exHasCond = !!(ex.conditions && Array.isArray(ex.conditions.rules) && ex.conditions.rules.length);
+    const newHasCond = !!(newRule.conditions && Array.isArray(newRule.conditions.rules) && newRule.conditions.rules.length);
+    // 5. double-deduction risk: same scope+conditions, both line-level, different rules
+    if(ex.id !== newRule.id && exHasCond && newHasCond && _scopeOverlaps(ex, newRule) && _conditionsEqual(ex.conditions, newRule.conditions) && isLineLevelAction(ex.action) && isLineLevelAction(newRule.action) && ex.action !== newRule.action){
+      conflicts.push({ type:'OVERLAP', severity:'info', message:`خطر استقطاع مزدوج: ${ex.id} و القاعدة الجديدة تطبقان على نفس الشروط` });
+    }
+  });
+  // de-duplicate by message
+  const seen = new Set();
+  const uniq = conflicts.filter(c => { if(seen.has(c.message)) return false; seen.add(c.message); return true; });
+  return { hasConflicts: uniq.length > 0, conflicts: uniq };
+}

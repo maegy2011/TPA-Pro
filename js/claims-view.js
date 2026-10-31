@@ -253,7 +253,10 @@ function renderFinalSummary(){
       counts[r] = (counts[r]||0) + ((Number(l.qty)||0)*(Number(l.billedUnit)||0) - (Number(l.approved)||0));
     })));
     const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
-    rb.innerHTML = '<div class="rv-section-title">توزيع الأسباب</div>' + Object.entries(counts).map(([k,v]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span>${escapeHtml(k)}</span><span>${fmt(v)} (${Math.round(v/total*100)}%)</span></div>`).join('');
+    rb.innerHTML = '<div class="rv-section-title">توزيع أسباب الاستقطاع</div>' + Object.entries(counts).map(([k,v]) => {
+      const pct = Math.round(v/total*100);
+      return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${escapeHtml(k)}</span><span>${fmt(v)} (${pct}%)</span></div><div style="height:6px;background:var(--border,#e5e7eb);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--bad,#dc2626);border-radius:3px"></div></div></div>`;
+    }).join('') + (Object.keys(counts).length?'': '<div style="font-size:12px;color:var(--muted)">لا توجد استقطاعات</div>');
   }
   // checklist
   const cb = document.getElementById('rvFinalChecklist');
@@ -267,12 +270,18 @@ function renderFinalSummary(){
     const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
     const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
     const items = [
-      { ok: !mismatch, text: `الإجمالي مُطابق (${fmt(billed)} = ${fmt(entered)})` },
-      { ok: excs.length === 0, text: `كل الاستثناءات معالجة (${excs.length} متبقٍ)` },
-      { ok: paPending === 0, text: `لا توجد بنود بانتظار موافقة PA (${paPending})` },
-      { ok: missingDocs === 0, text: `المستندات مكتملة (${missingDocs} ناقصة)` },
+      { key:'match', ok: !mismatch, text: `الإجمالي مُطابق (${fmt(billed)} = ${fmt(entered)})` },
+      { key:'exc', ok: excs.length === 0, text: `كل الاستثناءات معالجة (${excs.length} متبقٍ)` },
+      { key:'pa', ok: paPending === 0, text: `لا توجد بنود بانتظار موافقة PA (${paPending})` },
+      { key:'docs', ok: missingDocs === 0, text: `المستندات مكتملة (${missingDocs} ناقصة)` },
     ];
-    cb.innerHTML = '<div class="rv-section-title">قائمة الفحوصات</div>' + items.map(it => `<div style="font-size:12px;padding:4px 0;color:${it.ok?'var(--ok)':'var(--bad)'}">${it.ok?'☑':'☐'} ${escapeHtml(it.text)}</div>`).join('');
+    cb.innerHTML = '<div class="rv-section-title">قائمة التحقق الإلزامية</div>' + items.map(it => `<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;cursor:pointer"><input type="checkbox" class="final-check" data-final-check="${it.key}" ${it.ok?'checked':''} ${it.ok?'':'disabled'}> <span style="color:${it.ok?'var(--text,#111)':'var(--bad,#dc2626)'}">${escapeHtml(it.text)}</span></label>`).join('');
+    // gate finalize button
+    const finBtn = document.getElementById('finalizeReviewBtn');
+    if (finBtn) {
+      const allChecked = items.every(it => it.ok);
+      finBtn.disabled = !allChecked;
+    }
   }
   // default decision
   const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
@@ -284,6 +293,7 @@ function renderFinalSummary(){
   if (r) r.checked = true;
 }
 function recalcReview(){
+  if(typeof clearValidationCache === 'function') clearValidationCache();
   let billed = 0, eligible = 0, finalApproved = 0;
   workingInvoices.forEach(inv => (inv.patients||[]).forEach(pat => {
     computePatient(pat, activeClaim, inv.date, inv);

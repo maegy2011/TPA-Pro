@@ -95,3 +95,58 @@ function testDeductionRule(id){
   showInfo('اختبار قاعدة', msg);
 }
 
+
+function simulateRule(id){
+  const rule = deductionRules.find(r => r.id === id);
+  if(!rule){ showWarning('تنبيه','القاعدة غير موجودة'); return; }
+  if(!claims.length){ showWarning('تنبيه','لا مطالبات للاختبار'); return; }
+  const sample = claims.slice(0, 50);
+  let totalLines = 0, affected = 0;
+  let totalBefore = 0, totalAfter = 0, totalExtraDed = 0;
+  const affectedSamples = [];
+  const isPatientLevel = ['apply_cap','apply_copay'].includes(rule.action);
+
+  sample.forEach(claim => {
+    const refDate = claim.date || claim.receivedDate || daysFromNow(0);
+    if(isPatientLevel){
+      (claim.invoices||[]).forEach(inv => {
+        (inv.patients||[]).forEach(pat => {
+          const subtotal = (pat.lines||[]).reduce((s,l) => s + (Number(l.approved)|| (Number(l.qty)||0)*(Number(l.billedUnit)||0)), 0);
+          const ctx = { claim, patient: pat, invoice: inv };
+          const matched = ruleMatchesContext(rule, ctx, refDate);
+          if(!matched){ totalBefore += subtotal; totalAfter += subtotal; return; }
+          const res = evaluateRuleAction(rule, ctx, subtotal);
+          const deduct = res.deduct !== undefined ? res.deduct : (subtotal - (res.newApproved !== undefined ? res.newApproved : subtotal));
+          const after = Math.max(0, subtotal - deduct);
+          totalLines += (pat.lines||[]).length;
+          totalBefore += subtotal; totalAfter += after;
+          if(deduct > 0){ affected++; totalExtraDed += deduct; if(affectedSamples.length < 8) affectedSamples.push({ claim: claim.id, service: (pat.lines||[]).map(l=>l.name||l.code).join(', ').slice(0,40), before: subtotal, after }); }
+        });
+      });
+    } else {
+      (claim.invoices||[]).forEach(inv => {
+        (inv.patients||[]).forEach(pat => {
+          (pat.lines||[]).forEach(line => {
+            totalLines++;
+            const base = line.qty * (line.tariffUnit != null ? Math.min(line.billedUnit, line.tariffUnit) : line.billedUnit);
+            const ctx = { claim, patient: pat, invoice: inv, line: { ...line, lineBase: base } };
+            const matched = ruleMatchesContext(rule, ctx, refDate);
+            if(!matched){ totalBefore += base; totalAfter += base; return; }
+            const res = rule.isComposite ? evaluateCompositeRule(rule, ctx, refDate) : evaluateRuleAction(rule, ctx, base);
+            const newVal = res && res.newApproved !== undefined ? res.newApproved : (base - (res && res.deduct ? res.deduct : 0));
+            totalBefore += base; totalAfter += newVal;
+            if(newVal < base){ affected++; totalExtraDed += (base - newVal); if(affectedSamples.length < 8) affectedSamples.push({ claim: claim.id, service: line.name || line.code, before: base, after: newVal }); }
+          });
+        });
+      });
+    }
+  });
+
+  const pct = totalBefore ? ((totalExtraDed/totalBefore)*100).toFixed(1) : '0';
+  let msg = `القاعدة: ${rule.name}<br>المطالبات المختبرة: ${sample.length}<br>البنود: ${totalLines}<br>البنود/المرضى المتأثرون: ${affected}<br>إجمالي قبل: ${fmt(totalBefore)}<br>إجمالي بعد: ${fmt(totalAfter)}<br>استقطاع إضافي: ${fmt(totalExtraDed)} (${pct}%)`;
+  if(affectedSamples.length){
+    msg += '<br><br><b>عينة من البنود المتأثرة:</b><br>';
+    affectedSamples.forEach(s => { msg += `${escapeHtml(s.claim)} — ${escapeHtml(s.service)}: ${fmt(s.before)} → ${fmt(s.after)}<br>`; });
+  }
+  showInfo('محاكاة قاعدة الخصم', msg);
+}

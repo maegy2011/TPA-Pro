@@ -19,7 +19,9 @@ const WIZ_FIELDS = [
   { path:'line.category', label:'فئة' },
   { path:'line.qty', label:'كمية' },
   { path:'line.billedUnit', label:'سعر' },
-  { path:'line.billedTotal', label:'إجمالي البند' }
+  { path:'line.billedTotal', label:'إجمالي البند' },
+  { path:'claim.diagnosis', label:'تشخيص (ICD-10)' },
+  { path:'claim.diagnosisSecondary', label:'تشخيص ثانوي' }
 ];
 const WIZ_OPS = {
   eq:{label:'يساوي'}, ne:{label:'لا يساوي'}, in:{label:'ضمن'}, not_in:{label:'ليس ضمن'},
@@ -52,6 +54,6 @@ const WIZ_OP_GROUPS = [
   { label:'نصية', ops:['normalize_eq','normalize_contains','similar_to','exists','is_empty','is_not_empty','is_true','is_false'] },
   { label:'تاريخية', ops:['before','after','on_or_before','on_or_after','between_dates','not_between_dates','same_day','same_month','same_year','same_quarter','same_week_as','is_today','is_weekend','is_weekday','is_business_day','is_not_business_day','in_last_n_days','in_next_n_days','is_this_month','is_this_quarter','is_this_year','is_last_month','is_last_quarter','is_last_year','is_first_day_of_month','is_last_day_of_month','before_field','after_field','on_same_day_as','between_fields','within_days','within_days_of','working_days_since','before_field_days','after_field_days'] },
 ];
-const WIZ_MODES = { expr:{label:'شرط'}, any:{label:'يوجد'}, all:{label:'كل'}, count:{label:'عدد'}, sum:{label:'مجموع'}, avg:{label:'متوسط'}, max:{label:'أقصى'}, min:{label:'أدنى'}, duplicate:{label:'مكرر'}, unique:{label:'فريد'} };
+const WIZ_MODES = { expr:{label:'شرط'}, any:{label:'يوجد'}, all:{label:'كل'}, count:{label:'عدد'}, sum:{label:'مجموع'}, avg:{label:'متوسط'}, max:{label:'أقصى'}, min:{label:'أدنى'}, duplicate:{label:'مكرر'}, unique:{label:'فريد'}, frequency:{label:'تكرار'}, bundle:{label:'حزمة'}, diagnosis_match:{label:'تشخيص'} };
 
 const WIZ_SCOPES = { self:{label:'البند'}, patient:{label:'المريض'}, invoice:{label:'الفاتورة'}, claim:{label:'المطالبة'} };

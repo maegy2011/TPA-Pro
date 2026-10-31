@@ -136,6 +136,7 @@ function computePatient(pat, claim, refDate, invoice){
   return pat;
 }
 function recalcClaim(c){
+  if(typeof clearValidationCache === 'function') clearValidationCache();
   if(!c.invoices) c.invoices = [];
   let billed = 0, eligible = 0, approved = 0, cap = 0, copay = 0;
   c.invoices.forEach(inv => {

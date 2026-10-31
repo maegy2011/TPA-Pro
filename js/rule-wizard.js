@@ -132,6 +132,19 @@ function wizGoTo(step){
 }
 function wizNext(){ wizSyncInputs(); if(!wizValidate(wizState.step)) return; if(wizState.step === 6){ wizSave(); return; } wizState.step++; wizRenderStep(); }
 function wizBack(){ wizSyncInputs(); if(wizState.step > 1){ wizState.step--; wizRenderStep(); } }
+function _wizBuildRule(){
+  const y = new Date(wizState.from).getFullYear(), pre = 'DR-'+y+'-';
+  let m = 0;
+  deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
+  return { id:pre+String(m+1).padStart(3,'0'), name:wizState.name, type:wizState.type, action:wizState.action, rate:wizState.type === 'composite' ? 0 : wizState.rate, isComposite:wizState.type === 'composite', compositeConfig:wizState.type === 'composite' ? JSON.parse(JSON.stringify(wizState.compositeConfig)) : null, requires:(wizState.requires.ruleIds && wizState.requires.ruleIds.length) ? JSON.parse(JSON.stringify(wizState.requires)) : null, scope:{ providerIds:[...wizState.providerIds], contractIds:[...wizState.contractIds], claimTypes:[...wizState.ctypes] }, conditions:JSON.parse(JSON.stringify(wizState.conditions)), effectiveFrom:wizState.from, effectiveTo:wizState.to||'', active:true, enabled:true, notes:wizState.notes, tiers: (wizState.tiersEnabled && wizState.tiers && wizState.tiers.length) ? JSON.parse(JSON.stringify(wizState.tiers)) : null, tiersEnabled: !!wizState.tiersEnabled };
+}
+function _wizDoSave(){
+  const rule = _wizBuildRule();
+  deductionRules.push(rule); closeDrWizard(); renderDeductionRules(); showSuccess('تم', rule.id);
+  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+  if (typeof persistData === 'function') persistData(true);
+  if (typeof renderAll === 'function') renderAll();
+}
 function wizSave(){
   wizSyncInputs();
   // tiers overlap check
@@ -142,13 +155,14 @@ function wizSave(){
     }
   }
   for (const s of [1,2,3,4,5]) { if (!wizValidate(s)) { wizState.step = s; wizRenderStep(); return; } }
-  const y = new Date(wizState.from).getFullYear(), pre = 'DR-'+y+'-';
-  let m = 0;
-  deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
-  const rule = { id:pre+String(m+1).padStart(3,'0'), name:wizState.name, type:wizState.type, action:wizState.action, rate:wizState.type === 'composite' ? 0 : wizState.rate, isComposite:wizState.type === 'composite', compositeConfig:wizState.type === 'composite' ? JSON.parse(JSON.stringify(wizState.compositeConfig)) : null, requires:(wizState.requires.ruleIds && wizState.requires.ruleIds.length) ? JSON.parse(JSON.stringify(wizState.requires)) : null, scope:{ providerIds:[...wizState.providerIds], contractIds:[...wizState.contractIds], claimTypes:[...wizState.ctypes] }, conditions:JSON.parse(JSON.stringify(wizState.conditions)), effectiveFrom:wizState.from, effectiveTo:wizState.to||'', active:true, enabled:true, notes:wizState.notes, tiers: (wizState.tiersEnabled && wizState.tiers && wizState.tiers.length) ? JSON.parse(JSON.stringify(wizState.tiers)) : null, tiersEnabled: !!wizState.tiersEnabled };
-  deductionRules.push(rule); closeDrWizard(); renderDeductionRules(); showSuccess('تم', rule.id);
-  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
-  if (typeof persistData === 'function') persistData(true);
-  if (typeof renderAll === 'function') renderAll();
+  // conflict detection
+  const draftRule = _wizBuildRule();
+  const cd = (typeof detectRuleConflicts === 'function') ? detectRuleConflicts(draftRule, deductionRules) : { hasConflicts:false, conflicts:[] };
+  if(cd.hasConflicts){
+    const msg = cd.conflicts.map(c => `• [${c.severity}] ${c.message}`).join('\n');
+    openDialog({ type:'warning', title:'تعارضات محتملة في القاعدة', message: msg + '\n\nهل تريد المتابعة والحفظ رغم التعارضات؟', confirmText:'حفظ رغم ذلك', cancelText:'إلغاء', onConfirm: () => { _wizDoSave(); }, onCancel: () => {} });
+    return;
+  }
+  _wizDoSave();
 }
 

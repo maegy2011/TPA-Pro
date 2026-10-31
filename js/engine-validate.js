@@ -64,7 +64,22 @@ function isServiceCovered(ctx, code) {
   return true;
 }
 
+/* ---------- التخزين المؤقت لنتائج الفحص ---------- */
+const VALIDATION_CACHE = new Map();
+function _validationCacheKey(line, ctx){
+  try {
+    return JSON.stringify({
+      code: line.code, qty: line.qty, billedUnit: line.billedUnit, manual: !!line._manualEntry,
+      claim: ctx.claim && ctx.claim.id, inv: ctx.invoice && ctx.invoice.id, pat: ctx.patient && ctx.patient.id,
+      contract: ctx.contract && ctx.contract.id, tariff: ctx.tariff && ctx.tariff.id,
+    });
+  } catch(e){ return null; }
+}
+function clearValidationCache(){ VALIDATION_CACHE.clear(); }
+
 function validateLine(line, ctx) {
+  const _ck = _validationCacheKey(line, ctx);
+  if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }
   const { claim, patient, invoice, contract, tariff, serviceOverrides } = ctx;
   const ctxFull = { claim, patient, invoice, contract, tariff, serviceOverrides: serviceOverrides || (contract?.serviceOverrides || {}) };
   const passed = [];
@@ -158,7 +173,7 @@ function validateLine(line, ctx) {
   const lesser = tariffTotal !== null ? Math.min(billedTotal, tariffTotal) : billedTotal;
   const afterContract = covered ? Math.round(lesser * (1 - contractRate / 100)) : 0;
 
-  return {
+  const _res = {
     passed,
     failed,
     reductions,
@@ -173,9 +188,13 @@ function validateLine(line, ctx) {
     covered,
     afterContract,
   };
+  if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_res)));
+  return _res;
 }
 
 function validateInvoice(inv, ctx) {
+  const _ck = inv && inv.id ? ('VINV:'+inv.id+':'+(ctx.contract&&ctx.contract.id)) : null;
+  if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }
   const passed = [];
   const failed = [];
   const missingDocs = [];
@@ -188,7 +207,9 @@ function validateInvoice(inv, ctx) {
   } else {
     passed.push('docs-present');
   }
-  return { passed, failed, missingDocs };
+  const _vires = { passed, failed, missingDocs };
+  if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_vires)));
+  return _vires;
 }
 
 function validateClaim(claim) {

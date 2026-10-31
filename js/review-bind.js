@@ -206,6 +206,19 @@ function bindReviewModal(){
     });
   }
 
+  // gating finalize button on checklist checkboxes
+  const finalPanel = document.getElementById('rvTabFinal');
+  if (finalPanel && !finalPanel.dataset.checkBound) {
+    finalPanel.dataset.checkBound = '1';
+    finalPanel.addEventListener('change', e => {
+      if (!e.target.classList.contains('final-check')) return;
+      const checks = finalPanel.querySelectorAll('.final-check');
+      const all = Array.from(checks).every(c => c.checked);
+      const btn = document.getElementById('finalizeReviewBtn');
+      if (btn) btn.disabled = !all;
+    });
+  }
+
   const finBtn = document.getElementById('finalizeReviewBtn');
   if (finBtn && !finBtn.dataset.bound) {
     finBtn.dataset.bound = '1';

@@ -58,6 +58,39 @@ function evaluateCondition(cond, ctx){
   if(mode === 'any'){ if(!cond.subField || !cond.subOp) return true; return items.some(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
   if(mode === 'all'){ if(!cond.subField || !cond.subOp) return true; if(!items.length) return false; return items.every(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
   if(mode === 'count'){ if(!cond.subField || !cond.subOp) return true; const n = items.filter(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)).length; return compareValues(n, cond.compareOp||'gt', cond.compareValue||0, ctx); }
+  if(mode === 'frequency'){
+    // count occurrences of same field value within windowDays in the given scope
+    const f = cond.field || 'line.code';
+    const windowDays = Number(cond.windowDays) || 0;
+    const items = getScopeItems(scope, ctx);
+    const myVal = resolveFieldPath(f, ctx);
+    const myDate = ctx.invoice?.date || ctx.claim?.date || ctx.line?.date;
+    let cnt = 0;
+    items.forEach(it => {
+      if(String(resolveFieldPath(f, it)) !== String(myVal)) return;
+      const d = it.invoice?.date || it.claim?.date || it.line?.date;
+      if(windowDays > 0 && myDate && d){
+        const diff = Math.abs(new Date(myDate) - new Date(d)) / (1000*60*60*24);
+        if(diff <= windowDays) cnt++;
+      } else { cnt++; }
+    });
+    return compareValues(cnt, cond.compareOp || 'gt', cond.compareValue || 1, ctx);
+  }
+  if(mode === 'bundle'){
+    // true if all component codes are present in the scope
+    const comps = Array.isArray(cond.components) ? cond.components : String(cond.components||'').split(',').map(x=>x.trim()).filter(Boolean);
+    if(!comps.length) return true;
+    const items = getScopeItems(scope, ctx);
+    const codes = items.map(it => String(resolveFieldPath(cond.field || 'line.code', it)));
+    return comps.every(c => codes.includes(String(c)));
+  }
+  if(mode === 'diagnosis_match'){
+    // verify claim diagnosis is compatible with the service (allowed list)
+    const allowed = String(cond.value || '').split(',').map(x=>x.trim()).filter(Boolean);
+    const dx = resolveFieldPath(cond.field || 'claim.diagnosis', ctx);
+    if(!allowed.length) return true;
+    return allowed.includes(String(dx));
+  }
   if(['sum','avg','max','min'].includes(mode)){
     const vals = items.map(it => Number(resolveFieldPath(cond.aggField||'line.billedTotal', it))||0);
     let res = 0;
