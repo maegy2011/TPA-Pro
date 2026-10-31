@@ -25,12 +25,12 @@ function openReview(id){
   $('#rvReceivedDate').value = c.receivedDate||'—'; $('#rvPatient').value = c.patient; $('#rvProvider').value = c.provider;
   $('#rvReason').value = c.reason||''; $('#rvNotes').value = c.notes||'';
   if(c.priorApproval && c.priorApproval.required){
-    $('#priorApprovalBox').style.display = 'block';
+    $('#\1')?.style.display = 'block';
     $('#paStatus').value = c.priorApproval.status || 'not-requested';
     $('#paRefNumber').value = c.priorApproval.refNumber || '';
     $('#paDate').value = c.priorApproval.date || '';
     updatePAWarning();
-  } else $('#priorApprovalBox').style.display = 'none';
+  } else $('#\1')?.style.display = 'none';
   $$('.rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
   renderReviewInvoices();
   const s = upsertCurrentSession();

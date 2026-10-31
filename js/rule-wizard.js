@@ -37,18 +37,18 @@ function wizRenderStep(){
   $$('.wiz-step').forEach(s => { const n = Number(s.dataset.wizStep); s.classList.toggle('active', n === wizState.step); s.classList.toggle('done', n < wizState.step); });
   $$('.wiz-panel').forEach(p => p.classList.toggle('active', Number(p.dataset.wizPanel) === wizState.step));
   $('#drWizSub').textContent = `الخطوة ${wizState.step} من 6`;
-  $('#wizBackBtn').style.visibility = wizState.step === 1 ? 'hidden' : 'visible';
+  $('#\1')?.style.visibility = wizState.step === 1 ? 'hidden' : 'visible';
   $('#wizNextBtn').textContent = wizState.step === 6 ? 'حفظ' : 'التالي';
   if(wizState.step === 1) $$('.wiz-type-card').forEach(c => c.classList.toggle('active', c.dataset.wizType === wizState.type));
   if(wizState.step === 2){
     $('#wizName').value = wizState.name; $('#wizNotes').value = wizState.notes;
     const isComp = wizState.type === 'composite', isCust = wizState.type === 'custom';
-    $('#wizRateWrap').style.display = isComp ? 'none' : 'block';
-    $('#wizActionWrap').style.display = isCust ? 'block' : 'none';
-    $('#wizCompositeWrap').style.display = isComp ? 'block' : 'none';
+    $('#\1')?.style.display = isComp ? 'none' : 'block';
+    $('#\1')?.style.display = isCust ? 'block' : 'none';
+    $('#\1')?.style.display = isComp ? 'block' : 'none';
     if(isCust) $('#wizAction').value = wizState.action;
-    if(!isComp){ $('#wizRate').value = wizState.rate||''; wizRenderRatePresets(); $('#wizTiersWrap').style.display = 'block'; $('#wizTiersEnable').checked = !!wizState.tiersEnabled; wizRenderTiers(); }
-    else { $('#wizTiersWrap').style.display = 'none'; wizRenderChildRules(); $('#wizCompositeMode').value = wizState.compositeConfig.applyMode; $('#wizRequireAll').checked = wizState.compositeConfig.requireAllMatch; }
+    if(!isComp){ $('#wizRate').value = wizState.rate||''; wizRenderRatePresets(); $('#\1')?.style.display = 'block'; $('#wizTiersEnable').checked = !!wizState.tiersEnabled; wizRenderTiers(); }
+    else { $('#\1')?.style.display = 'none'; wizRenderChildRules(); $('#wizCompositeMode').value = wizState.compositeConfig.applyMode; $('#wizRequireAll').checked = wizState.compositeConfig.requireAllMatch; }
     wizRenderRequires(); $('#wizRequiresMode').value = wizState.requires.mode; wizTypeHint();
   }
   if(wizState.step === 3){ $('#wizFrom').value = wizState.from; $('#wizTo').value = wizState.to; wizRenderPeriodPresets(); }

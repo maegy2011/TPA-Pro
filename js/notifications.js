@@ -1,7 +1,7 @@
 let toastTimer;
 function showToast(msg){
-  $('#toastMsg').textContent = msg;
-  const t = $('#toast'); t.classList.add('show');
+  const tm = $('#toastMsg'); if(tm) tm.textContent = msg;
+  const t = $('#toast'); if(t) t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }

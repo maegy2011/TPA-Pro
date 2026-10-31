@@ -15,9 +15,9 @@ function openDialog(opts){
   $('#dialogIcon').innerHTML = DIALOG_ICONS[iconType] || DIALOG_ICONS.info;
   $('#dialogTitle').textContent = opts.title || '';
   $('#dialogMessage').innerHTML = escapeHtml(opts.message || '');
-  $('#dialogMessage').style.display = opts.message ? 'block' : 'none';
+  $('#\1')?.style.display = opts.message ? 'block' : 'none';
   $('#dialogBody').innerHTML = opts.body || '';
-  $('#dialogBody').style.display = opts.body ? 'block' : 'none';
+  $('#\1')?.style.display = opts.body ? 'block' : 'none';
   const actions = $('#dialogActions'); actions.innerHTML = '';
   if(opts.requireCountdown){
     let rem = 5;

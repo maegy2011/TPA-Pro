@@ -13,7 +13,7 @@ function openDrModal(id){
   $('#drActive').checked = r ? r.active : true; $('#drNotes').value = r ? r.notes||'' : '';
   const ct = r ? (r.scope.claimTypes||[]) : ['employee'];
   $$('.dr-ctype').forEach(cb => cb.checked = ct.includes(cb.value));
-  $('#deleteDrBtn').style.display = r ? 'block' : 'none';
+  $('#\1')?.style.display = r ? 'block' : 'none';
   $('#drModal').classList.add('open');
 }
 function closeDrModal(){ $('#drModal').classList.remove('open'); editingDrId = null; }

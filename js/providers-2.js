@@ -59,13 +59,13 @@ function openContractModal(id){
     $('#ctrStart').value = c.startDate; $('#ctrEnd').value = c.endDate;
     $('#ctrDiscount').value = c.discountRate; $('#ctrPayment').value = c.paymentTerms||'30 يوم';
     $('#ctrMaxCoverage').value = c.maxCoverage||0; $('#ctrServices').value = c.coveredServices||'جميع الخدمات';
-    $('#ctrNotes').value = c.notes||''; $('#deleteContract').style.display = 'block';
+    $('#ctrNotes').value = c.notes||''; $('#\1')?.style.display = 'block';
   } else {
     const today = daysFromNow(0);
     $('#ctrStatus').value = 'active'; $('#ctrStart').value = today; $('#ctrEnd').value = daysFromNow(365);
     $('#ctrDiscount').value = 10; $('#ctrPayment').value = '30 يوم'; $('#ctrMaxCoverage').value = 200000;
     $('#ctrServices').value = 'جميع الخدمات'; $('#ctrNotes').value = ''; $('#ctrNumber').value = nextContractNumber(today);
-    $('#deleteContract').style.display = 'none';
+    $('#\1')?.style.display = 'none';
   }
   if(!isEdit) $('#ctrStart').onchange = function(){ $('#ctrNumber').value = nextContractNumber(this.value); };
   else $('#ctrStart').onchange = null;
@@ -112,8 +112,8 @@ function bindTariffsControls(){
   $$('.link-tab').forEach(tab => tab.addEventListener('click', () => {
     $$('.link-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    $('#linkProvidersList').style.display = tab.dataset.linkTab === 'providers' ? 'flex' : 'none';
-    $('#linkContractsList').style.display = tab.dataset.linkTab === 'contracts' ? 'flex' : 'none';
+    $('#\1')?.style.display = tab.dataset.linkTab === 'providers' ? 'flex' : 'none';
+    $('#\1')?.style.display = tab.dataset.linkTab === 'contracts' ? 'flex' : 'none';
   }));
   $('#linkProvidersList').addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
   $('#linkContractsList').addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
