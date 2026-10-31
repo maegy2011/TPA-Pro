@@ -29,20 +29,18 @@ function getContractContext(claim) {
   const provider = (typeof providers !== 'undefined' ? providers : []).find(p => p.name === claim.provider) || null;
   if (!provider) return { ...empty, provider };
 
-  const contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => c.providerId === provider.id) || null;
+  const contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => c.providerId === provider.id && ['active','expiring','upcoming'].includes(effectiveContractStatus(c))) || null;
 
   let tariff = null;
   if (contract?.tariffId) {
-    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId) || null;
+    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId && effectiveTariffStatus(t) === 'active') || null;
   }
   if (!tariff && contract) {
     tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t =>
-      (t.linkedContractIds || []).includes(contract.id) ||
-      (t.linkedProviderIds || []).includes(provider.id)
+      ((t.linkedContractIds || []).includes(contract.id) ||
+       (t.linkedProviderIds || []).includes(provider.id)) &&
+      effectiveTariffStatus(t) === 'active'
     ) || null;
-  }
-  if (!tariff) {
-    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => (typeof effectiveTariffStatus === 'function' ? effectiveTariffStatus(t) === 'active' : t.status === 'active')) || null;
   }
 
   const serviceOverrides = contract?.serviceOverrides || {};
@@ -61,6 +59,8 @@ function getContractRateForService(ctx, code) {
 function isServiceCovered(ctx, code) {
   const ov = ctx?.serviceOverrides?.[code];
   if (ov && ov.covered === false) return false;
+  const svc = (ctx?.tariff?.services || []).find(s => String(s.code) === String(code));
+  if (svc && svc.covered === false) return false;
   return true;
 }
 
@@ -102,7 +102,7 @@ function validateLine(line, ctx) {
         failed.push('pa-pending');
       } else if (pa.status === 'approved') {
         const lineDate = invoice?.date || claim?.date;
-        if (pa.date && lineDate && new Date(pa.date) < new Date(lineDate)) {
+        if (pa.date && lineDate && new Date(pa.date) > new Date(lineDate)) {
           failed.push('pa-expired');
         } else {
           passed.push('pa-valid');

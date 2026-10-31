@@ -131,5 +131,8 @@ function wizSave(){
   deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
   const rule = { id:pre+String(m+1).padStart(3,'0'), name:wizState.name, type:wizState.type, action:wizState.action, rate:wizState.type === 'composite' ? 0 : wizState.rate, isComposite:wizState.type === 'composite', compositeConfig:wizState.type === 'composite' ? JSON.parse(JSON.stringify(wizState.compositeConfig)) : null, requires:(wizState.requires.ruleIds && wizState.requires.ruleIds.length) ? JSON.parse(JSON.stringify(wizState.requires)) : null, scope:{ providerIds:[...wizState.providerIds], contractIds:[...wizState.contractIds], claimTypes:[...wizState.ctypes] }, conditions:JSON.parse(JSON.stringify(wizState.conditions)), effectiveFrom:wizState.from, effectiveTo:wizState.to||'', active:true, enabled:true, notes:wizState.notes, tiers: (wizState.tiersEnabled && wizState.tiers && wizState.tiers.length) ? JSON.parse(JSON.stringify(wizState.tiers)) : null, tiersEnabled: !!wizState.tiersEnabled };
   deductionRules.push(rule); closeDrWizard(); renderDeductionRules(); showSuccess('تم', rule.id);
+  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+  if (typeof persistData === 'function') persistData(true);
+  if (typeof renderAll === 'function') renderAll();
 }
 

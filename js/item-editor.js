@@ -174,6 +174,7 @@ function saveLineEditor() {
   if (tu !== null && tu < 0) { showWarning('تنبيه', 'سعر اللائحة سالب'); return; }
 
   const ctx = getContractContext(activeClaim);
+  const tariffSvc = (ctx.tariff?.services || []).find(s => String(s.code) === String(code)) || null;
 
   const data = {
     code, name,
@@ -188,6 +189,7 @@ function saveLineEditor() {
     note: '',
     approved: 0,
     _overrideMode: 'auto',
+    requiresPriorApproval: !!(tariffSvc && tariffSvc.requiresPriorApproval),
   };
 
   const validation = validateLine(data, {

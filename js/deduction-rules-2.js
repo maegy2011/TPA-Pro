@@ -35,6 +35,9 @@ function saveDr(){
     showSuccess('تم','تمت');
   }
   closeDrModal(); renderDeductionRules();
+  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+  if (typeof persistData === 'function') persistData(true);
+  if (typeof renderAll === 'function') renderAll();
 }
 function deleteDr(id){
   const r = deductionRules.find(x=>x.id===id); if(!r) return;

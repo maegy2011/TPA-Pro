@@ -27,7 +27,7 @@ function checkRequires(rule, appliedIds){
   return true;
 }
 function ruleMatchesContext(rule, ctx, refDate){
-  if(rule.enabled === false) return false;
+  if(rule.enabled === false || rule.active === false) return false;
   if(rule.effectiveFrom && refDate < rule.effectiveFrom) return false;
   if(rule.effectiveTo && refDate > rule.effectiveTo) return false;
   const claim = ctx.claim;
@@ -101,4 +101,4 @@ function evaluateCompositeRule(rule, ctx, refDate){
 }
 function patientBeneficiaryType(pat, claim){ return pat.beneficiaryType || claim.type || 'employee'; }
 function hasValidPriorApproval(claim){ return claim.priorApproval && claim.priorApproval.required && claim.priorApproval.status === 'approved'; }
-function lineRequiresPA(line){ if(line.requiresPriorApproval) return true; return paProcedures.some(p => p.code === line.code); }
+function lineRequiresPA(line){ if(line.requiresPriorApproval) return true; return paProcedures.some(p => (p.code || p.id) === line.code); }

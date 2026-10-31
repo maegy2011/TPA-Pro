@@ -1,6 +1,6 @@
 function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
-  const allRules = deductionRules.filter(r => r.enabled !== false);
+  const allRules = deductionRules.filter(r => r.enabled !== false && r.active !== false);
   const ctx = { claim, patient: pat, invoice: invoice || null };
   const _ctx = getContractContext(claim);
   (pat.lines||[]).forEach(l => {
@@ -38,7 +38,7 @@ function computePatient(pat, claim, refDate, invoice){
         const cctx = { ...lctx, line: { ...l, lineBase: current } };
         const res = evaluateCompositeRule(rule, cctx, refDate);
         if(res && res.newApproved !== undefined && res.newApproved < current){
-          current = res.newApproved;
+          current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
           (res.appliedChildRules||[]).forEach(cr => appliedIds.add(cr.id));
           compositeLog.push({ id: rule.id, name: rule.name, children: (res.appliedChildRules||[]).map(c=>c.id) });
@@ -47,7 +47,7 @@ function computePatient(pat, claim, refDate, invoice){
       } else {
         const res = evaluateRuleAction(rule, lctx, current);
         if(res.newApproved !== undefined && res.newApproved < current){
-          current = res.newApproved;
+          current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
           lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = rule.rate;
         }
