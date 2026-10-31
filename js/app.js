@@ -86,7 +86,8 @@ function initApp(){
     const tbB = document.getElementById('tbBackupBtn'), tbU = document.getElementById('tbUserBtn'), tbT = document.getElementById('tbTrashBtn');
     if(tbB) tbB.addEventListener('click', () => doExportBackup(false));
     if(tbT) tbT.addEventListener('click', () => { navHistory = []; navigateTo('trash', {noPush:true}); });
-    if(tbU) tbU.addEventListener('click', (e) => { e.stopPropagation(); const m = document.getElementById('tbUserMenu'); if(m) m.style.display = m.style.display === 'none' ? 'flex' : 'none'; });
+    const sb = document.getElementById('smartBackBtn');
+    if(sb) sb.addEventListener('click', goBack);
     document.addEventListener('click', (e) => { const m = document.getElementById('tbUserMenu'); if(m && !e.target.closest('#tbUserWrap')) m.style.display = 'none'; });
     const tm = document.getElementById('tbUserMenu');
     if(tm) tm.addEventListener('click', (e) => {

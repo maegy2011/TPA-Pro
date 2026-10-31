@@ -40,12 +40,32 @@ document.addEventListener('click', e => {
   if(typeof doExportBackup === 'function') doExportBackup(false);
 });
 document.addEventListener('click', e => {
-  const btn = e.target.closest && e.target.closest('.onb-lang');
+  if(e.target.closest && e.target.closest('#smartBackBtn')){ if(typeof goBack === 'function') goBack(); }
+});
+document.addEventListener('click', e => {
+  const btn = e.target.closest && e.target.closest('#tbTrashBtn');
   if(!btn) return;
-  setLang(currentLang === 'ar' ? 'en' : 'ar');
-  btn.textContent = currentLang === 'ar' ? 'EN' : 'AR';
-  if(typeof translateDOMMulti === 'function') translateDOMMulti();
-  else if(typeof translateDOM === 'function') translateDOM(document.body);
+  if(typeof navigateTo === 'function') navigateTo('trash', {noPush:true});
+});
+document.addEventListener('click', e => {
+  const btn = e.target.closest && e.target.closest('#tbUserBtn');
+  if(!btn) return;
+  e.stopPropagation();
+  const m = document.getElementById('tbUserMenu');
+  if(m) m.style.display = m.style.display === 'none' ? 'flex' : 'none';
+});
+document.addEventListener('click', e => {
+  const m = document.getElementById('tbUserMenu');
+  if(m && !e.target.closest('#tbUserWrap')) m.style.display = 'none';
+});
+document.addEventListener('click', e => {
+  const item = e.target.closest && e.target.closest('.tb-menu-item');
+  if(!item) return;
+  const action = item.dataset.action;
+  const m = document.getElementById('tbUserMenu'); if(m) m.style.display = 'none';
+  if(action === 'help' && typeof navigateTo === 'function') navigateTo('help', {noPush:true});
+  if(action === 'settings' && typeof navigateTo === 'function') navigateTo('settings', {noPush:true});
+  if(action === 'lang' && typeof setLang === 'function'){ setLang(currentLang === 'ar' ? 'en' : 'ar'); item.textContent = currentLang === 'ar' ? 'اللغة: EN' : 'Language: AR'; if(typeof translateDOMMulti === 'function') translateDOMMulti(); }
 });
 document.addEventListener('click', e => {
   const btn = e.target.closest && e.target.closest('.onb-eye');
