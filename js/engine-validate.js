@@ -77,6 +77,12 @@ function _validationCacheKey(line, ctx){
 }
 function clearValidationCache(){ VALIDATION_CACHE.clear(); }
 
+/**
+ * التحقق من بند واحد وتطبيق التعرفة والعقد والقواعد.
+ * @param {Object} line - البند
+ * @param {Object} ctx - السياق (claim, patient, invoice, contract, tariff, ...)
+ * @returns {Object} نتيجة التحقق
+ */
 function validateLine(line, ctx) {
   const _ck = _validationCacheKey(line, ctx);
   if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }

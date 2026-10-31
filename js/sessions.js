@@ -20,6 +20,10 @@ function getSessionClaimInfo(s){
   const snap = s.claimSnapshot || {};
   return { id:s.claimId, patient:(live&&live.patient)||snap.patient||'—', provider:(live&&live.provider)||snap.provider||'—', billed:(live&&live.billed)||snap.billed||0, approved:(live&&live.approved)||snap.approved||0, stale:!live };
 }
+/**
+ * التقاط حالة الجلسة الحالية (لحفظ/استئناف).
+ * @returns {Object|null} حالة الجلسة
+ */
 function captureCurrentSessionState(){
   if(!activeClaim) return null;
   const ex = findSessionByClaim(activeClaim.id);

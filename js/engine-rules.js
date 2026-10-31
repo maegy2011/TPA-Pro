@@ -224,6 +224,12 @@ const LEGAL_DEDUCTION_REASONS = {
   }
 };
 
+/**
+ * توليد سبب الخصم القانوني (عنوان/سند/تفسير) لمفتاح قاعدة معين.
+ * @param {string} ruleKey - مفتاح القاعدة
+ * @param {Object} [context] - سياق (claim, patient, invoice, line, ...)
+ * @returns {Object} كائن {title, legalBasis, explanation, fullText, formattedText}
+ */
 function generateLegalDeductionReason(ruleKey, context) {
   context = context || {};
   const template = LEGAL_DEDUCTION_REASONS[ruleKey];

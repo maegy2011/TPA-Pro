@@ -1,3 +1,11 @@
+/**
+ * حساب مريض واحد: تطبيق التعرفة والعقد والقواعد والأسقف/التحمل.
+ * @param {Object} pat - بيانات المريض (بما في ذلك lines)
+ * @param {Object} claim - المطالبة
+ * @param {string} [refDate] - تاريخ المرجع
+ * @param {Object} [invoice] - الفاتورة
+ * @returns {Object} pat بعد التحديث
+ */
 function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
   const allRules = deductionRules.filter(r => r.enabled !== false && r.active !== false);
