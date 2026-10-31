@@ -45,7 +45,6 @@ function openTariffModal(id){
     $('#tfPriceLevel').value = t.basePriceLevel; $('#tfDescription').value = t.description||'';
     $('#tfIncreaseRate').value = t.annualIncreaseRate||0;
     $('#tfLastIncrease').value = t.lastIncreaseDate||''; $('#tfApprovedBy').value = t.lastIncreaseApprovedBy||'';
-    $('#tfAdjustType').value = t.adjustmentType||'none'; $('#tfAdjustRate').value = t.adjustmentRate||0;
     workingServices = (t.services||[]).map(s => ({...s}));
     workingIncreaseHistory = (t.increaseHistory||[]).map(h => ({...h}));
     (el => { if (el) el.style.display = 'block'; })($('#deleteTariff'));
