@@ -1,3 +1,4 @@
+/* css/tables-2.css — أنماط TPA Pro */
 .services-table input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer}
 .bulk-bar{display:none;align-items:center;gap:10px;padding:10px 14px;background:#EFF6F6;border-radius:10px;margin-bottom:10px;font-size:12.5px;flex-wrap:wrap}
 .bulk-bar.show{display:flex}
