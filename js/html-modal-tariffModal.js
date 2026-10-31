@@ -54,12 +54,7 @@ const MODAL_TARIFF = `
             <div class="history-list" id="tfHistoryList"></div>
           </div>
           <div class="tf-panel" data-tf-panel="links">
-            <div class="link-tabs">
-              <button type="button" class="link-tab active" data-link-tab="providers">الجهات</button>
-              <button type="button" class="link-tab" data-link-tab="contracts">العقود</button>
-            </div>
-            <div class="link-list" id="linkProvidersList"></div>
-            <div class="link-list" id="linkContractsList" style="display:none"></div>
+            <div class="link-list" id="linkContractsList"></div>
           </div>
         </div>
         <div class="modal-foot"><button class="btn solid" id="saveTariff" data-i18n="common.save">حفظ</button><button class="btn danger" id="deleteTariff" style="display:none" data-i18n="common.delete">حذف</button><button class="btn out" data-close-tariff data-i18n="common.cancel">إلغاء</button></div>

@@ -136,8 +136,8 @@ function bindTariffsControls(){
     (el => { if (el) el.style.display = tab.dataset.linkTab === 'providers' ? 'flex' : 'none'; })($('#linkProvidersList'));
     (el => { if (el) el.style.display = tab.dataset.linkTab === 'contracts' ? 'flex' : 'none'; })($('#linkContractsList'));
   }));
-  $('#linkProvidersList').addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
-  $('#linkContractsList').addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
+  const lpl = $('#linkProvidersList'); if(lpl) lpl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
+  const lcl = $('#linkContractsList'); if(lcl) lcl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
   $('#tfAdjustType').addEventListener('change', updateAdjustPreview);
   $('#tfAdjustRate').addEventListener('input', updateAdjustPreview);
   $('#tfApplyAll').addEventListener('click', applyAdjustAll);

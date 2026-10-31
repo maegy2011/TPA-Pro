@@ -3,13 +3,13 @@ function renderTariffs(){
   const generalN = tariffs.filter(t=>t.type==='general').length;
   const privateN = tariffs.filter(t=>t.type==='private').length;
   const suppN = tariffs.filter(t=>t.type==='supplementary').length;
-  const totalLinks = tariffs.reduce((s,t)=>s+(t.linkedProviderIds||[]).length+(t.linkedContractIds||[]).length,0);
+  const totalLinks = tariffs.reduce((s,t)=>s+(t.linkedContractIds||[]).length,0);
   const totalServices = tariffs.reduce((s,t)=>s+(t.services?t.services.length:0),0);
   $('#tariffKpi').innerHTML = `
     <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">اللوائح</div><div class="kpi-val">${tariffs.length} <small>لائحة</small></div></div><div class="kpi-ico">${kpiIcon('tariff')}</div></div><div class="kpi-foot">${activeN} نشطة · ${totalServices} خدمة</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">التوزيع</div><div class="kpi-val" style="font-size:15px">عامة ${generalN} · خاصة ${privateN} · مكملة ${suppN}</div></div><div class="kpi-ico">${kpiIcon('file')}</div></div><div class="kpi-foot">${generalN+privateN+suppN}</div></div>
     <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">خدمات</div><div class="kpi-val">${totalServices}</div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">عبر اللوائح</div></div>
-    <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">الروابط</div><div class="kpi-val">${totalLinks}</div></div><div class="kpi-ico">${kpiIcon('link')}</div></div><div class="kpi-foot">جهات + عقود</div></div>`;
+    <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">الروابط</div><div class="kpi-val">${totalLinks}</div></div><div class="kpi-ico">${kpiIcon('link')}</div></div><div class="kpi-foot">عقود</div></div>`;
   const list = tariffs.filter(t => {
     if(tariffFilter === 'discount'){ if(t.adjustmentType !== 'discount') return false; }
     else if(tariffFilter === 'increase'){ if(t.adjustmentType !== 'increase') return false; }
@@ -131,15 +131,13 @@ function applyAnnualIncrease(){
   });
 }
 function renderLinkLists(t){
-  const sp = t ? (t.linkedProviderIds||[]) : [];
   const sc = t ? (t.linkedContractIds||[]) : [];
-  $('#linkProvidersList').innerHTML = providers.map(p => `<label class="link-item ${sp.includes(p.id)?'checked':''}"><input type="checkbox" value="${escapeHtml(p.id)}" ${sp.includes(p.id)?'checked':''}><div><div class="li-name">${escapeHtml(p.name)}</div><div class="li-sub">${escapeHtml(p.type)} — ${escapeHtml(p.city)}</div></div></label>`).join('');
-  $('#linkContractsList').innerHTML = contracts.map(c => { const p = getProviderById(c.providerId); return `<label class="link-item ${sc.includes(c.id)?'checked':''}"><input type="checkbox" value="${escapeHtml(c.id)}" ${sc.includes(c.id)?'checked':''}><div><div class="li-name">${escapeHtml(c.id)}</div><div class="li-sub">${escapeHtml(p?p.name:'—')}</div></div></label>`; }).join('');
+  const box = $('#linkContractsList'); if(box) box.innerHTML = contracts.map(c => { const p = getProviderById(c.providerId); return `<label class="link-item ${sc.includes(c.id)?'checked':''}"><input type="checkbox" value="${escapeHtml(c.id)}" ${sc.includes(c.id)?'checked':''}><div><div class="li-name">${escapeHtml(c.id)}</div><div class="li-sub">${escapeHtml(p?p.name:'—')}</div></div></label>`; }).join('');
 }
 function saveTariff(){
   const name = $('#tfName').value.trim(); if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
   const eff = $('#tfEffective').value; if(!eff){ showWarning('تنبيه','أدخل السريان'); return; }
-  const lp = $$('#linkProvidersList input:checked').map(i => i.value);
+  const lp = [];
   const lc = $$('#linkContractsList input:checked').map(i => i.value);
   const data = { name, type:$('#tfType').value, description:$('#tfDescription').value.trim(), effectiveDate:eff, expiryDate:$('#tfExpiry').value||'', status:$('#tfStatus').value||'active', basePriceLevel:Number($('#tfPriceLevel').value)||100, annualIncreaseEnabled:false, annualIncreaseRate:Number($('#tfIncreaseRate').value)||0, lastIncreaseDate:$('#tfLastIncrease').value||'', lastIncreaseApprovedBy:$('#tfApprovedBy').value.trim(), adjustmentType:$('#tfAdjustType').value, adjustmentRate:Number($('#tfAdjustRate').value)||0, linkedProviderIds:lp, linkedContractIds:lc, increaseHistory:workingIncreaseHistory, services:workingServices.map(s=>({...s})) };
   if(editingTariffId){ const t = getTariffById(editingTariffId); if(!t) return; Object.assign(t, data); showSuccess('تم','تم التحديث'); }
