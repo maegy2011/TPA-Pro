@@ -138,6 +138,7 @@ function bindTariffsControls(){
   }));
   const lpl = $('#linkProvidersList'); if(lpl) lpl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
   const lcl = $('#linkContractsList'); if(lcl) lcl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
+  const tss = $('#tfServicesSearch'); if(tss && !tss.dataset.bound){ tss.dataset.bound='1'; tss.addEventListener('input', e => renderTariffServicesChecklist(e.target.value)); }
   $('#tfApplyAnnual').addEventListener('click', applyAnnualIncrease);
   $$('[data-close-service]').forEach(el => el.addEventListener('click', closeServiceModal));
   $('#saveService').addEventListener('click', saveService);

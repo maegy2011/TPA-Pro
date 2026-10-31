@@ -1,4 +1,5 @@
 let editingServiceTariffId = null;
+let workingLinkedServices = [];
 function renderTariffs(){
   const activeN = tariffs.filter(t=>effectiveTariffStatus(t)==='active').length;
   const generalN = tariffs.filter(t=>t.type==='general').length;
@@ -48,6 +49,7 @@ function openTariffModal(id){
     $('#tfLastIncrease').value = t.lastIncreaseDate||''; $('#tfApprovedBy').value = t.lastIncreaseApprovedBy||'';
     workingServices = (t.services||[]).map(s => ({...s}));
     workingIncreaseHistory = (t.increaseHistory||[]).map(h => ({...h}));
+    workingLinkedServices = [...(t.linkedServiceNames||[])];
     (el => { if (el) el.style.display = 'block'; })($('#deleteTariff'));
   } else {
     const today = daysFromNow(0);
@@ -55,11 +57,11 @@ function openTariffModal(id){
     $('#tfEffective').value = today; $('#tfExpiry').value = daysFromNow(365); $('#tfPriceLevel').value = 100; $('#tfDescription').value = '';
     $('#tfIncreaseRate').value = 0; $('#tfLastIncrease').value = ''; $('#tfApprovedBy').value = '';
 
-    workingServices = []; workingIncreaseHistory = []; (el => { if (el) el.style.display = 'none'; })($('#deleteTariff'));
+    workingServices = []; workingIncreaseHistory = []; workingLinkedServices = []; (el => { if (el) el.style.display = 'none'; })($('#deleteTariff'));
   }
   $$('.tf-tab').forEach((tab,i) => tab.classList.toggle('active', i === 0));
   $$('.tf-panel').forEach((p,i) => p.classList.toggle('active', i === 0));
-  renderIncreaseHistory(); renderLinkLists(isEdit ? t : null);
+  renderIncreaseHistory(); renderLinkLists(isEdit ? t : null); renderTariffServicesChecklist();
   if(!isEdit) $('#tfEffective').onchange = function(){ $('#tfNumber').value = nextTariffNumber(this.value); };
   else $('#tfEffective').onchange = null;
   $('#tariffModal').classList.add('open'); document.body.style.overflow = 'hidden';
@@ -147,12 +149,29 @@ function renderLinkLists(t){
   const sc = t ? (t.linkedContractIds||[]) : [];
   const box = $('#linkContractsList'); if(box) box.innerHTML = contracts.map(c => { const p = getProviderById(c.providerId); return `<label class="link-item ${sc.includes(c.id)?'checked':''}"><input type="checkbox" value="${escapeHtml(c.id)}" ${sc.includes(c.id)?'checked':''}><div><div class="li-name">${escapeHtml(c.id)}</div><div class="li-sub">${escapeHtml(p?p.name:'—')}</div></div></label>`; }).join('');
 }
+function getAllServiceNamesDistinct(){
+  const set = new Set();
+  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s && s.name) set.add(s.name); }));
+  return [...set];
+}
+function renderTariffServicesChecklist(q){
+  const box = $('#tfServicesChecklist'); if(!box) return;
+  const term = (q||'').trim().toLowerCase();
+  const list = getAllServiceNamesDistinct().filter(n => !term || n.toLowerCase().includes(term));
+  box.innerHTML = list.map(n => `<label style="display:block;margin:2px 0"><input type="checkbox" value="${escapeHtml(n)}" ${workingLinkedServices.includes(n)?'checked':''}> ${escapeHtml(n)}</label>`).join('');
+  box.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked){ if(!workingLinkedServices.includes(cb.value)) workingLinkedServices.push(cb.value); }
+      else workingLinkedServices = workingLinkedServices.filter(x => x !== cb.value);
+    });
+  });
+}
 function saveTariff(){
   const name = $('#tfName').value.trim(); if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
   const eff = $('#tfEffective').value; if(!eff){ showWarning('تنبيه','أدخل السريان'); return; }
   const lp = [];
   const lc = $$('#linkContractsList input:checked').map(i => i.value);
-  const data = { name, type:$('#tfType').value, description:$('#tfDescription').value.trim(), effectiveDate:eff, expiryDate:$('#tfExpiry').value||'', status:$('#tfStatus').value||'active', basePriceLevel:Number($('#tfPriceLevel').value)||100, annualIncreaseEnabled:false, annualIncreaseRate:Number($('#tfIncreaseRate').value)||0, lastIncreaseDate:$('#tfLastIncrease').value||'', lastIncreaseApprovedBy:$('#tfApprovedBy').value.trim(), adjustmentType:'none', adjustmentRate:0, linkedProviderIds:lp, linkedContractIds:lc, increaseHistory:workingIncreaseHistory, services:workingServices.map(s=>({...s})) };
+  const data = { name, type:$('#tfType').value, description:$('#tfDescription').value.trim(), effectiveDate:eff, expiryDate:$('#tfExpiry').value||'', status:$('#tfStatus').value||'active', basePriceLevel:Number($('#tfPriceLevel').value)||100, annualIncreaseEnabled:false, annualIncreaseRate:Number($('#tfIncreaseRate').value)||0, lastIncreaseDate:$('#tfLastIncrease').value||'', lastIncreaseApprovedBy:$('#tfApprovedBy').value.trim(), adjustmentType:'none', adjustmentRate:0, linkedProviderIds:lp, linkedContractIds:lc, linkedServiceNames:workingLinkedServices, increaseHistory:workingIncreaseHistory, services:workingServices.map(s=>({...s})) };
   if(editingTariffId){ const t = getTariffById(editingTariffId); if(!t) return; Object.assign(t, data); showSuccess('تم','تم التحديث'); }
   else { const nid = nextTariffNumber(eff); tariffs.push({ id:nid, ...data }); showSuccess('تم','تمت الإضافة'); }
   closeTariffModal(); renderAll();

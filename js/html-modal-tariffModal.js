@@ -8,6 +8,7 @@ const MODAL_TARIFF = `
           <div class="tf-tabs">
             <button type="button" class="tf-tab active" data-tf-tab="basic">أساسية</button>
             <button type="button" class="tf-tab" data-tf-tab="annual">زيادات</button>
+            <button type="button" class="tf-tab" data-tf-tab="services">خدمات</button>
             <button type="button" class="tf-tab" data-tf-tab="links">ربط</button>
           </div>
           <div class="tf-panel active" data-tf-panel="basic">
@@ -31,6 +32,10 @@ const MODAL_TARIFF = `
             <div style="margin:14px 0"><button type="button" class="btn-apply" id="tfApplyAnnual">تطبيق الزيادة</button></div>
             <div class="section-title" style="display:block">سجل الزيادات</div>
             <div class="history-list" id="tfHistoryList"></div>
+          </div>
+          <div class="tf-panel" data-tf-panel="services">
+            <input type="text" id="tfServicesSearch" placeholder="بحث في الخدمات..." style="margin-bottom:8px;width:100%">
+            <div id="tfServicesChecklist" style="max-height:260px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
           </div>
           <div class="tf-panel" data-tf-panel="links">
             <div class="link-list" id="linkContractsList"></div>
