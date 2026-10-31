@@ -3,7 +3,7 @@ function clearOnboardingError(){ const e = document.getElementById('onbErr'); if
 function bindOnboarding(){
   const next = document.getElementById('onbNextBtn');
   const langBtn = document.getElementById('onbLangBtn');
-  if(langBtn){ langBtn.textContent = currentLang === 'ar' ? 'EN' : 'AR'; langBtn.addEventListener('click', () => { setLang(currentLang === 'ar' ? 'en' : 'ar'); langBtn.textContent = currentLang === 'ar' ? 'EN' : 'AR'; if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); }); }
+  if(langBtn){ langBtn.textContent = currentLang === 'ar' ? 'EN' : 'AR'; langBtn.addEventListener('click', () => { const newLang = currentLang === 'ar' ? 'en' : 'ar'; setLang(newLang); langBtn.textContent = newLang === 'ar' ? 'EN' : 'AR'; if(typeof applyAllTranslations === 'function') applyAllTranslations(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); }); }
   setTimeout(() => { document.getElementById('onbReviewerName')?.focus(); }, 50);
   // eye toggles
   document.querySelectorAll('.onb-eye').forEach(btn => {
@@ -91,5 +91,15 @@ if(typeof applyFullBackup === 'function'){
     return r;
   };
 }
+// delegated language toggle (works even if bindOnboarding ran before DOM ready)
+document.addEventListener('click', e => {
+  const btn = e.target && e.target.closest && e.target.closest('#onbLangBtn');
+  if(!btn) return;
+  const newLang = currentLang === 'ar' ? 'en' : 'ar';
+  setLang(newLang);
+  btn.textContent = newLang === 'ar' ? 'EN' : 'AR';
+  if(typeof applyAllTranslations === 'function') applyAllTranslations();
+  if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body);
+});
 // Bind when DOM ready
 setTimeout(() => { try { bindOnboarding(); } catch(e){ console.warn('bindOnboarding', e); } }, 0);
