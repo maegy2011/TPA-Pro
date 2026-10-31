@@ -73,7 +73,7 @@ const I18N = {
   'dash.searchPlaceholder': 'بحث...', 'dash.deductionRate': 'نسبة الاستقطاع',
   'dash.totalDiffs': 'إجمالي الفروقات', 'dash.claimsCount': 'من المطالبات',
   'dash.deductionReasons': 'أسباب الاستقطاع', 'dash.amountDistribution': 'توزيع المبالغ',
-  'dash.noResults': 'لا نتائج', 'dash.noClaims': 'لا مطالبات بعد. ابدأ باستلام دفعة وارد.',
+  'dash.noResults': 'لا نتائج', 'dash.noClaims': 'لا مطالبات بعد. ابدأ باستلام مطالبة وارد.',
   'dash.claimNum': 'رقم / وارد', 'dash.patient': 'المريض', 'dash.billed': 'المطالب به',
   'dash.approved': 'المعتمد', 'dash.status': 'الحالة',
   // Claims
@@ -85,7 +85,7 @@ const I18N = {
   'intake.title': 'استلام الدفعات (الوارد)', 'intake.searchPlaceholder': 'بحث...',
   'intake.all': 'الكل', 'intake.received': 'وارد جديد', 'intake.underReview': 'قيد المعالجة',
   'intake.completed': 'مكتمل', 'intake.noBatches': 'لا دفعات',
-  'intake.addBatch': 'استلام دفعة', 'intake.claimNum': 'رقم', 'intake.provider': 'الجهة',
+  'intake.addBatch': 'استلام مطالبة', 'intake.claimNum': 'رقم', 'intake.provider': 'الجهة',
   'intake.month': 'الشهر', 'intake.received': 'الاستلام', 'intake.claims': 'المطالبات',
   'intake.value': 'القيمة', 'intake.status': 'الحالة', 'intake.edit': 'تعديل',
   // Providers

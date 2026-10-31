@@ -73,7 +73,7 @@ function renderIntake(){
 function openBatchModal(id){
   editingBatchId = id || null; const isEdit = !!id;
   const b = isEdit ? getBatchById(id) : null; if(isEdit && !b) return;
-  $('#btModalTitle').textContent = isEdit ? 'تعديل الدفعة' : 'استلام دفعة';
+  $('#btModalTitle').textContent = isEdit ? 'تعديل الدفعة' : 'استلام مطالبة';
   $('#btModalSub').textContent = isEdit ? b.id : 'بيانات جديدة';
   renderProviderOptions('');
   $('#btProviderSearch').value = '';

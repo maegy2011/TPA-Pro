@@ -113,6 +113,62 @@ function renderActiveInvoice(){
     ${rules}
     <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>#</th><th>الكود</th><th>البند</th><th>كمية</th><th>فاتورة</th><th>لائحة</th><th>الأقل</th><th>معتمد</th><th>فرق</th><th>حالة</th><th></th></tr></thead><tbody>${linesHtml}</tbody></table></div>
     <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button></div>`;
+  if (typeof renderExceptions === 'function') renderExceptions();
+}
+function collectExceptions(){
+  const out = [];
+  (workingInvoices||[]).forEach((inv, ii) => (inv.patients||[]).forEach((pat, pi) => (pat.lines||[]).forEach((ln, li) => {
+    if (ln._decision === 'needs-attention') out.push({ inv, ii, pat, pi, ln, li });
+  })));
+  return out;
+}
+function renderExceptions(){
+  const box = document.getElementById('rvExceptions');
+  if (!box) return;
+  const excs = collectExceptions();
+  const cnt = document.getElementById('rvExcCount');
+  if (cnt) cnt.textContent = excs.length;
+  if (!excs.length) {
+    box.innerHTML = '<div class="rv-empty" style="text-align:center;padding:24px;color:var(--ok);font-weight:800">✅ لا استثناءات — كل البنود اجتازت الفحص</div>';
+    const btn = document.getElementById('finalizeReviewBtn');
+    if (btn) btn.disabled = false;
+    return;
+  }
+  const totalAuto = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision!=='needs-attention').length,0),0);
+  const rejectedAuto = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='auto-rejected').length,0),0);
+  box.innerHTML = `<div class="rv-exc-summary">${excs.length} استثناء معلّق · ${totalAuto} بند اجتاز · ${rejectedAuto} رُفض تلقائيًا</div>` +
+    excs.map(e => {
+      const ln = e.ln;
+      const reasons = (ln._checksFailed||[]).map(r => reasonLabel(r)).join('، ') || '—';
+      const billed = (Number(ln.qty)||0)*(Number(ln.billedUnit)||0);
+      const tariffTotal = ln.tariffUnit !== null && ln.tariffUnit !== undefined ? (Number(ln.qty)||0)*Number(ln.tariffUnit) : null;
+      const lesser = ln.lineBase !== undefined ? ln.lineBase : (tariffTotal !== null ? Math.min(billed, tariffTotal) : billed);
+      const rate = ln._contractRate || 0;
+      const after = ln._contractCovered ? Math.round(lesser*(1-rate/100)) : 0;
+      const sev = (ln._checksFailed||[]).some(r => isRejectReason(r)) ? 'reject' : 'attention';
+      const color = sev === 'reject' ? '#FEF2F2' : '#FFFBEB';
+      return `<div class="rv-exc-card" data-exc="${e.ii}-${e.pi}-${e.li}" style="background:${color};border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-weight:800;color:var(--navy)">${escapeHtml(ln.code)} · ${escapeHtml(ln.name)}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1}</div>
+        <div style="font-size:12px;margin:6px 0">فاتورة ${fmt(billed)} · لائحة ${tariffTotal!==null?fmt(tariffTotal):'—'} · الأقل ${fmt(lesser)} · خصم ${rate}% → معتمد مقترح ${fmt(after)}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--warn)">⚠ ${escapeHtml(reasons)}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin:4px 0">الاقتراح: ${escapeHtml(ln._suggestedAction?.type||'review')}</div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <button type="button" class="btn-sm" data-exc-act="approve" data-exc-key="${e.ii}-${e.pi}-${e.li}">اعتماد</button>
+          <button type="button" class="btn-sm" data-exc-act="reduce" data-exc-key="${e.ii}-${e.pi}-${e.li}">تخفيض</button>
+          <button type="button" class="btn-sm danger" data-exc-act="reject" data-exc-key="${e.ii}-${e.pi}-${e.li}">رفض</button>
+          ${(ln._checksFailed||[]).some(r=>String(r).startsWith('pa')) ? `<button type="button" class="btn-sm" data-exc-act="pa" data-exc-key="${e.ii}-${e.pi}-${e.li}">طلب موافقة</button>` : ''}
+        </div>
+        <div class="rv-exc-note-wrap" style="margin-top:8px">
+          <input type="text" class="rv-exc-note" data-exc-note="${e.ii}-${e.pi}-${e.li}" placeholder="ملاحظة (إلزامية للرفض/التخفيض)">
+        </div>
+        <div class="rv-exc-reduce-wrap" style="display:none;margin-top:6px" data-exc-reduce="${e.ii}-${e.pi}-${e.li}">
+          <input type="number" class="rv-exc-reduce-val" data-exc-reduce-val="${e.ii}-${e.pi}-${e.li}" min="0" max="${after}" value="${after}" placeholder="مبلغ معتمد">
+        </div>
+      </div>`;
+    }).join('');
+  const btn = document.getElementById('finalizeReviewBtn');
+  if (btn) btn.disabled = excs.length > 0;
 }
 function recalcReview(){
   let billed = 0, eligible = 0, finalApproved = 0;

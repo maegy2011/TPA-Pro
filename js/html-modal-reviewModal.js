@@ -9,6 +9,12 @@ const MODAL_REVIEW = `
           <button class="close-btn" data-close><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="modal-body">
+          <div class="rv-tabs">
+            <button type="button" class="rv-tab active" data-rv-tab="input">1. الإدخال</button>
+            <button type="button" class="rv-tab" data-rv-tab="exceptions">2. الاستثناءات <span class="rv-tab-count" id="rvExcCount">0</span></button>
+            <button type="button" class="rv-tab" data-rv-tab="final">3. المراجعة النهائية</button>
+          </div>
+          <div class="rv-tab-panel" id="rvTabInput">
           <button type="button" class="btn-sm ghost" id="rvViewTimelineBtn" style="width:100%;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;stroke:currentColor"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
             عرض الخط الزمني
@@ -51,6 +57,14 @@ const MODAL_REVIEW = `
               <div class="fg"><label>رقم الموافقة</label><input id="paRefNumber"></div>
               <div class="fg"><label>التاريخ</label><input id="paDate" type="date"></div>
             </div>
+          </div>
+        </div>
+          <div class="rv-tab-panel" id="rvTabExceptions" style="display:none">
+            <div id="rvExceptions"></div>
+          </div>
+          <div class="rv-tab-panel" id="rvTabFinal" style="display:none">
+            <div id="rvFinalSummary"></div>
+            <div class="modal-foot" style="margin-top:12px"><button class="btn solid" id="finalizeReviewBtn">إنهاء المراجعة</button></div>
           </div>
         </div>
         <div class="modal-foot"><button class="btn solid" id="saveReview">حفظ المراجعة</button><button class="btn out" data-close data-i18n="common.cancel">إلغاء</button></div>

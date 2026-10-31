@@ -47,7 +47,7 @@ Object.assign(window.TRANSLATE_DICT = window.TRANSLATE_DICT || {}, {
   'استخدم': 'Use',
   'استشارة': 'Consultation',
   'استعادة': 'Restore',
-  'استلام دفعة': 'Receive Batch',
+  'استلام مطالبة': 'Receive Claim',
   'استلم دفعة وارد من صفحة': 'Receive a batch from page',
   'استيراد': 'Import',
   'اسم الجهة *': 'Provider Name *',

@@ -3,7 +3,7 @@ const MODAL_BATCH = `
     <div class="modal" id="batchModal">
       <div class="modal-bg" data-close-batch></div>
       <div class="modal-panel wide">
-        <div class="modal-head"><div><h3 id="btModalTitle">استلام دفعة</h3><p id="btModalSub">—</p></div><button class="close-btn" data-close-batch><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+        <div class="modal-head"><div><h3 id="btModalTitle">استلام مطالبة</h3><p id="btModalSub">—</p></div><button class="close-btn" data-close-batch><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
         <div class="modal-body">
           <div class="form-grid">
             <div class="fg full"><label>الجهة *</label>

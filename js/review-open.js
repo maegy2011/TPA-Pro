@@ -7,11 +7,8 @@ function openReview(id){
     if(activeSessionId && activeClaim){ upsertCurrentSession(); activeClaim = null; workingInvoices = []; }
     resumeSession(existing.id); return;
   }
-  let baseInvoices = c.invoices;
-  if(!baseInvoices || !baseInvoices.length){
-    const lines = [mkLine('GEN-001','بند مطالبة غير مفصل','أخرى',1,Number(c.billed)||0,Number(c.billed)||0,Number(c.approved)||0)];
-    baseInvoices = [mkInvoice(c.id+'-1','outpatient',c.date,[mkPatient(c.id+'-P1',c.patient||'—','',lines)])];
-  }
+  let baseInvoices = c.invoices || [];
+  if (!Array.isArray(baseInvoices)) baseInvoices = [];
   activeClaim = c;
   workingInvoices = JSON.parse(JSON.stringify(baseInvoices));
   rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
@@ -33,6 +30,7 @@ function openReview(id){
   } else (el => { if (el) el.style.display = 'none'; })($('#priorApprovalBox'));
   $$('.rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
   renderReviewInvoices();
+  if (typeof renderExceptions === 'function') renderExceptions();
   const s = upsertCurrentSession();
   if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); }
   clearSessionDirty();

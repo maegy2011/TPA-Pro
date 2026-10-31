@@ -35,7 +35,7 @@ function renderRecent(){
     $('#dashSearchInfo').textContent = `${base.length} نتيجة`;
   } else $('#dashSearchInfo').textContent = 'آخر 5';
   const display = dashSearchTerm ? base.slice(0,10) : base.slice(0,5);
-  if(!display.length){ $('#recentBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--muted)">لا مطالبات بعد. ابدأ باستلام دفعة وارد.</td></tr>'; return; }
+  if(!display.length){ $('#recentBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--muted)">لا مطالبات بعد. ابدأ باستلام مطالبة وارد.</td></tr>'; return; }
   $('#recentBody').innerHTML = display.map(c => {
     const st = STATUS[c.status] || STATUS.pending;
     return `<tr style="cursor:pointer" data-view="${escapeHtml(c.id)}"><td data-label="رقم"><span class="clm-id">${escapeHtml(c.id)}</span><div style="font-size:10px;color:var(--teal);font-weight:700;margin-top:2px">${escapeHtml(c.receivedNumber||'—')}</div></td><td data-label="المريض">${escapeHtml(c.patient)}</td><td data-label="المطالب" class="mono">${fmt(c.billed)}</td><td data-label="المعتمد" class="mono big">${fmt(c.approved)}</td><td data-label="الحالة"><span class="badge ${st.cls}">${st.label}</span></td></tr>`;

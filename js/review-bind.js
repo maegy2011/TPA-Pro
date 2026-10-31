@@ -103,7 +103,105 @@ function bindReviewModal(){
   $$('[data-close-line]').forEach(el => el.addEventListener('click', closeLineEditor));
   $('#saveLineBtn').addEventListener('click', saveLineEditor);
   $('#rvViewTimelineBtn').addEventListener('click', () => { const id = $('#rvId').value; if(!id) return; closeReview(); openTimeline(id); });
-  bindLineAutocomplete();
+  bindLineSmartForm();
+
+  // تبويبات المراجعة
+  const rvTabs = document.querySelector('#reviewModal .rv-tabs');
+  if (rvTabs && !rvTabs.dataset.bound) {
+    rvTabs.dataset.bound = '1';
+    rvTabs.addEventListener('click', e => {
+      const btn = e.target.closest('[data-rv-tab]'); if(!btn) return;
+      const tab = btn.dataset.rvTab;
+      $$('.rv-tab').forEach(b => b.classList.toggle('active', b === btn));
+      $$('.rv-tab-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById('rvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      if (panel) panel.style.display = '';
+      if (tab === 'exceptions') renderExceptions();
+      if (tab === 'final') {
+        const box = document.getElementById('rvFinalSummary');
+        if (box) {
+          const excs = collectExceptions();
+          box.innerHTML = `<div style="padding:12px;font-weight:700">استثناءات معلّقة: ${excs.length}</div>`;
+        }
+      }
+    });
+  }
+
+  // binding exceptions
+  const excBox = document.getElementById('rvExceptions');
+  if (excBox && !excBox.dataset.bound) {
+    excBox.dataset.bound = '1';
+    excBox.addEventListener('click', e => {
+      const btn = e.target.closest('[data-exc-act]'); if(!btn) return;
+      const key = btn.dataset.excKey;
+      const [ii, pi, li] = key.split('-').map(Number);
+      const inv = workingInvoices[ii]; const pat = inv && inv.patients ? inv.patients[pi] : null; const ln = pat && pat.lines ? pat.lines[li] : null;
+      if (!ln) return;
+      const noteInput = excBox.querySelector(`[data-exc-note="${key}"]`);
+      const note = noteInput ? noteInput.value.trim() : '';
+      const act = btn.dataset.excAct;
+      markSessionDirty();
+      if (act === 'approve') {
+        ln._decision = 'manual-approved';
+        ln._overrideMode = 'manual';
+        ln._manualValue = ln._contractCovered ? (ln.lineBaseAfterContract !== undefined ? ln.lineBaseAfterContract : ln.lineBase) : 0;
+        ln.approved = ln._manualValue;
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      } else if (act === 'reject') {
+        if (!note) { showWarning('تنبيه','الملاحظة إلزامية للرفض'); return; }
+        ln._decision = 'manual-rejected';
+        ln._overrideMode = 'manual';
+        ln._manualValue = 0;
+        ln.approved = 0;
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      } else if (act === 'reduce') {
+        const reduceWrap = excBox.querySelector(`[data-exc-reduce="${key}"]`);
+        if (reduceWrap) reduceWrap.style.display = '';
+        const valInput = excBox.querySelector(`[data-exc-reduce-val="${key}"]`);
+        if (!valInput) return;
+        const v = Number(valInput.value);
+        if (isNaN(v) || v < 0) { showWarning('تنبيه','أدخل مبلغًا صالحًا'); return; }
+        if (v > (ln._contractCovered ? (ln.lineBaseAfterContract||ln.lineBase||0) : 0)) { showWarning('تنبيه','المبلغ يتجاوز المعتمد'); return; }
+        if (v < (ln._contractCovered ? (ln.lineBaseAfterContract||ln.lineBase||0) : 0) && !note) { showWarning('تنبيه','الملاحظة إلزامية للتخفيض'); return; }
+        ln._decision = 'manual-reduced';
+        ln._overrideMode = 'manual';
+        ln._manualValue = v;
+        ln.approved = v;
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      } else if (act === 'pa') {
+        ln._decision = 'pa-pending';
+        ln._overrideMode = 'auto';
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      }
+      // recalc
+      workingInvoices.forEach(inv2 => (inv2.patients||[]).forEach(p => computePatient(p, activeClaim, inv2.date, inv2)));
+      recalcReview();
+      renderExceptions();
+      renderActiveInvoice();
+    });
+  }
+
+  const finBtn = document.getElementById('finalizeReviewBtn');
+  if (finBtn && !finBtn.dataset.bound) {
+    finBtn.dataset.bound = '1';
+    finBtn.addEventListener('click', () => {
+      const excs = collectExceptions();
+      if (excs.length > 0) { showWarning('استثناءات معلّقة', `بقي ${excs.length} استثناء. عالجها أو تجاوز الفحوصات.`); return; }
+      saveReview();
+    });
+  }
 
   // تتبع التعديلات الحقيقية
   const rvModal = $('#reviewModal');

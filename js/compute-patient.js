@@ -2,20 +2,34 @@ function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
   const allRules = deductionRules.filter(r => r.enabled !== false);
   const ctx = { claim, patient: pat, invoice: invoice || null };
+  const _ctx = getContractContext(claim);
   (pat.lines||[]).forEach(l => {
-    const billed = l.qty * l.billedUnit;
+    const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
     const hasT = (l.tariffUnit !== null && l.tariffUnit !== undefined);
-    const tariffTotal = hasT ? l.qty * l.tariffUnit : billed;
+    const tariffTotal = hasT ? (Number(l.qty)||0) * (Number(l.tariffUnit)||0) : billed;
     const lesser = hasT ? Math.min(billed, tariffTotal) : billed;
     l.lineBase = lesser;
     if(l._overrideMode === undefined) l._overrideMode = 'auto';
+
+    const covered = !l._manualEntry && isServiceCovered(_ctx, l.code) && hasT;
+    if(!covered){
+      l._autoApproved = 0;
+      l._contractRejected = true;
+      l._contractRate = 0;
+      l.lineBaseAfterContract = 0;
+      return;
+    }
+    const rate = getContractRateForService(_ctx, l.code);
+    l._contractRate = rate;
+    l.lineBaseAfterContract = Math.round(lesser * (1 - rate / 100));
+    l._contractRejected = false;
   });
   const lineRules = topoSortRules(allRules.filter(r => r.isComposite || isLineLevelAction(r.action)));
   pat.lines.forEach(l => {
     const lctx = { ...ctx, line: l };
     const appliedIds = new Set();
     const compositeLog = [];
-    let current = l.lineBase;
+    let current = (l.lineBaseAfterContract !== undefined ? l.lineBaseAfterContract : l.lineBase);
     let lastRuleId = null, lastRuleName = '', lastRuleRate = 0;
     for(const rule of lineRules){
       if(!checkRequires(rule, appliedIds)) continue;
@@ -47,6 +61,13 @@ function computePatient(pat, claim, refDate, invoice){
   });
   // ✅ F6: الأولوية لـ _maxlabsForced قبل القواعد العادية
   pat.lines.forEach(l => {
+    if(l._contractRejected){
+      l.approved = 0;
+      l._overrideMode = 'manual';
+      l._manualValue = 0;
+      if(!l.note) l.note = l._manualEntry ? 'إدخال يدوي غير مدرج' : 'غير مغطاة/غير مدرجة';
+      return;
+    }
     if(l._maxlabsForced){
       l.approved = 0;
       l._autoApproved = 0;

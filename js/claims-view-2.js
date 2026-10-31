@@ -29,6 +29,10 @@ function saveReview(){
 }
 function finalizeReview(){
   if(!activeClaim) return;
+  if (typeof collectExceptions === 'function') {
+    const excs = collectExceptions();
+    if (excs.length > 0) { showWarning('استثناءات معلّقة', `بقي ${excs.length} استثناء. عالجها أو تجاوز الفحوصات.`); return; }
+  }
   const cid = activeClaim.id;
   activeClaim.invoices = JSON.parse(JSON.stringify(workingInvoices));
   activeClaim.invoices.forEach(inv => (inv.patients||[]).forEach(p => computePatient(p, activeClaim, inv.date, inv)));
