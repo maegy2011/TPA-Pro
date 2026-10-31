@@ -9,16 +9,16 @@ const MODAL_BATCH = `
             <div class="fg full"><label>الجهة *</label>
               <div style="display:flex;gap:6px">
                 <input id="btProviderSearch" placeholder="بحث جهة..." style="flex:1">
-                <button type="button" class="btn-xs" id="btAddProviderBtn" title="إضافة جهة">+ جهة</button>
+
               </div>
               <select id="btProvider" style="margin-top:6px"></select>
             </div>
             <div class="fg"><label>نوع الفترة</label><select id="btPeriodType"><option value="single">فترة واحدة</option><option value="multi">فترات متعددة (متتالية)</option><option value="scattered">فترات متفرقة</option></select></div>
             <div class="fg"><label>الشهر / الأشهر *</label><input id="btMonth" placeholder="2025-01 أو 2025-01,2025-02"></div>
-            <div class="fg"><label>تاريخ الاستلام *</label><input id="btReceivedDate" type="date"></div>
+
             <div class="fg"><label>الحالة</label><select id="btStatus"><option value="new">جديدة</option><option value="received">وارد جديد</option><option value="under-review">قيد المعالجة</option><option value="completed">مكتمل</option></select></div>
             <div class="fg"><label>رقم وارد المطالبة</label><input id="btNumber" readonly></div>
-            <div class="fg"><label>تاريخ المطالبة *</label><input id="btClaimDate" type="date"></div>
+
             <div class="fg"><label>تاريخ وارد المطالبة</label><input id="btClaimReceivedDate" type="date"></div>
             <div class="fg"><label>القيمة الإجمالية (ج.م) *</label><input id="btBilled" type="number" min="0" placeholder="0"></div>
             <div class="fg full"><label>ملاحظات</label><textarea id="btNotes"></textarea></div>

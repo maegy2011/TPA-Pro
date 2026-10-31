@@ -29,9 +29,6 @@ function bindIntakeControls(){
   $('#saveBatchAnother').addEventListener('click', () => saveBatch(true));
   $('#deleteBatch').addEventListener('click', () => { if(editingBatchId) deleteBatchWithDialog(editingBatchId); });
   $('#btProviderSearch').addEventListener('input', e => renderProviderOptions(e.target.value));
-  $('#btAddProviderBtn').addEventListener('click', () => {
-    if(typeof openProviderModal === 'function'){ openProviderModal(); }
-  });
 }
 function renderIntake(){
   const total = batches.length;
@@ -85,11 +82,9 @@ function openBatchModal(id){
     $('#btProvider').value = b.providerId;
     $('#btPeriodType').value = b.periodType || 'single';
     $('#btMonth').value = b.month;
-    $('#btReceivedDate').value = b.receivedDate;
     $('#btStatus').value = b.status;
     $('#btNumber').value = b.id;
     $('#btNotes').value = b.notes||'';
-    $('#btClaimDate').value = b.claimDate||'';
     $('#btClaimReceivedDate').value = b.claimReceivedDate||'';
     $('#btBilled').value = b.totalBilled||0;
     (el => { if (el) el.style.display = 'block'; })($('#deleteBatch'));
@@ -97,11 +92,9 @@ function openBatchModal(id){
     const today = daysFromNow(0);
     $('#btPeriodType').value = 'single';
     $('#btMonth').value = today.slice(0,7);
-    $('#btReceivedDate').value = today;
     $('#btStatus').value = 'new';
     $('#btNumber').value = nextReceivedNumber();
     $('#btNotes').value = '';
-    $('#btClaimDate').value = today;
     $('#btClaimReceivedDate').value = today;
     $('#btBilled').value = '';
     (el => { if (el) el.style.display = 'none'; })($('#deleteBatch'));
@@ -114,16 +107,14 @@ function saveBatch(another){
   const providerId = $('#btProvider').value;
   const periodType = $('#btPeriodType').value;
   const month = $('#btMonth').value.trim();
-  const receivedDate = $('#btReceivedDate').value;
+  const claimReceivedDate = $('#btClaimReceivedDate').value || daysFromNow(0);
+  const receivedDate = claimReceivedDate;
   const status = $('#btStatus').value;
-  const claimDate = $('#btClaimDate').value;
-  const claimReceivedDate = $('#btClaimReceivedDate').value;
+  const claimDate = receivedDate;
   const billed = Number($('#btBilled').value);
   const notes = $('#btNotes').value.trim();
   if(!providerId){ showWarning('تنبيه','اختر الجهة'); return; }
   if(!month){ showWarning('تنبيه','أدخل الشهر'); return; }
-  if(!receivedDate){ showWarning('تنبيه','أدخل تاريخ الاستلام'); return; }
-  if(!claimDate){ showWarning('تنبيه','أدخل تاريخ المطالبة'); return; }
   if(!billed || billed <= 0){ showWarning('تنبيه','أدخل القيمة الإجمالية'); return; }
   const p = getProviderById(providerId);
   const batchId = editingBatchId || ('BTH-'+month.split(',')[0]+'-'+$('#btNumber').value);
