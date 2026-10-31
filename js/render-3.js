@@ -13,6 +13,17 @@ function buildClaimTimeline(claim){
     else if(pa.status === 'pending') events.push({ date: pa.date||claim.receivedDate, type:'pa-pending', icon:'clock', title:'قيد الدراسة', refNumber: pa.refNumber });
     else events.push({ date: claim.receivedDate, type:'note', icon:'alert', title:'موافقة غير مطلوبة' });
   }
+  // قرارات البنود
+  (claim.invoices||[]).forEach(inv => (inv.patients||[]).forEach(pat => (pat.lines||[]).forEach(l => {
+    if(l._decidedAt){
+      const map = { 'manual-approved':'اعتماد بند', 'manual-reduced':'تخفيض بند', 'manual-rejected':'رفض بند', 'pa-pending':'بانتظار PA' };
+      const title = map[l._decision] || l._decision || 'قرار بند';
+      events.push({ date: l._decidedAt.slice(0,10), type:'note', icon:'file', title:`${title} — ${l.code}`, description: l._decisionNote || '' });
+    }
+  })));
+  if(claim._overrideChecklist && claim._overrideChecklist.length){
+    claim._overrideChecklist.forEach(o => events.push({ date: (o.at||'').slice(0,10), type:'note', icon:'alert', title:'تجاوز الفحوصات', description: o.reason }));
+  }
   if(claim.status !== 'pending'){
     const sm = { approved:{type:'review-approved',icon:'check',title:'اعتماد كامل'}, partial:{type:'review-partial',icon:'file',title:'اعتماد جزئي'}, rejected:{type:'review-rejected',icon:'x',title:'رفض'} };
     const s = sm[claim.status];
