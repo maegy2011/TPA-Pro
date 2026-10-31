@@ -48,14 +48,14 @@ function openTariffModal(id){
     $('#tfAdjustType').value = t.adjustmentType||'none'; $('#tfAdjustRate').value = t.adjustmentRate||0;
     workingServices = (t.services||[]).map(s => ({...s}));
     workingIncreaseHistory = (t.increaseHistory||[]).map(h => ({...h}));
-    $('#\1')?.style.display = 'block';
+    (el => { if (el) el.style.display = 'block'; })($('#deleteTariff'));
   } else {
     const today = daysFromNow(0);
     $('#tfNumber').value = nextTariffNumber(today); $('#tfName').value = ''; $('#tfType').value = 'general'; $('#tfStatus').value = 'active';
     $('#tfEffective').value = today; $('#tfExpiry').value = daysFromNow(365); $('#tfPriceLevel').value = 100; $('#tfDescription').value = '';
     $('#tfIncreaseEnabled').checked = false; $('#tfIncreaseRate').value = 0; $('#tfLastIncrease').value = ''; $('#tfApprovedBy').value = '';
     $('#tfAdjustType').value = 'none'; $('#tfAdjustRate').value = 0;
-    workingServices = []; workingIncreaseHistory = []; $('#\1')?.style.display = 'none';
+    workingServices = []; workingIncreaseHistory = []; (el => { if (el) el.style.display = 'none'; })($('#deleteTariff'));
   }
   $$('.tf-tab').forEach((tab,i) => tab.classList.toggle('active', i === 0));
   $$('.tf-panel').forEach((p,i) => p.classList.toggle('active', i === 0));

@@ -15,9 +15,9 @@ function openDialog(opts){
   $('#dialogIcon').innerHTML = DIALOG_ICONS[iconType] || DIALOG_ICONS.info;
   $('#dialogTitle').textContent = opts.title || '';
   $('#dialogMessage').innerHTML = escapeHtml(opts.message || '');
-  $('#\1')?.style.display = opts.message ? 'block' : 'none';
+  (el => { if (el) el.style.display = opts.message ? 'block' : 'none'; })($('#dialogMessage'));
   $('#dialogBody').innerHTML = opts.body || '';
-  $('#\1')?.style.display = opts.body ? 'block' : 'none';
+  (el => { if (el) el.style.display = opts.body ? 'block' : 'none'; })($('#dialogBody'));
   const actions = $('#dialogActions'); actions.innerHTML = '';
   if(opts.requireCountdown){
     let rem = 5;

@@ -76,10 +76,10 @@ function openProviderModal(id){
     $('#pvName').value = p.name; $('#pvType').value = p.type;
     $('#pvContact').value = p.contact||''; $('#pvPhone').value = p.phone||'';
     $('#pvEmail').value = p.email||''; $('#pvNotes').value = p.notes||'';
-    $('#\1')?.style.display = 'block';
+    (el => { if (el) el.style.display = 'block'; })($('#deleteProvider'));
   } else {
     ['pvName','pvContact','pvPhone','pvEmail','pvNotes'].forEach(x => { const el = $('#'+x); if(el) el.value = ''; });
-    $('#pvType').value = 'مستشفى'; $('#\1')?.style.display = 'none';
+    $('#pvType').value = 'مستشفى'; (el => { if (el) el.style.display = 'none'; })($('#deleteProvider'));
   }
   const s = $('#pvProvinceSearch'); if(s) s.value = '';
   renderProvinceOptions('');

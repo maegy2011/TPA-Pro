@@ -76,12 +76,12 @@ function resumeSession(sessionId){
   if(s.reviewFormState.claimType) activeClaim.type = s.reviewFormState.claimType;
   $$('.rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === activeClaim.type));
   if(activeClaim.priorApproval && activeClaim.priorApproval.required){
-    $('#\1')?.style.display = 'block';
+    (el => { if (el) el.style.display = 'block'; })($('#priorApprovalBox'));
     $('#paStatus').value = s.reviewFormState.paStatus || activeClaim.priorApproval.status || 'not-requested';
     $('#paRefNumber').value = s.reviewFormState.paRefNumber || activeClaim.priorApproval.refNumber || '';
     $('#paDate').value = s.reviewFormState.paDate || activeClaim.priorApproval.date || '';
     updatePAWarning();
-  } else $('#\1')?.style.display = 'none';
+  } else (el => { if (el) el.style.display = 'none'; })($('#priorApprovalBox'));
   renderReviewInvoices();
   clearSessionDirty();
   $('#reviewModal').classList.add('open'); document.body.style.overflow = 'hidden';

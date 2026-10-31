@@ -92,7 +92,7 @@ function openBatchModal(id){
     $('#btClaimDate').value = b.claimDate||'';
     $('#btClaimReceivedDate').value = b.claimReceivedDate||'';
     $('#btBilled').value = b.totalBilled||0;
-    $('#\1')?.style.display = 'block';
+    (el => { if (el) el.style.display = 'block'; })($('#deleteBatch'));
   } else {
     const today = daysFromNow(0);
     $('#btPeriodType').value = 'single';
@@ -104,7 +104,7 @@ function openBatchModal(id){
     $('#btClaimDate').value = today;
     $('#btClaimReceivedDate').value = today;
     $('#btBilled').value = '';
-    $('#\1')?.style.display = 'none';
+    (el => { if (el) el.style.display = 'none'; })($('#deleteBatch'));
   }
   $('#btMonth').onchange = () => { if(!isEdit) $('#btNumber').value = nextReceivedNumber(); };
   $('#batchModal').classList.add('open'); document.body.style.overflow = 'hidden';
