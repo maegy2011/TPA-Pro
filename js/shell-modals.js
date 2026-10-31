@@ -2,7 +2,7 @@ const SHELL_MODALS = `
 <!-- ============================================================
      نافذة الحوار الموحدة
      ============================================================ -->
-<div class="dialog-overlay" id="unifiedDialog">
+<div class="dialog-overlay" id="unifiedDialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
   <div class="dialog-backdrop" data-dialog-close></div>
   <div class="dialog-box">
     <button class="dialog-close-x" data-dialog-close><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
