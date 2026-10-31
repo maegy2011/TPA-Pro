@@ -2,6 +2,10 @@ let workSessions = [];
 let activeSessionId = null;
 let sessionsFilter = 'all';
 let sessionsSearch = '';
+let currentSessionTimer = null;
+let lastUserActivityTimestamp = Date.now();
+let activeSessionTimer = null;
+let lastActivityTime = Date.now();
 function genSessionId(){ return 'SES-'+Date.now().toString(36).toUpperCase()+'-'+Math.floor(Math.random()*1000); }
 function loadSessions(){
   try {
@@ -30,7 +34,9 @@ function captureCurrentSessionState(){
     createdAt:(ex&&ex.createdAt)||new Date().toISOString(),
     lastActiveAt:new Date().toISOString(),
     status:'paused',
-    name:(ex&&ex.name)||null
+    name:(ex&&ex.name)||null,
+    elapsedSeconds: (ex && typeof ex.elapsedSeconds === 'number') ? ex.elapsedSeconds : 0,
+    lastSavedPoint: (ex && ex.lastSavedPoint) ? JSON.parse(JSON.stringify(ex.lastSavedPoint)) : { invoiceIdx: rvActiveInvoiceIdx||0, patientIdx: rvActivePatientIdx||0, lineIdx: 0 }
   };
 }
 function upsertCurrentSession(){
@@ -68,6 +74,8 @@ function resumeSession(sessionId){
   rvActivePatientIdx = s.rvActivePatientIdx || 0;
   activeSessionId = s.id;
   s.status = 'active'; s.lastActiveAt = new Date().toISOString(); persistSessions();
+  if(s.lastSavedPoint){ rvActiveInvoiceIdx = s.lastSavedPoint.invoiceIdx || rvActiveInvoiceIdx || 0; rvActivePatientIdx = s.lastSavedPoint.patientIdx || rvActivePatientIdx || 0; }
+  if(typeof startSessionTimeTracker === 'function') startSessionTimeTracker(s);
   $('#rvSub').textContent = `${activeClaim.id} • ${activeClaim.patient}`;
   $('#rvId').value = activeClaim.id; $('#rvDate').value = activeClaim.date||'';
   $('#rvReceivedNumber').value = activeClaim.receivedNumber||'—'; $('#rvReceivedDate').value = activeClaim.receivedDate||'—';
@@ -135,4 +143,97 @@ function renderSessions(){
     box.innerHTML = `<div class="session-empty"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M6.5 3v4M17.5 3v4M2.5 10h19"/></svg><p>${workSessions.length?'لا نتائج':'لا جلسات'}</p><span>${workSessions.length?'جرّب آخر':'ابدأ بمراجعة'}</span></div>`;
   } else box.innerHTML = `<div class="sessions-grid">${filtered.map(renderSessionCard).join('')}</div>`;
   updateSessionsBadge();
+}
+
+/* ---------- تتبع النشاط الفعلي والحفظ التلقائي ---------- */
+(function(){
+  const syncActivity = () => { lastUserActivityTimestamp = Date.now(); lastActivityTime = Date.now(); };
+  ['click', 'keydown', 'mousemove', 'scroll'].forEach(evt => {
+    try { window.addEventListener(evt, syncActivity, { passive: true }); } catch(e){}
+  });
+})();
+
+function startSessionTimeTracker(session) {
+  if (currentSessionTimer) clearInterval(currentSessionTimer);
+  if (activeSessionTimer) clearInterval(activeSessionTimer);
+  if (!session) return;
+  if (!session.elapsedSeconds) session.elapsedSeconds = 0;
+  if (!session.lastSavedPoint) session.lastSavedPoint = { invoiceIdx: 0, patientIdx: 0, lineIdx: 0 };
+  currentSessionTimer = setInterval(() => {
+    const isUserActive = (Date.now() - lastUserActivityTimestamp) < 60000;
+    const isWindowFocused = !document.hidden;
+    if (isUserActive && isWindowFocused && session.status === 'active') {
+      session.elapsedSeconds += 1;
+      updateSessionTimerUI(session.elapsedSeconds);
+      updateTimerUI(session.elapsedSeconds);
+    }
+  }, 1000);
+  activeSessionTimer = currentSessionTimer;
+}
+function initActiveSessionTracker(session){ return startSessionTimeTracker(session); }
+
+function stopSessionTimeTracker() {
+  if (currentSessionTimer) { clearInterval(currentSessionTimer); currentSessionTimer = null; }
+  if (activeSessionTimer) { clearInterval(activeSessionTimer); activeSessionTimer = null; }
+}
+function stopActiveSessionTracker(){ return stopSessionTimeTracker(); }
+
+function updateCurrentReviewProgressPoint(claimId, invoiceIdx, patientIdx, lineIdx) {
+  let session = workSessions.find(s => s.claimId === claimId && s.status === 'active');
+  if (!session) return;
+  session.lastSavedPoint = {
+    invoiceIdx: invoiceIdx || 0,
+    patientIdx: patientIdx || 0,
+    lineIdx: lineIdx || 0,
+    timestamp: new Date().toISOString()
+  };
+  session.updatedAt = new Date().toISOString();
+  persistSessions();
+}
+function saveProgressPoint(claimId, invoiceIdx, patientIdx, lineIdx) {
+  return updateCurrentReviewProgressPoint(claimId, invoiceIdx, patientIdx, lineIdx);
+}
+
+function resumeSessionFromLastPoint(sessionId) {
+  const session = workSessions.find(s => s.id === sessionId);
+  if (!session) return;
+  workSessions.forEach(s => { if (s.status === 'active') s.status = 'paused'; });
+  session.status = 'active';
+  activeSessionId = session.id;
+  try { openReview(session.claimId); } catch(e){}
+  if (session.lastSavedPoint) {
+    rvActiveInvoiceIdx = session.lastSavedPoint.invoiceIdx || 0;
+    rvActivePatientIdx = session.lastSavedPoint.patientIdx || 0;
+    try { renderReviewInvoices(); } catch(e){}
+  }
+  startSessionTimeTracker(session);
+  try { showSuccess('تم استئناف الجلسة', `الوقت المستغرق حتى الآن: ${formatElapsedTime(session.elapsedSeconds || 0)}`); } catch(e){}
+}
+
+function formatElapsedTime(seconds) {
+  seconds = seconds || 0;
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hrs > 0) return `${hrs} ساعة و ${mins} دقيقة`;
+  return `${mins} دقيقة و ${secs} ثانية`;
+}
+
+function updateSessionTimerUI(seconds) {
+  const timerEl = document.getElementById('rvSessionTimerDisplay');
+  if (timerEl) {
+    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(seconds % 60).padStart(2, '0');
+    timerEl.textContent = `⏱️ وقت المراجعة الفعلي: ${hrs}:${mins}:${secs}`;
+  }
+}
+function updateTimerUI(seconds) {
+  const el = document.getElementById('rvSessionTimerDisplay');
+  if (el) {
+    const m = String(Math.floor((seconds||0) / 60)).padStart(2, '0');
+    const s = String((seconds||0) % 60).padStart(2, '0');
+    el.textContent = `⏱️ وقت العمل الفعلي: ${m}:${s}`;
+  }
+  updateSessionTimerUI(seconds);
 }

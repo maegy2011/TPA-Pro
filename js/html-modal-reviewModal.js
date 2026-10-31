@@ -11,9 +11,9 @@ const MODAL_REVIEW = `
         <div class="modal-body">
           <div class="rv-context-bar" id="rvContextBar">—</div>
           <div class="rv-tabs" role="tablist">
-            <button type="button" class="rv-tab active" role="tab" aria-selected="true" data-rv-tab="input">1. الإدخال</button>
-            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="exceptions">2. الاستثناءات <span class="rv-tab-count" id="rvExcCount">0</span></button>
-            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="final">3. المراجعة النهائية</button>
+            <button type="button" class="rv-tab active" role="tab" aria-selected="true" data-rv-tab="input">📋 1. الإدخال والتدقيق الآلي</button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="exceptions">⚠️ 2. الاستثناءات المعلقة (<span id="rvExcCount">0</span>)</button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="final">⚖️ 3. القرار والتخريج القانوني النهائي</button>
           </div>
           <div class="rv-tab-panel" id="rvTabInput" role="tabpanel">
           <button type="button" class="btn-sm ghost" id="rvViewTimelineBtn" style="width:100%;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">

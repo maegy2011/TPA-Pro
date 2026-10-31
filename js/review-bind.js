@@ -17,6 +17,7 @@ function bindReviewModal(){
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
     const tab = e.target.closest('[data-inv-idx]'); if(!tab) return;
     rvActiveInvoiceIdx = Number(tab.dataset.invIdx); rvActivePatientIdx = 0; renderReviewInvoices();
+    if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0);
   });
 
   // لوحة الفاتورة
@@ -27,7 +28,7 @@ function bindReviewModal(){
     if(e.target.closest('[data-edit-invoice]')){ openInvoiceEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-delete-invoice]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return; showDelete('حذف الفاتورة', `سيتم حذف "${inv.number||inv.id}".`, () => { markSessionDirty(); workingInvoices.splice(rvActiveInvoiceIdx,1); rvActiveInvoiceIdx = Math.max(0, rvActiveInvoiceIdx-1); rvActivePatientIdx = 0; renderReviewInvoices(); }); return; }
     if(e.target.closest('[data-edit-patient]')){ openPatientEditor(rvActiveInvoiceIdx, rvActivePatientIdx); return; }
-    const patTab = e.target.closest('[data-pat-idx]'); if(patTab){ rvActivePatientIdx = Number(patTab.dataset.patIdx); renderActiveInvoice(); return; }
+    const patTab = e.target.closest('[data-pat-idx]'); if(patTab){ rvActivePatientIdx = Number(patTab.dataset.patIdx); renderActiveInvoice(); if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0); return; }
     const editL = e.target.closest('[data-edit-line]'); if(editL){ openLineEditor(rvActivePatientIdx, Number(editL.dataset.editLine)); return; }
     const delL = e.target.closest('[data-del-line]'); if(delL){ const inv = workingInvoices[rvActiveInvoiceIdx]; const pat = inv&&inv.patients?inv.patients[rvActivePatientIdx]:null; if(!pat) return; const idx = Number(delL.dataset.delLine); showDelete('حذف البند','سيتم حذف هذا البند.', () => { markSessionDirty(); pat.lines.splice(idx,1); renderActiveInvoice(); recalcReview(); }); return; }
 

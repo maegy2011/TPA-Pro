@@ -169,3 +169,83 @@ function detectRuleConflicts(newRule, existingRules){
   const uniq = conflicts.filter(c => { if(seen.has(c.message)) return false; seen.add(c.message); return true; });
   return { hasConflicts: uniq.length > 0, conflicts: uniq };
 }
+
+/* ---------- قاموس التخريج القانوني والتفسير المالي والإجرائي ---------- */
+const LEGAL_DEDUCTION_REASONS = {
+  'not-in-tariff': {
+    title: 'عدم الإدراج في لائحة الأسعار المعتمدة',
+    legalBasis: 'استناداً إلى أحكام العقد المبرم وبنود لائحة الأسعار المتفق عليها بين الطرفين.',
+    explanation: (ctx) => `تبين أن الخدمة المطلوبة (${ctx?.line?.name || ''} - رمز: ${ctx?.line?.code || ''}) غير مدرجة ضمن لائحة الأسعار المعتمدة للجهة (${ctx?.claim?.provider || ''}). يُخصم كامل المبلغ المطالب به.`
+  },
+  'not-covered': {
+    title: 'استبعاد الخدمة من جدول المنافع والتغطية التأمينية',
+    legalBasis: 'وفقاً لملحق الاستثناءات والخدمات غير المغطاة في وثيقة التغطية التأمينية المعتمدة.',
+    explanation: (ctx) => `الخدمة المقدمة (${ctx?.line?.name || ''}) صريحة الاستثناء ولا تقع ضمن نطاق الخدمات Covered Services المتفق عليها في العقد.`
+  },
+  'price-exceeds': {
+    title: 'تجاوز السقف التسعيري المحدد باللائحة',
+    legalBasis: 'طبقاً لبند التعرفة المعتمدة والسقف الأعلى المحدد للخدمة الطبية.',
+    explanation: (ctx) => `تم تعديل سعر الوحدة للخدمة (${ctx?.line?.name || ''}) من المبلغ المطالب به (${ctx?.line?.billedUnit || 0} ج.م) إلى السقف المعتمد باللائحة (${ctx?.line?.tariffUnit || 0} ج.م)، ويُخصم الفارق البالغ (${ctx?.diff || 0} ج.م).`
+  },
+  'contract-discount': {
+    title: 'تطبيق نسبة الخصم التعاقدي المباشر',
+    legalBasis: 'بناءً على بند الخصومات التجارية والتعاقدية الوارد في العقد المبرم.',
+    explanation: (ctx) => `تطبيق نسبة الخصم التعاقدي المتفق عليها (${ctx?.rate || 0}%) على إجمالي المبلغ المستحق للخدمة (${ctx?.line?.name || ''}).`
+  },
+  'pa-required': {
+    title: 'غياب الحصول على الموافقة المسبقة (Prior Authorization)',
+    legalBasis: 'وفقاً للإجراءات التنظيمية وشروط الموافقة المسبقة للخدمات والعمليات الخاصة.',
+    explanation: (ctx) => `الخدمة/الإجراء (${ctx?.line?.name || ''}) يندرج تحت قائمة الخدمات التي تتطلب الحصول على موافقة مسبقة قبل التقديم، ولم تُرفق الموافقة المعتمدة.`
+  },
+  'max-labs-exceeded': {
+    title: 'تجاوز الحد الأقصى اليومي للفحوصات المخبرية في الزيارة الواحدة',
+    legalBasis: 'استناداً إلى أدلة الممارسة الطبية وضوابط الترشيد المالي والترشيد الطبي المعتمدة للنظام.',
+    explanation: (ctx) => `تجاوز عدد الفحوصات المخبرية في الزيارة الواحدة الحد المسموح به (${ctx?.maxLabs || 0} فحوصات). تم اعتماد الفحوصات الأعلى تكلفة وخصم الفحوصات الزائدة الإضافية.`
+  },
+  'coverage-cap': {
+    title: 'تجاوز سقف التغطية المالي المسموح للمريض',
+    legalBasis: 'وفقاً لضوابط وسقوف التغطية التأمينية والحد الأقصى للمستفيدين.',
+    explanation: (ctx) => `تجاوزت مطالبة المريض (${ctx?.patient?.name || ''}) الحد الأقصى المسموح به لسقف التغطية (${ctx?.capRate || 0}%). تم تطبيق خصم السقف بمبلغ (${ctx?.capAmount || 0} ج.م).`
+  },
+  'tariff-limit': {
+    title: 'تجاوز السقف التسعيري المحدد باللائحة',
+    legalBasis: 'طبقاً لبند التعرفة المعتمدة والسقف الأعلى المحدد للخدمة الطبية.',
+    explanation: (ctx) => `تم تعديل سعر الوحدة للخدمة (${ctx?.line?.name || ''}) من المبلغ المطالب به (${ctx?.line?.billedUnit || 0} ج.م) إلى السقف المعتمد باللائحة (${ctx?.line?.tariffUnit || 0} ج.م)، ويُخصم الفارق البالغ (${ctx?.diff || 0} ج.م).`
+  },
+  'manual-entry': {
+    title: 'عدم الإدراج في لائحة الأسعار المعتمدة',
+    legalBasis: 'استناداً إلى أحكام العقد المبرم وبنود لائحة الأسعار المتفق عليها بين الطرفين.',
+    explanation: (ctx) => `تبين أن الخدمة المطلوبة (${ctx?.line?.name || ''} - رمز: ${ctx?.line?.code || ''}) غير مدرجة ضمن لائحة الأسعار المعتمدة للجهة (${ctx?.claim?.provider || ''}). يُخصم كامل المبلغ المطالب به.`
+  },
+  'retiree-copay': {
+    title: 'تطبيق نسبة التحمل المقررة لشريحة المعاشات/المتقاعدين',
+    legalBasis: 'طبقاً لجدول نفقات التحمل وشروط تغطية فئة المتقاعدين والمعاشات.',
+    explanation: (ctx) => `تطبيق نسبة تحمل المتقاعد المقررة (${ctx?.copayRate || 0}%) على صافي المطالبة القابلة للتغطية، بمبلغ تحمل قدره (${ctx?.copayAmount || 0} ج.م).`
+  }
+};
+
+function generateLegalDeductionReason(ruleKey, context) {
+  context = context || {};
+  const template = LEGAL_DEDUCTION_REASONS[ruleKey];
+  if (!template) {
+    const fallbackExpl = context.note || 'تم تطبيق الاستقطاع بناءً على قواعد التدقيق الآلي.';
+    const fallback = {
+      title: 'استقطاع مالي وتعديل تعاقدي',
+      legalBasis: 'بناءً على أحكام المراجعة المالية والتدقيق التعاقدي.',
+      explanation: fallbackExpl,
+      fullText: `[سبب الخصم]: استقطاع مالي وتعديل تعاقدي\n[المستند القانوني]: بناءً على أحكام المراجعة المالية والتدقيق التعاقدي.\n[التفسير الإجرائي]: ${fallbackExpl}`,
+      formattedText: `[السبب]: استقطاع مالي وتعديل تعاقدي | [السند]: بناءً على أحكام المراجعة المالية والتدقيق التعاقدي. | [التفسير]: ${fallbackExpl}`
+    };
+    return fallback;
+  }
+  let explanationText;
+  try { explanationText = template.explanation(context); }
+  catch (e) { explanationText = context.note || 'تم تطبيق الاستقطاع بناءً على قواعد التدقيق الآلي.'; }
+  return {
+    title: template.title,
+    legalBasis: template.legalBasis,
+    explanation: explanationText,
+    fullText: `[سبب الخصم]: ${template.title}\n[المستند القانوني]: ${template.legalBasis}\n[التفسير الإجرائي]: ${explanationText}`,
+    formattedText: `[السبب]: ${template.title} | [السند]: ${template.legalBasis} | [التفسير]: ${explanationText}`
+  };
+}

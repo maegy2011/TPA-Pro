@@ -206,6 +206,9 @@ function saveLineEditor() {
   data._checksFailed = validation.failed;
   data._flaggedReasons = [...validation.failed, ...(validation.reductions || [])];
   data._suggestedAction = validation.suggestedAction;
+  data._legalDeduction = validation.legalDeduction || validation.legalReason || null;
+  data._legalReason = data._legalDeduction;
+  data.legalDeduction = data._legalDeduction;
   data._contractRate = validation.contractRate;
   data._contractCovered = validation.covered;
   data.approved = validation.afterContract;

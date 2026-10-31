@@ -25,6 +25,10 @@ function computePatient(pat, claim, refDate, invoice){
       l._contractRejected = true;
       l._contractRate = 0;
       l.lineBaseAfterContract = 0;
+      const _key = l._manualEntry ? 'not-in-tariff' : (isServiceCovered(_ctx, l.code) ? 'not-in-tariff' : 'not-covered');
+      l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason(_key, { claim, patient: pat, invoice: invoice || null, line: l }) : null;
+      l._legalReason = l._legalDeduction;
+      l.legalDeduction = l._legalDeduction;
       return;
     }
     const rate = getContractRateForService(_ctx, l.code);
@@ -85,18 +89,31 @@ function computePatient(pat, claim, refDate, invoice){
       l._autoRuleRate = 0;
       l._appliedRuleIds = ['_maxlabs'];
       l.note = 'تجاوز حد التحاليل';
+       l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('max-labs-exceeded', { claim, patient: pat, invoice: invoice || null, line: l, maxLabs: (typeof REVIEW_RULES !== 'undefined' ? REVIEW_RULES.maxLabsPerVisit : 0) }) : null;
+       l._legalReason = l._legalDeduction;
+       l.legalDeduction = l._legalDeduction;
       return;
     }
     if(l._overrideMode === 'manual' && l._manualValue !== null && l._manualValue !== undefined){
       l.approved = Math.max(0, Math.min(l.qty*l.billedUnit, Number(l._manualValue)||0));
     } else if(l._overrideMode === 'reverted'){ l.approved = l.lineBase; }
     else { l.approved = l._autoApproved; }
+    if (!l._contractRejected && !l._maxlabsForced && !l.paRejected && !l._legalDeduction) {
+      const _billed = (Number(l.qty)||0)*(Number(l.billedUnit)||0);
+      const _tt = (l.tariffUnit !== null && l.tariffUnit !== undefined) ? (Number(l.qty)||0)*Number(l.tariffUnit) : null;
+      if (_tt !== null && _billed > _tt + 0.01) {
+        l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('price-exceeds', { claim, patient: pat, invoice: invoice || null, line: l, diff: _billed - _tt }) : null;
+      } else if ((Number(l._contractRate)||0) > 0) {
+        l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('contract-discount', { claim, patient: pat, invoice: invoice || null, line: l, rate: l._contractRate }) : null;
+      }
+      if (l._legalDeduction) { l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; }
+    }
   });
   if(!pat.beneficiaryType) pat.beneficiaryType = claim.type || 'employee';
   const benType = patientBeneficiaryType(pat, claim);
   const paValid = hasValidPriorApproval(claim);
   if(benType === 'retiree' && !paValid){
-    pat.lines.forEach(l => { if(lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; } });
+    pat.lines.forEach(l => { if(lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('pa-required', { claim, patient: pat, invoice: invoice || null, line: l }) : null; l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; } });
   }
   const subtotal = pat.lines.reduce((s,l)=>s+(Number(l.approved)||0), 0);
   const pctx = { ...ctx, patient: pat };
@@ -130,6 +147,12 @@ function computePatient(pat, claim, refDate, invoice){
   pat._copayAmt = Math.max(0, Math.min(subtotal-pat._capAmt, Math.round(finalCopay)));
   pat._final = Math.max(0, subtotal-pat._capAmt-pat._copayAmt);
   pat._beneficiaryPays = pat._capAmt + pat._copayAmt;
+  if (pat._capAmt > 0) {
+    pat._capLegal = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('coverage-cap', { claim, patient: pat, capRate: capRule ? capRule.rate : 0, capAmount: pat._capAmt }) : null;
+  }
+  if (pat._copayAmt > 0) {
+    pat._copayLegal = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('retiree-copay', { claim, patient: pat, copayRate: copayRule ? copayRule.rate : 0, copayAmount: pat._copayAmt }) : null;
+  }
   pat._refDate = refDate;
   if(pat._capMode === undefined) pat._capMode = 'auto';
   if(pat._copayMode === undefined) pat._copayMode = 'auto';

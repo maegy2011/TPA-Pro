@@ -37,7 +37,7 @@ function openReview(id){
   renderReviewInvoices();
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
   const s = upsertCurrentSession();
-  if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); }
+  if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); if(typeof startSessionTimeTracker === 'function') startSessionTimeTracker(s); }
   clearSessionDirty();
   $('#reviewModal').classList.add('open'); document.body.style.overflow = 'hidden';
   updateSessionsBadge();
@@ -61,6 +61,7 @@ function _doCloseReview(discard){
     const s = upsertCurrentSession();
     if(s){ s.status = 'paused'; persistSessions(); }
   }
+  if(typeof stopSessionTimeTracker === 'function') stopSessionTimeTracker();
   activeSessionId = null;
   clearSessionDirty();
   $('#reviewModal').classList.remove('open');

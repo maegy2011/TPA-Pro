@@ -52,7 +52,7 @@ Load order is defined in index.html (82 script tags).
 ================================================================================
 FILE: /home/administrator/TPA/TPA_Pro_TestData.json
 ================================================================================
-﻿{
+{
   "app": "TPA Pro",
   "version": "1.0",
   "type": "full-backup",
@@ -871,12 +871,60 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           {
             "id": "INV-1",
             "amount": 500,
-            "date": "2026-10-21"
+            "date": "2026-10-21",
+            "patients": [
+              {
+                "id": "INV-1-P1",
+                "name": "مريض 1",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-12",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 1,
+                    "billedUnit": 160,
+                    "tariffUnit": 160,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-15",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 1,
+                    "billedUnit": 310,
+                    "tariffUnit": 310,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-1"
           }
         ],
         "billed": 500,
         "approved": 0,
-        "eligible": 500
+        "eligible": 500,
+        "diagnosis": "I10",
+        "diagnosisSecondary": "E11"
       },
       {
         "id": "CLM-0002",
@@ -896,10 +944,64 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           "date": ""
         },
         "batchId": "BTH-2026-002",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-2",
+            "amount": 620,
+            "date": "2026-10-22",
+            "patients": [
+              {
+                "id": "INV-2-P1",
+                "name": "مريض 2",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-19",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 510,
+                    "tariffUnit": 510,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-12",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 2,
+                    "billedUnit": 160,
+                    "tariffUnit": 160,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-2"
+          }
+        ],
         "billed": 620,
         "approved": 0,
-        "eligible": 620
+        "eligible": 620,
+        "diagnosis": "J45",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0003",
@@ -923,12 +1025,60 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           {
             "id": "INV-3",
             "amount": 740,
-            "date": "2026-10-23"
+            "date": "2026-10-23",
+            "patients": [
+              {
+                "id": "INV-3-P1",
+                "name": "مريض 3",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-18",
+                    "name": "حشوة أسنان",
+                    "category": "أسنان",
+                    "qty": 1,
+                    "billedUnit": 460,
+                    "tariffUnit": 460,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-16",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 360,
+                    "tariffUnit": 360,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-3"
           }
         ],
         "billed": 740,
         "approved": 629,
-        "eligible": 740
+        "eligible": 740,
+        "diagnosis": "E11",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0004",
@@ -948,10 +1098,64 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           "date": "2026-10-24"
         },
         "batchId": "BTH-2026-004",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-4",
+            "amount": 860,
+            "date": "2026-10-24",
+            "patients": [
+              {
+                "id": "INV-4-P1",
+                "name": "مريض 4",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-23",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 2,
+                    "billedUnit": 220,
+                    "tariffUnit": 220,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-29",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 520,
+                    "tariffUnit": 520,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-4"
+          }
+        ],
         "billed": 860,
         "approved": 0,
-        "eligible": 860
+        "eligible": 860,
+        "diagnosis": "M54",
+        "diagnosisSecondary": "R51"
       },
       {
         "id": "CLM-0005",
@@ -975,12 +1179,60 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           {
             "id": "INV-5",
             "amount": 980,
-            "date": "2026-10-25"
+            "date": "2026-10-25",
+            "patients": [
+              {
+                "id": "INV-5-P1",
+                "name": "مريض 5",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-28",
+                    "name": "حشوة أسنان",
+                    "category": "أسنان",
+                    "qty": 2,
+                    "billedUnit": 470,
+                    "tariffUnit": 470,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-23",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 2,
+                    "billedUnit": 220,
+                    "tariffUnit": 220,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-5"
           }
         ],
         "billed": 980,
         "approved": 0,
-        "eligible": 980
+        "eligible": 980,
+        "diagnosis": "K21",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0006",
@@ -1000,10 +1252,77 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           "date": ""
         },
         "batchId": "BTH-2026-006",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-6",
+            "amount": 1100,
+            "date": "2026-10-26",
+            "patients": [
+              {
+                "id": "INV-6-P1",
+                "name": "مريض 6",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-23",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 1,
+                    "billedUnit": 220,
+                    "tariffUnit": 220,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-26",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 370,
+                    "tariffUnit": 370,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-25",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 2,
+                    "billedUnit": 320,
+                    "tariffUnit": 320,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-6"
+          }
+        ],
         "billed": 1100,
         "approved": 0,
-        "eligible": 1100
+        "eligible": 1100,
+        "diagnosis": "R51",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0007",
@@ -1027,12 +1346,73 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           {
             "id": "INV-7",
             "amount": 1220,
-            "date": "2026-10-27"
+            "date": "2026-10-27",
+            "patients": [
+              {
+                "id": "INV-7-P1",
+                "name": "مريض 7",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-35",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 1,
+                    "billedUnit": 330,
+                    "tariffUnit": 330,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-39",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 1,
+                    "billedUnit": 530,
+                    "tariffUnit": 530,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-33",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 1,
+                    "billedUnit": 230,
+                    "tariffUnit": 230,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-7"
           }
         ],
         "billed": 1220,
         "approved": 0,
-        "eligible": 1220
+        "eligible": 1220,
+        "diagnosis": "N39",
+        "diagnosisSecondary": "H10"
       },
       {
         "id": "CLM-0008",
@@ -1052,10 +1432,64 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           "date": ""
         },
         "batchId": "BTH-2026-008",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-8",
+            "amount": 1340,
+            "date": "2026-10-28",
+            "patients": [
+              {
+                "id": "INV-8-P1",
+                "name": "مريض 8",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-36",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 380,
+                    "tariffUnit": 380,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-32",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 1,
+                    "billedUnit": 180,
+                    "tariffUnit": 180,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-8"
+          }
+        ],
         "billed": 1340,
         "approved": 1139,
-        "eligible": 1340
+        "eligible": 1340,
+        "diagnosis": "L30",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0009",
@@ -1079,12 +1513,73 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           {
             "id": "INV-9",
             "amount": 1460,
-            "date": "2026-10-29"
+            "date": "2026-10-29",
+            "patients": [
+              {
+                "id": "INV-9-P1",
+                "name": "مريض 9",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-32",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 1,
+                    "billedUnit": 180,
+                    "tariffUnit": 180,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-36",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 380,
+                    "tariffUnit": 380,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-39",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 530,
+                    "tariffUnit": 530,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-9"
           }
         ],
         "billed": 1460,
         "approved": 0,
-        "eligible": 1460
+        "eligible": 1460,
+        "diagnosis": "H10",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0010",
@@ -1104,10 +1599,77 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
           "date": "2026-10-30"
         },
         "batchId": "BTH-2026-010",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-10",
+            "amount": 1580,
+            "date": "2026-10-30",
+            "patients": [
+              {
+                "id": "INV-10-P1",
+                "name": "مريض 10",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-19",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 510,
+                    "tariffUnit": 510,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-18",
+                    "name": "حشوة أسنان",
+                    "category": "أسنان",
+                    "qty": 1,
+                    "billedUnit": 460,
+                    "tariffUnit": 460,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-15",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 2,
+                    "billedUnit": 310,
+                    "tariffUnit": 310,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-10"
+          }
+        ],
         "billed": 1580,
         "approved": 0,
-        "eligible": 1580
+        "eligible": 1580,
+        "diagnosis": "I10",
+        "diagnosisSecondary": "E11"
       }
     ],
     "trash": [
@@ -1156,18 +1718,173 @@ FILE: /home/administrator/TPA/TPA_Pro_TestData.json
       {
         "id": "DR-1",
         "name": "استقطاع 10%",
-        "type": "percentage",
-        "value": 10,
-        "condition": "always",
-        "active": true
+        "type": "custom",
+        "action": "reduce_by_percent",
+        "rate": 10,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": []
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "always",
+        "tiers": null,
+        "tiersEnabled": false
       },
       {
         "id": "DR-2",
         "name": "حد أقصى 500",
-        "type": "cap",
-        "value": 500,
-        "condition": "amount>1000",
-        "active": true
+        "type": "custom",
+        "action": "cap_to_amount",
+        "rate": 500,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": []
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "amount>1000",
+        "tiers": null,
+        "tiersEnabled": false
+      },
+      {
+        "id": "DR-FREQ",
+        "name": "حد التكرار (تحليل دم كل 14 يوم)",
+        "type": "custom",
+        "action": "reject_line",
+        "rate": 100,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": [
+            {
+              "mode": "frequency",
+              "scope": "patient",
+              "field": "line.code",
+              "compareOp": "gt",
+              "compareValue": 1,
+              "windowDays": 14
+            }
+          ]
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "رفض تكرار نفس التحليل خلال 14 يوم",
+        "tiers": null,
+        "tiersEnabled": false
+      },
+      {
+        "id": "DR-BUNDLE",
+        "name": "كشف تفكيك (لوحة فحوصات)",
+        "type": "custom",
+        "action": "reduce_by_percent",
+        "rate": 20,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": [
+            {
+              "mode": "bundle",
+              "scope": "invoice",
+              "components": [
+                "SVC-12",
+                "SVC-13"
+              ],
+              "field": "line.code"
+            }
+          ]
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "خصم 20% عند تفكيك لوحة فحوصات",
+        "tiers": null,
+        "tiersEnabled": false
+      },
+      {
+        "id": "DR-DX",
+        "name": "توافق تشخيصي (I10)",
+        "type": "custom",
+        "action": "reject_line",
+        "rate": 100,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": [
+            {
+              "mode": "diagnosis_match",
+              "field": "claim.diagnosis",
+              "value": "J45,E11",
+              "op": "in"
+            }
+          ]
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "رفض خدمات أمراض القلب لتشخيصات غير متوافقة",
+        "tiers": null,
+        "tiersEnabled": false
       }
     ],
     "paProcedures": [
@@ -1305,6 +2022,7 @@ FILE: /home/administrator/TPA/index.html
 <script src="js/render-3.js"></script>
 <script src="js/render-4.js"></script>
 <script src="js/review-state.js"></script>
+<script src="js/review-ui.js"></script>
 <script src="js/review-bind.js"></script>
 <script src="js/editors.js"></script>
 <script src="js/item-editor.js"></script>
@@ -3438,6 +4156,10 @@ function computePatient(pat, claim, refDate, invoice){
       l._contractRejected = true;
       l._contractRate = 0;
       l.lineBaseAfterContract = 0;
+      const _key = l._manualEntry ? 'not-in-tariff' : (isServiceCovered(_ctx, l.code) ? 'not-in-tariff' : 'not-covered');
+      l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason(_key, { claim, patient: pat, invoice: invoice || null, line: l }) : null;
+      l._legalReason = l._legalDeduction;
+      l.legalDeduction = l._legalDeduction;
       return;
     }
     const rate = getContractRateForService(_ctx, l.code);
@@ -3498,18 +4220,31 @@ function computePatient(pat, claim, refDate, invoice){
       l._autoRuleRate = 0;
       l._appliedRuleIds = ['_maxlabs'];
       l.note = 'تجاوز حد التحاليل';
+       l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('max-labs-exceeded', { claim, patient: pat, invoice: invoice || null, line: l, maxLabs: (typeof REVIEW_RULES !== 'undefined' ? REVIEW_RULES.maxLabsPerVisit : 0) }) : null;
+       l._legalReason = l._legalDeduction;
+       l.legalDeduction = l._legalDeduction;
       return;
     }
     if(l._overrideMode === 'manual' && l._manualValue !== null && l._manualValue !== undefined){
       l.approved = Math.max(0, Math.min(l.qty*l.billedUnit, Number(l._manualValue)||0));
     } else if(l._overrideMode === 'reverted'){ l.approved = l.lineBase; }
     else { l.approved = l._autoApproved; }
+    if (!l._contractRejected && !l._maxlabsForced && !l.paRejected && !l._legalDeduction) {
+      const _billed = (Number(l.qty)||0)*(Number(l.billedUnit)||0);
+      const _tt = (l.tariffUnit !== null && l.tariffUnit !== undefined) ? (Number(l.qty)||0)*Number(l.tariffUnit) : null;
+      if (_tt !== null && _billed > _tt + 0.01) {
+        l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('price-exceeds', { claim, patient: pat, invoice: invoice || null, line: l, diff: _billed - _tt }) : null;
+      } else if ((Number(l._contractRate)||0) > 0) {
+        l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('contract-discount', { claim, patient: pat, invoice: invoice || null, line: l, rate: l._contractRate }) : null;
+      }
+      if (l._legalDeduction) { l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; }
+    }
   });
   if(!pat.beneficiaryType) pat.beneficiaryType = claim.type || 'employee';
   const benType = patientBeneficiaryType(pat, claim);
   const paValid = hasValidPriorApproval(claim);
   if(benType === 'retiree' && !paValid){
-    pat.lines.forEach(l => { if(lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; } });
+    pat.lines.forEach(l => { if(lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('pa-required', { claim, patient: pat, invoice: invoice || null, line: l }) : null; l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; } });
   }
   const subtotal = pat.lines.reduce((s,l)=>s+(Number(l.approved)||0), 0);
   const pctx = { ...ctx, patient: pat };
@@ -3543,6 +4278,12 @@ function computePatient(pat, claim, refDate, invoice){
   pat._copayAmt = Math.max(0, Math.min(subtotal-pat._capAmt, Math.round(finalCopay)));
   pat._final = Math.max(0, subtotal-pat._capAmt-pat._copayAmt);
   pat._beneficiaryPays = pat._capAmt + pat._copayAmt;
+  if (pat._capAmt > 0) {
+    pat._capLegal = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('coverage-cap', { claim, patient: pat, capRate: capRule ? capRule.rate : 0, capAmount: pat._capAmt }) : null;
+  }
+  if (pat._copayAmt > 0) {
+    pat._copayLegal = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('retiree-copay', { claim, patient: pat, copayRate: copayRule ? copayRule.rate : 0, copayAmount: pat._copayAmt }) : null;
+  }
   pat._refDate = refDate;
   if(pat._capMode === undefined) pat._capMode = 'auto';
   if(pat._copayMode === undefined) pat._copayMode = 'auto';
@@ -4458,6 +5199,86 @@ function detectRuleConflicts(newRule, existingRules){
   return { hasConflicts: uniq.length > 0, conflicts: uniq };
 }
 
+/* ---------- قاموس التخريج القانوني والتفسير المالي والإجرائي ---------- */
+const LEGAL_DEDUCTION_REASONS = {
+  'not-in-tariff': {
+    title: 'عدم الإدراج في لائحة الأسعار المعتمدة',
+    legalBasis: 'استناداً إلى أحكام العقد المبرم وبنود لائحة الأسعار المتفق عليها بين الطرفين.',
+    explanation: (ctx) => `تبين أن الخدمة المطلوبة (${ctx?.line?.name || ''} - رمز: ${ctx?.line?.code || ''}) غير مدرجة ضمن لائحة الأسعار المعتمدة للجهة (${ctx?.claim?.provider || ''}). يُخصم كامل المبلغ المطالب به.`
+  },
+  'not-covered': {
+    title: 'استبعاد الخدمة من جدول المنافع والتغطية التأمينية',
+    legalBasis: 'وفقاً لملحق الاستثناءات والخدمات غير المغطاة في وثيقة التغطية التأمينية المعتمدة.',
+    explanation: (ctx) => `الخدمة المقدمة (${ctx?.line?.name || ''}) صريحة الاستثناء ولا تقع ضمن نطاق الخدمات Covered Services المتفق عليها في العقد.`
+  },
+  'price-exceeds': {
+    title: 'تجاوز السقف التسعيري المحدد باللائحة',
+    legalBasis: 'طبقاً لبند التعرفة المعتمدة والسقف الأعلى المحدد للخدمة الطبية.',
+    explanation: (ctx) => `تم تعديل سعر الوحدة للخدمة (${ctx?.line?.name || ''}) من المبلغ المطالب به (${ctx?.line?.billedUnit || 0} ج.م) إلى السقف المعتمد باللائحة (${ctx?.line?.tariffUnit || 0} ج.م)، ويُخصم الفارق البالغ (${ctx?.diff || 0} ج.م).`
+  },
+  'contract-discount': {
+    title: 'تطبيق نسبة الخصم التعاقدي المباشر',
+    legalBasis: 'بناءً على بند الخصومات التجارية والتعاقدية الوارد في العقد المبرم.',
+    explanation: (ctx) => `تطبيق نسبة الخصم التعاقدي المتفق عليها (${ctx?.rate || 0}%) على إجمالي المبلغ المستحق للخدمة (${ctx?.line?.name || ''}).`
+  },
+  'pa-required': {
+    title: 'غياب الحصول على الموافقة المسبقة (Prior Authorization)',
+    legalBasis: 'وفقاً للإجراءات التنظيمية وشروط الموافقة المسبقة للخدمات والعمليات الخاصة.',
+    explanation: (ctx) => `الخدمة/الإجراء (${ctx?.line?.name || ''}) يندرج تحت قائمة الخدمات التي تتطلب الحصول على موافقة مسبقة قبل التقديم، ولم تُرفق الموافقة المعتمدة.`
+  },
+  'max-labs-exceeded': {
+    title: 'تجاوز الحد الأقصى اليومي للفحوصات المخبرية في الزيارة الواحدة',
+    legalBasis: 'استناداً إلى أدلة الممارسة الطبية وضوابط الترشيد المالي والترشيد الطبي المعتمدة للنظام.',
+    explanation: (ctx) => `تجاوز عدد الفحوصات المخبرية في الزيارة الواحدة الحد المسموح به (${ctx?.maxLabs || 0} فحوصات). تم اعتماد الفحوصات الأعلى تكلفة وخصم الفحوصات الزائدة الإضافية.`
+  },
+  'coverage-cap': {
+    title: 'تجاوز سقف التغطية المالي المسموح للمريض',
+    legalBasis: 'وفقاً لضوابط وسقوف التغطية التأمينية والحد الأقصى للمستفيدين.',
+    explanation: (ctx) => `تجاوزت مطالبة المريض (${ctx?.patient?.name || ''}) الحد الأقصى المسموح به لسقف التغطية (${ctx?.capRate || 0}%). تم تطبيق خصم السقف بمبلغ (${ctx?.capAmount || 0} ج.م).`
+  },
+  'tariff-limit': {
+    title: 'تجاوز السقف التسعيري المحدد باللائحة',
+    legalBasis: 'طبقاً لبند التعرفة المعتمدة والسقف الأعلى المحدد للخدمة الطبية.',
+    explanation: (ctx) => `تم تعديل سعر الوحدة للخدمة (${ctx?.line?.name || ''}) من المبلغ المطالب به (${ctx?.line?.billedUnit || 0} ج.م) إلى السقف المعتمد باللائحة (${ctx?.line?.tariffUnit || 0} ج.م)، ويُخصم الفارق البالغ (${ctx?.diff || 0} ج.م).`
+  },
+  'manual-entry': {
+    title: 'عدم الإدراج في لائحة الأسعار المعتمدة',
+    legalBasis: 'استناداً إلى أحكام العقد المبرم وبنود لائحة الأسعار المتفق عليها بين الطرفين.',
+    explanation: (ctx) => `تبين أن الخدمة المطلوبة (${ctx?.line?.name || ''} - رمز: ${ctx?.line?.code || ''}) غير مدرجة ضمن لائحة الأسعار المعتمدة للجهة (${ctx?.claim?.provider || ''}). يُخصم كامل المبلغ المطالب به.`
+  },
+  'retiree-copay': {
+    title: 'تطبيق نسبة التحمل المقررة لشريحة المعاشات/المتقاعدين',
+    legalBasis: 'طبقاً لجدول نفقات التحمل وشروط تغطية فئة المتقاعدين والمعاشات.',
+    explanation: (ctx) => `تطبيق نسبة تحمل المتقاعد المقررة (${ctx?.copayRate || 0}%) على صافي المطالبة القابلة للتغطية، بمبلغ تحمل قدره (${ctx?.copayAmount || 0} ج.م).`
+  }
+};
+
+function generateLegalDeductionReason(ruleKey, context) {
+  context = context || {};
+  const template = LEGAL_DEDUCTION_REASONS[ruleKey];
+  if (!template) {
+    const fallbackExpl = context.note || 'تم تطبيق الاستقطاع بناءً على قواعد التدقيق الآلي.';
+    const fallback = {
+      title: 'استقطاع مالي وتعديل تعاقدي',
+      legalBasis: 'بناءً على أحكام المراجعة المالية والتدقيق التعاقدي.',
+      explanation: fallbackExpl,
+      fullText: `[سبب الخصم]: استقطاع مالي وتعديل تعاقدي\n[المستند القانوني]: بناءً على أحكام المراجعة المالية والتدقيق التعاقدي.\n[التفسير الإجرائي]: ${fallbackExpl}`,
+      formattedText: `[السبب]: استقطاع مالي وتعديل تعاقدي | [السند]: بناءً على أحكام المراجعة المالية والتدقيق التعاقدي. | [التفسير]: ${fallbackExpl}`
+    };
+    return fallback;
+  }
+  let explanationText;
+  try { explanationText = template.explanation(context); }
+  catch (e) { explanationText = context.note || 'تم تطبيق الاستقطاع بناءً على قواعد التدقيق الآلي.'; }
+  return {
+    title: template.title,
+    legalBasis: template.legalBasis,
+    explanation: explanationText,
+    fullText: `[سبب الخصم]: ${template.title}\n[المستند القانوني]: ${template.legalBasis}\n[التفسير الإجرائي]: ${explanationText}`,
+    formattedText: `[السبب]: ${template.title} | [السند]: ${template.legalBasis} | [التفسير]: ${explanationText}`
+  };
+}
+
 ================================================================================
 FILE: /home/administrator/TPA/js/engine-validate.js
 ================================================================================
@@ -4636,6 +5457,20 @@ function validateLine(line, ctx) {
   const lesser = tariffTotal !== null ? Math.min(billedTotal, tariffTotal) : billedTotal;
   const afterContract = covered ? Math.round(lesser * (1 - contractRate / 100)) : 0;
 
+  function _mapLegalKey(r){ 
+    if(r === 'not-in-tariff') return 'not-in-tariff';
+    if(r === 'not-covered') return 'not-covered';
+    if(r === 'manual-entry') return 'not-in-tariff';
+    if(r && String(r).startsWith('pa')) return 'pa-required';
+    if(r === 'tariff-limit') return 'price-exceeds';
+    if(r === 'contract-discount') return 'contract-discount';
+    return r;
+  }
+  const _primaryReason = hasReject ? failed.find(f => VALIDATION_REASONS[f]?.severity === 'reject') : (hasAttention ? failed.find(f => VALIDATION_REASONS[f]?.severity === 'attention') : (reductions.length ? reductions[0] : null));
+  const _legalKey = _primaryReason ? _mapLegalKey(_primaryReason) : null;
+  const _legalDeduction = (_legalKey && typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason(_legalKey, { claim, patient, invoice, line, diff: billedTotal - (tariffTotal !== null ? tariffTotal : billedTotal), maxLabs: null }) : null;
+  const _legalReasons = [...failed, ...(reductions||[])].map(_mapLegalKey).map(k => (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason(k, { claim, patient, invoice, line }) : null).filter(Boolean);
+
   const _res = {
     passed,
     failed,
@@ -4650,6 +5485,10 @@ function validateLine(line, ctx) {
     contractRate,
     covered,
     afterContract,
+    legalKey: _legalKey,
+    legalReason: _legalDeduction,
+    legalDeduction: _legalDeduction,
+    legalReasons: _legalReasons,
   };
   if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_res)));
   return _res;
@@ -5340,9 +6179,9 @@ const MODAL_REVIEW = `
         <div class="modal-body">
           <div class="rv-context-bar" id="rvContextBar">—</div>
           <div class="rv-tabs" role="tablist">
-            <button type="button" class="rv-tab active" role="tab" aria-selected="true" data-rv-tab="input">1. الإدخال</button>
-            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="exceptions">2. الاستثناءات <span class="rv-tab-count" id="rvExcCount">0</span></button>
-            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="final">3. المراجعة النهائية</button>
+            <button type="button" class="rv-tab active" role="tab" aria-selected="true" data-rv-tab="input">📋 1. الإدخال والتدقيق الآلي</button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="exceptions">⚠️ 2. الاستثناءات المعلقة (<span id="rvExcCount">0</span>)</button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="final">⚖️ 3. القرار والتخريج القانوني النهائي</button>
           </div>
           <div class="rv-tab-panel" id="rvTabInput" role="tabpanel">
           <button type="button" class="btn-sm ghost" id="rvViewTimelineBtn" style="width:100%;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">
@@ -6779,6 +7618,9 @@ function saveLineEditor() {
   data._checksFailed = validation.failed;
   data._flaggedReasons = [...validation.failed, ...(validation.reductions || [])];
   data._suggestedAction = validation.suggestedAction;
+  data._legalDeduction = validation.legalDeduction || validation.legalReason || null;
+  data._legalReason = data._legalDeduction;
+  data.legalDeduction = data._legalDeduction;
   data._contractRate = validation.contractRate;
   data._contractCovered = validation.covered;
   data.approved = validation.afterContract;
@@ -8342,6 +9184,7 @@ function bindReviewModal(){
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
     const tab = e.target.closest('[data-inv-idx]'); if(!tab) return;
     rvActiveInvoiceIdx = Number(tab.dataset.invIdx); rvActivePatientIdx = 0; renderReviewInvoices();
+    if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0);
   });
 
   // لوحة الفاتورة
@@ -8352,7 +9195,7 @@ function bindReviewModal(){
     if(e.target.closest('[data-edit-invoice]')){ openInvoiceEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-delete-invoice]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return; showDelete('حذف الفاتورة', `سيتم حذف "${inv.number||inv.id}".`, () => { markSessionDirty(); workingInvoices.splice(rvActiveInvoiceIdx,1); rvActiveInvoiceIdx = Math.max(0, rvActiveInvoiceIdx-1); rvActivePatientIdx = 0; renderReviewInvoices(); }); return; }
     if(e.target.closest('[data-edit-patient]')){ openPatientEditor(rvActiveInvoiceIdx, rvActivePatientIdx); return; }
-    const patTab = e.target.closest('[data-pat-idx]'); if(patTab){ rvActivePatientIdx = Number(patTab.dataset.patIdx); renderActiveInvoice(); return; }
+    const patTab = e.target.closest('[data-pat-idx]'); if(patTab){ rvActivePatientIdx = Number(patTab.dataset.patIdx); renderActiveInvoice(); if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0); return; }
     const editL = e.target.closest('[data-edit-line]'); if(editL){ openLineEditor(rvActivePatientIdx, Number(editL.dataset.editLine)); return; }
     const delL = e.target.closest('[data-del-line]'); if(delL){ const inv = workingInvoices[rvActiveInvoiceIdx]; const pat = inv&&inv.patients?inv.patients[rvActivePatientIdx]:null; if(!pat) return; const idx = Number(delL.dataset.delLine); showDelete('حذف البند','سيتم حذف هذا البند.', () => { markSessionDirty(); pat.lines.splice(idx,1); renderActiveInvoice(); recalcReview(); }); return; }
 
@@ -8649,7 +9492,7 @@ function openReview(id){
   renderReviewInvoices();
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
   const s = upsertCurrentSession();
-  if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); }
+  if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); if(typeof startSessionTimeTracker === 'function') startSessionTimeTracker(s); }
   clearSessionDirty();
   $('#reviewModal').classList.add('open'); document.body.style.overflow = 'hidden';
   updateSessionsBadge();
@@ -8673,6 +9516,7 @@ function _doCloseReview(discard){
     const s = upsertCurrentSession();
     if(s){ s.status = 'paused'; persistSessions(); }
   }
+  if(typeof stopSessionTimeTracker === 'function') stopSessionTimeTracker();
   activeSessionId = null;
   clearSessionDirty();
   $('#reviewModal').classList.remove('open');
@@ -8711,6 +9555,42 @@ function newPatientId(inv){
   return inv.id+'-P'+(m+1);
 }
 function _hasUnsavedChanges(){ return _sessionDirty === true; }
+
+================================================================================
+FILE: /home/administrator/TPA/js/review-ui.js
+================================================================================
+/* review-ui.js — واجهة تبويبات المراجعة */
+function renderReviewTabsLayout() {
+  const container = document.getElementById('reviewModalContainer');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="rv-tabs" role="tablist">
+      <button type="button" class="rv-tab active" data-tab="input" onclick="switchReviewTab('input')">
+        📋 1. الإدخال والتدقيق الآلي
+      </button>
+      <button type="button" class="rv-tab" data-tab="exceptions" onclick="switchReviewTab('exceptions')">
+        ⚠️ 2. الاستثناءات المعلقة (<span id="rvExcCountBadge">0</span>)
+      </button>
+      <button type="button" class="rv-tab" data-tab="final" onclick="switchReviewTab('final')">
+        ⚖️ 3. القرار والتخريج القانوني النهائي
+      </button>
+    </div>
+    <div id="rvTabContentArea" class="rv-tab-content"></div>
+  `;
+}
+
+function switchReviewTab(tabName) {
+  document.querySelectorAll('.rv-tab').forEach(t => t.classList.remove('active'));
+  const btn = document.querySelector(`[data-tab="${tabName}"]`);
+  if (btn) btn.classList.add('active');
+  const panels = document.querySelectorAll('.rv-tab-panel');
+  panels.forEach(p => { p.style.display = 'none'; });
+  const map = { input: 'rvTabInput', exceptions: 'rvTabExceptions', final: 'rvTabFinal' };
+  const panel = document.getElementById(map[tabName] || '');
+  if (panel) panel.style.display = '';
+  if (tabName === 'exceptions' && typeof renderExceptions === 'function') renderExceptions();
+  if (tabName === 'final' && typeof renderFinalSummary === 'function') renderFinalSummary();
+}
 
 ================================================================================
 FILE: /home/administrator/TPA/js/rule-wizard-2.js
@@ -9686,6 +10566,10 @@ let workSessions = [];
 let activeSessionId = null;
 let sessionsFilter = 'all';
 let sessionsSearch = '';
+let currentSessionTimer = null;
+let lastUserActivityTimestamp = Date.now();
+let activeSessionTimer = null;
+let lastActivityTime = Date.now();
 function genSessionId(){ return 'SES-'+Date.now().toString(36).toUpperCase()+'-'+Math.floor(Math.random()*1000); }
 function loadSessions(){
   try {
@@ -9752,6 +10636,8 @@ function resumeSession(sessionId){
   rvActivePatientIdx = s.rvActivePatientIdx || 0;
   activeSessionId = s.id;
   s.status = 'active'; s.lastActiveAt = new Date().toISOString(); persistSessions();
+  if(s.lastSavedPoint){ rvActiveInvoiceIdx = s.lastSavedPoint.invoiceIdx || rvActiveInvoiceIdx || 0; rvActivePatientIdx = s.lastSavedPoint.patientIdx || rvActivePatientIdx || 0; }
+  if(typeof startSessionTimeTracker === 'function') startSessionTimeTracker(s);
   $('#rvSub').textContent = `${activeClaim.id} • ${activeClaim.patient}`;
   $('#rvId').value = activeClaim.id; $('#rvDate').value = activeClaim.date||'';
   $('#rvReceivedNumber').value = activeClaim.receivedNumber||'—'; $('#rvReceivedDate').value = activeClaim.receivedDate||'—';
@@ -9819,6 +10705,99 @@ function renderSessions(){
     box.innerHTML = `<div class="session-empty"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M6.5 3v4M17.5 3v4M2.5 10h19"/></svg><p>${workSessions.length?'لا نتائج':'لا جلسات'}</p><span>${workSessions.length?'جرّب آخر':'ابدأ بمراجعة'}</span></div>`;
   } else box.innerHTML = `<div class="sessions-grid">${filtered.map(renderSessionCard).join('')}</div>`;
   updateSessionsBadge();
+}
+
+/* ---------- تتبع النشاط الفعلي والحفظ التلقائي ---------- */
+(function(){
+  const syncActivity = () => { lastUserActivityTimestamp = Date.now(); lastActivityTime = Date.now(); };
+  ['click', 'keydown', 'mousemove', 'scroll'].forEach(evt => {
+    try { window.addEventListener(evt, syncActivity, { passive: true }); } catch(e){}
+  });
+})();
+
+function startSessionTimeTracker(session) {
+  if (currentSessionTimer) clearInterval(currentSessionTimer);
+  if (activeSessionTimer) clearInterval(activeSessionTimer);
+  if (!session) return;
+  if (!session.elapsedSeconds) session.elapsedSeconds = 0;
+  if (!session.lastSavedPoint) session.lastSavedPoint = { invoiceIdx: 0, patientIdx: 0, lineIdx: 0 };
+  currentSessionTimer = setInterval(() => {
+    const isUserActive = (Date.now() - lastUserActivityTimestamp) < 60000;
+    const isWindowFocused = !document.hidden;
+    if (isUserActive && isWindowFocused && session.status === 'active') {
+      session.elapsedSeconds += 1;
+      updateSessionTimerUI(session.elapsedSeconds);
+      updateTimerUI(session.elapsedSeconds);
+    }
+  }, 1000);
+  activeSessionTimer = currentSessionTimer;
+}
+function initActiveSessionTracker(session){ return startSessionTimeTracker(session); }
+
+function stopSessionTimeTracker() {
+  if (currentSessionTimer) { clearInterval(currentSessionTimer); currentSessionTimer = null; }
+  if (activeSessionTimer) { clearInterval(activeSessionTimer); activeSessionTimer = null; }
+}
+function stopActiveSessionTracker(){ return stopSessionTimeTracker(); }
+
+function updateCurrentReviewProgressPoint(claimId, invoiceIdx, patientIdx, lineIdx) {
+  let session = workSessions.find(s => s.claimId === claimId && s.status === 'active');
+  if (!session) return;
+  session.lastSavedPoint = {
+    invoiceIdx: invoiceIdx || 0,
+    patientIdx: patientIdx || 0,
+    lineIdx: lineIdx || 0,
+    timestamp: new Date().toISOString()
+  };
+  session.updatedAt = new Date().toISOString();
+  persistSessions();
+}
+function saveProgressPoint(claimId, invoiceIdx, patientIdx, lineIdx) {
+  return updateCurrentReviewProgressPoint(claimId, invoiceIdx, patientIdx, lineIdx);
+}
+
+function resumeSessionFromLastPoint(sessionId) {
+  const session = workSessions.find(s => s.id === sessionId);
+  if (!session) return;
+  workSessions.forEach(s => { if (s.status === 'active') s.status = 'paused'; });
+  session.status = 'active';
+  activeSessionId = session.id;
+  try { openReview(session.claimId); } catch(e){}
+  if (session.lastSavedPoint) {
+    rvActiveInvoiceIdx = session.lastSavedPoint.invoiceIdx || 0;
+    rvActivePatientIdx = session.lastSavedPoint.patientIdx || 0;
+    try { renderReviewInvoices(); } catch(e){}
+  }
+  startSessionTimeTracker(session);
+  try { showSuccess('تم استئناف الجلسة', `الوقت المستغرق حتى الآن: ${formatElapsedTime(session.elapsedSeconds || 0)}`); } catch(e){}
+}
+
+function formatElapsedTime(seconds) {
+  seconds = seconds || 0;
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hrs > 0) return `${hrs} ساعة و ${mins} دقيقة`;
+  return `${mins} دقيقة و ${secs} ثانية`;
+}
+
+function updateSessionTimerUI(seconds) {
+  const timerEl = document.getElementById('rvSessionTimerDisplay');
+  if (timerEl) {
+    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(seconds % 60).padStart(2, '0');
+    timerEl.textContent = `⏱️ وقت المراجعة الفعلي: ${hrs}:${mins}:${secs}`;
+  }
+}
+function updateTimerUI(seconds) {
+  const el = document.getElementById('rvSessionTimerDisplay');
+  if (el) {
+    const m = String(Math.floor((seconds||0) / 60)).padStart(2, '0');
+    const s = String((seconds||0) % 60).padStart(2, '0');
+    el.textContent = `⏱️ وقت العمل الفعلي: ${m}:${s}`;
+  }
+  updateSessionTimerUI(seconds);
 }
 
 ================================================================================

@@ -173,6 +173,20 @@ function validateLine(line, ctx) {
   const lesser = tariffTotal !== null ? Math.min(billedTotal, tariffTotal) : billedTotal;
   const afterContract = covered ? Math.round(lesser * (1 - contractRate / 100)) : 0;
 
+  function _mapLegalKey(r){ 
+    if(r === 'not-in-tariff') return 'not-in-tariff';
+    if(r === 'not-covered') return 'not-covered';
+    if(r === 'manual-entry') return 'not-in-tariff';
+    if(r && String(r).startsWith('pa')) return 'pa-required';
+    if(r === 'tariff-limit') return 'price-exceeds';
+    if(r === 'contract-discount') return 'contract-discount';
+    return r;
+  }
+  const _primaryReason = hasReject ? failed.find(f => VALIDATION_REASONS[f]?.severity === 'reject') : (hasAttention ? failed.find(f => VALIDATION_REASONS[f]?.severity === 'attention') : (reductions.length ? reductions[0] : null));
+  const _legalKey = _primaryReason ? _mapLegalKey(_primaryReason) : null;
+  const _legalDeduction = (_legalKey && typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason(_legalKey, { claim, patient, invoice, line, diff: billedTotal - (tariffTotal !== null ? tariffTotal : billedTotal), maxLabs: null }) : null;
+  const _legalReasons = [...failed, ...(reductions||[])].map(_mapLegalKey).map(k => (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason(k, { claim, patient, invoice, line }) : null).filter(Boolean);
+
   const _res = {
     passed,
     failed,
@@ -187,6 +201,10 @@ function validateLine(line, ctx) {
     contractRate,
     covered,
     afterContract,
+    legalKey: _legalKey,
+    legalReason: _legalDeduction,
+    legalDeduction: _legalDeduction,
+    legalReasons: _legalReasons,
   };
   if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_res)));
   return _res;
