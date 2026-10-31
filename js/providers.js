@@ -78,7 +78,7 @@ function openProviderModal(id){
     $('#pvEmail').value = p.email||''; $('#pvNotes').value = p.notes||'';
     (el => { if (el) el.style.display = 'block'; })($('#deleteProvider'));
   } else {
-    ['pvName','pvContact','pvPhone','pvEmail','pvNotes'].forEach(x => { const el = $('#'+x); if(el) el.value = ''; });
+    ['pvName','pvContact','pvPhone','pvEmail','pvNotes'].forEach(x => { const el = $('#'+x); if(el) el.value = ''; }); const ac = $('#pvAutoContract'); if(ac) ac.checked = false;
     $('#pvType').value = 'مستشفى'; (el => { if (el) el.style.display = 'none'; })($('#deleteProvider'));
   }
   const s = $('#pvProvinceSearch'); if(s) s.value = '';
@@ -88,12 +88,16 @@ function openProviderModal(id){
 function closeProviderModal(){ if(!$('#providerModal').classList.contains('open')) return; $('#providerModal').classList.remove('open'); _unlockBodyScroll(); editingProviderId = null; }
 function saveProvider(){
   const name = $('#pvName').value.trim();
-  if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
+  if(!name){ showWarning('تنبيه','أدخل اسم الجهة'); return; }
   if(providers.find(p => p.name === name && p.id !== editingProviderId)){ showWarning('تنبيه','الاسم مستخدم'); return; }
+  const email = $('#pvEmail').value.trim();
+  if(email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){ showWarning('تنبيه','بريد إلكتروني غير صالح'); return; }
+  const phone = $('#pvPhone').value.trim();
+  if(phone && !/^\\+?[0-9\\s-]{7,}$/.test(phone)){ showWarning('تنبيه','رقم هاتف غير صالح'); return; }
   const provinceList = [...selectedProvinces];
   const data = { name, type:$('#pvType').value, province: provinceList, city: provinceList.join('، '), contact:$('#pvContact').value.trim(), phone:$('#pvPhone').value.trim(), email:$('#pvEmail').value.trim(), notes:$('#pvNotes').value.trim() };
   if(editingProviderId){ const p = getProviderById(editingProviderId); if(!p) return; const old = p.name; Object.assign(p, data); if(old !== name) renameProviderClaims(old, name); showSuccess('تم','تم التحديث'); }
-  else { const maxN = providers.reduce((m,p)=>{ const n = parseInt(p.id.split('-')[1], 10); return Math.max(m, isNaN(n)?0:n); }, 0); providers.push({ id:'PRV-'+String(maxN+1).padStart(3,'0'), ...data }); showSuccess('تم','تمت الإضافة'); }
+  else { const maxN = providers.reduce((m,p)=>{ const n = parseInt(p.id.split('-')[1], 10); return Math.max(m, isNaN(n)?0:n); }, 0); const newId = 'PRV-'+String(maxN+1).padStart(3,'0'); providers.push({ id:newId, ...data }); if($('#pvAutoContract')?.checked){ const today = daysFromNow(0); const nid = nextContractNumber(today); contracts.push({ id:nid, providerId:newId, startDate:today, endDate:daysFromNow(365), discountRate:0, paymentTerms:'30 يوم', coveredServices:'جميع الخدمات', autoRenew:true, status:'active', notes:'عقد تلقائي' }); syncContractToProvider({ id:nid, providerId:newId }); } showSuccess('تم','تمت الإضافة'); }
   closeProviderModal(); renderAll();
   if(document.getElementById('batchModal')?.classList.contains('open')){ const sel = document.getElementById('btProvider'); if(sel && providers.length){ sel.innerHTML = providers.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${p.city?' — '+escapeHtml(p.city):''}</option>`).join(''); sel.value = providers[providers.length-1].id; } }
 }
