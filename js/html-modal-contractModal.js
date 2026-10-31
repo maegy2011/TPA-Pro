@@ -7,7 +7,7 @@ const MODAL_CONTRACT = `
         <div class="modal-body"><div class="form-grid">
           <div class="fg full"><label>الجهة *</label><select id="ctrProvider"></select></div>
           <div class="fg"><label>رقم العقد</label><input id="ctrNumber" readonly></div>
-          <div class="fg"><label>الحالة</label><select id="ctrStatus"><option value="active">نشط</option><option value="cancelled">ملغى</option></select></div>
+          <div class="fg"><label>الحالة</label><select id="ctrStatus"><option value="active">مفعل</option><option value="under-review">تحت الفحص</option><option value="pending">معلق</option><option value="terminated">مفسوخ</option></select></div>
           <div class="fg"><label>البداية *</label><input id="ctrStart" type="date"></div>
           <div class="fg"><label>النهاية *</label><input id="ctrEnd" type="date"></div>
           <div class="fg"><label>الخصم %</label><input id="ctrDiscount" type="number" min="0" max="100"></div>

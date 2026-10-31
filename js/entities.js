@@ -6,7 +6,7 @@ function getClaimById(id){ return claims.find(c=>c.id===id); }
 function getContractByProvider(pid){ return contracts.find(c=>c.providerId===pid); }
 function effectiveContractStatus(c){
   if(!c) return 'pending';
-  if(c.status === 'cancelled') return 'cancelled';
+  if(c.status === 'terminated') return 'terminated';
   if(!c.startDate || !c.endDate) return 'upcoming';
   const now = new Date(), s = new Date(c.startDate), e = new Date(c.endDate);
   if(now < s) return 'upcoming';
