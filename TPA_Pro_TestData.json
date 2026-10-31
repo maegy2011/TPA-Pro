@@ -1,4 +1,4 @@
-﻿{
+{
   "app": "TPA Pro",
   "version": "1.0",
   "type": "full-backup",
@@ -817,12 +817,60 @@
           {
             "id": "INV-1",
             "amount": 500,
-            "date": "2026-10-21"
+            "date": "2026-10-21",
+            "patients": [
+              {
+                "id": "INV-1-P1",
+                "name": "مريض 1",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-12",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 1,
+                    "billedUnit": 160,
+                    "tariffUnit": 160,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-15",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 1,
+                    "billedUnit": 310,
+                    "tariffUnit": 310,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-1"
           }
         ],
         "billed": 500,
         "approved": 0,
-        "eligible": 500
+        "eligible": 500,
+        "diagnosis": "I10",
+        "diagnosisSecondary": "E11"
       },
       {
         "id": "CLM-0002",
@@ -842,10 +890,64 @@
           "date": ""
         },
         "batchId": "BTH-2026-002",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-2",
+            "amount": 620,
+            "date": "2026-10-22",
+            "patients": [
+              {
+                "id": "INV-2-P1",
+                "name": "مريض 2",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-19",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 510,
+                    "tariffUnit": 510,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-12",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 2,
+                    "billedUnit": 160,
+                    "tariffUnit": 160,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-2"
+          }
+        ],
         "billed": 620,
         "approved": 0,
-        "eligible": 620
+        "eligible": 620,
+        "diagnosis": "J45",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0003",
@@ -869,12 +971,60 @@
           {
             "id": "INV-3",
             "amount": 740,
-            "date": "2026-10-23"
+            "date": "2026-10-23",
+            "patients": [
+              {
+                "id": "INV-3-P1",
+                "name": "مريض 3",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-18",
+                    "name": "حشوة أسنان",
+                    "category": "أسنان",
+                    "qty": 1,
+                    "billedUnit": 460,
+                    "tariffUnit": 460,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-16",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 360,
+                    "tariffUnit": 360,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-3"
           }
         ],
         "billed": 740,
         "approved": 629,
-        "eligible": 740
+        "eligible": 740,
+        "diagnosis": "E11",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0004",
@@ -894,10 +1044,64 @@
           "date": "2026-10-24"
         },
         "batchId": "BTH-2026-004",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-4",
+            "amount": 860,
+            "date": "2026-10-24",
+            "patients": [
+              {
+                "id": "INV-4-P1",
+                "name": "مريض 4",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-23",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 2,
+                    "billedUnit": 220,
+                    "tariffUnit": 220,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-29",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 520,
+                    "tariffUnit": 520,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-4"
+          }
+        ],
         "billed": 860,
         "approved": 0,
-        "eligible": 860
+        "eligible": 860,
+        "diagnosis": "M54",
+        "diagnosisSecondary": "R51"
       },
       {
         "id": "CLM-0005",
@@ -921,12 +1125,60 @@
           {
             "id": "INV-5",
             "amount": 980,
-            "date": "2026-10-25"
+            "date": "2026-10-25",
+            "patients": [
+              {
+                "id": "INV-5-P1",
+                "name": "مريض 5",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-28",
+                    "name": "حشوة أسنان",
+                    "category": "أسنان",
+                    "qty": 2,
+                    "billedUnit": 470,
+                    "tariffUnit": 470,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-23",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 2,
+                    "billedUnit": 220,
+                    "tariffUnit": 220,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-5"
           }
         ],
         "billed": 980,
         "approved": 0,
-        "eligible": 980
+        "eligible": 980,
+        "diagnosis": "K21",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0006",
@@ -946,10 +1198,77 @@
           "date": ""
         },
         "batchId": "BTH-2026-006",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-6",
+            "amount": 1100,
+            "date": "2026-10-26",
+            "patients": [
+              {
+                "id": "INV-6-P1",
+                "name": "مريض 6",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-23",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 1,
+                    "billedUnit": 220,
+                    "tariffUnit": 220,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-26",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 370,
+                    "tariffUnit": 370,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-25",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 2,
+                    "billedUnit": 320,
+                    "tariffUnit": 320,
+                    "tariffId": "TAR-002",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-6"
+          }
+        ],
         "billed": 1100,
         "approved": 0,
-        "eligible": 1100
+        "eligible": 1100,
+        "diagnosis": "R51",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0007",
@@ -973,12 +1292,73 @@
           {
             "id": "INV-7",
             "amount": 1220,
-            "date": "2026-10-27"
+            "date": "2026-10-27",
+            "patients": [
+              {
+                "id": "INV-7-P1",
+                "name": "مريض 7",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-35",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 1,
+                    "billedUnit": 330,
+                    "tariffUnit": 330,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-39",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 1,
+                    "billedUnit": 530,
+                    "tariffUnit": 530,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-33",
+                    "name": "أشعة سينية",
+                    "category": "أشعة",
+                    "qty": 1,
+                    "billedUnit": 230,
+                    "tariffUnit": 230,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-7"
           }
         ],
         "billed": 1220,
         "approved": 0,
-        "eligible": 1220
+        "eligible": 1220,
+        "diagnosis": "N39",
+        "diagnosisSecondary": "H10"
       },
       {
         "id": "CLM-0008",
@@ -998,10 +1378,64 @@
           "date": ""
         },
         "batchId": "BTH-2026-008",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-8",
+            "amount": 1340,
+            "date": "2026-10-28",
+            "patients": [
+              {
+                "id": "INV-8-P1",
+                "name": "مريض 8",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-36",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 380,
+                    "tariffUnit": 380,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-32",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 1,
+                    "billedUnit": 180,
+                    "tariffUnit": 180,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-8"
+          }
+        ],
         "billed": 1340,
         "approved": 1139,
-        "eligible": 1340
+        "eligible": 1340,
+        "diagnosis": "L30",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0009",
@@ -1025,12 +1459,73 @@
           {
             "id": "INV-9",
             "amount": 1460,
-            "date": "2026-10-29"
+            "date": "2026-10-29",
+            "patients": [
+              {
+                "id": "INV-9-P1",
+                "name": "مريض 9",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-32",
+                    "name": "تحليل دم",
+                    "category": "مختبر",
+                    "qty": 1,
+                    "billedUnit": 180,
+                    "tariffUnit": 180,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-36",
+                    "name": "طوارئ",
+                    "category": "طوارئ",
+                    "qty": 1,
+                    "billedUnit": 380,
+                    "tariffUnit": 380,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-39",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 530,
+                    "tariffUnit": 530,
+                    "tariffId": "TAR-003",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "employee",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-9"
           }
         ],
         "billed": 1460,
         "approved": 0,
-        "eligible": 1460
+        "eligible": 1460,
+        "diagnosis": "H10",
+        "diagnosisSecondary": ""
       },
       {
         "id": "CLM-0010",
@@ -1050,10 +1545,77 @@
           "date": "2026-10-30"
         },
         "batchId": "BTH-2026-010",
-        "invoices": [],
+        "invoices": [
+          {
+            "id": "INV-10",
+            "amount": 1580,
+            "date": "2026-10-30",
+            "patients": [
+              {
+                "id": "INV-10-P1",
+                "name": "مريض 10",
+                "nationalId": "",
+                "lines": [
+                  {
+                    "code": "SVC-19",
+                    "name": "أخرى خدمة",
+                    "category": "أخرى",
+                    "qty": 2,
+                    "billedUnit": 510,
+                    "tariffUnit": 510,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  },
+                  {
+                    "code": "SVC-18",
+                    "name": "حشوة أسنان",
+                    "category": "أسنان",
+                    "qty": 1,
+                    "billedUnit": 460,
+                    "tariffUnit": 460,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": false
+                  },
+                  {
+                    "code": "SVC-15",
+                    "name": "دواء",
+                    "category": "أدوية",
+                    "qty": 2,
+                    "billedUnit": 310,
+                    "tariffUnit": 310,
+                    "tariffId": "TAR-001",
+                    "approved": null,
+                    "note": "",
+                    "_manualEntry": false,
+                    "requiresPriorApproval": true
+                  }
+                ],
+                "beneficiaryType": "dependent",
+                "coverageCapOverride": null,
+                "retireeCopayOverride": null
+              }
+            ],
+            "documents": {
+              "patientId": true,
+              "referral": true,
+              "medicalReport": true,
+              "priorApprovalDoc": true
+            },
+            "type": "outpatient",
+            "number": "INV-10"
+          }
+        ],
         "billed": 1580,
         "approved": 0,
-        "eligible": 1580
+        "eligible": 1580,
+        "diagnosis": "I10",
+        "diagnosisSecondary": "E11"
       }
     ],
     "trash": [
@@ -1102,18 +1664,173 @@
       {
         "id": "DR-1",
         "name": "استقطاع 10%",
-        "type": "percentage",
-        "value": 10,
-        "condition": "always",
-        "active": true
+        "type": "custom",
+        "action": "reduce_by_percent",
+        "rate": 10,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": []
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "always",
+        "tiers": null,
+        "tiersEnabled": false
       },
       {
         "id": "DR-2",
         "name": "حد أقصى 500",
-        "type": "cap",
-        "value": 500,
-        "condition": "amount>1000",
-        "active": true
+        "type": "custom",
+        "action": "cap_to_amount",
+        "rate": 500,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": []
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "amount>1000",
+        "tiers": null,
+        "tiersEnabled": false
+      },
+      {
+        "id": "DR-FREQ",
+        "name": "حد التكرار (تحليل دم كل 14 يوم)",
+        "type": "custom",
+        "action": "reject_line",
+        "rate": 100,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": [
+            {
+              "mode": "frequency",
+              "scope": "patient",
+              "field": "line.code",
+              "compareOp": "gt",
+              "compareValue": 1,
+              "windowDays": 14
+            }
+          ]
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "رفض تكرار نفس التحليل خلال 14 يوم",
+        "tiers": null,
+        "tiersEnabled": false
+      },
+      {
+        "id": "DR-BUNDLE",
+        "name": "كشف تفكيك (لوحة فحوصات)",
+        "type": "custom",
+        "action": "reduce_by_percent",
+        "rate": 20,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": [
+            {
+              "mode": "bundle",
+              "scope": "invoice",
+              "components": [
+                "SVC-12",
+                "SVC-13"
+              ],
+              "field": "line.code"
+            }
+          ]
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "خصم 20% عند تفكيك لوحة فحوصات",
+        "tiers": null,
+        "tiersEnabled": false
+      },
+      {
+        "id": "DR-DX",
+        "name": "توافق تشخيصي (I10)",
+        "type": "custom",
+        "action": "reject_line",
+        "rate": 100,
+        "isComposite": false,
+        "compositeConfig": null,
+        "requires": null,
+        "scope": {
+          "providerIds": [],
+          "contractIds": [],
+          "claimTypes": [
+            "employee",
+            "dependent"
+          ]
+        },
+        "conditions": {
+          "logic": "AND",
+          "rules": [
+            {
+              "mode": "diagnosis_match",
+              "field": "claim.diagnosis",
+              "value": "J45,E11",
+              "op": "in"
+            }
+          ]
+        },
+        "effectiveFrom": "2026-10-01",
+        "effectiveTo": "",
+        "active": true,
+        "enabled": true,
+        "notes": "رفض خدمات أمراض القلب لتشخيصات غير متوافقة",
+        "tiers": null,
+        "tiersEnabled": false
       }
     ],
     "paProcedures": [
