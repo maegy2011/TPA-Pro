@@ -112,7 +112,7 @@ function bindReviewModal(){
     rvTabs.addEventListener('click', e => {
       const btn = e.target.closest('[data-rv-tab]'); if(!btn) return;
       const tab = btn.dataset.rvTab;
-      $$('.rv-tab').forEach(b => b.classList.toggle('active', b === btn));
+      $$('.rv-tab').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); });
       $$('.rv-tab-panel').forEach(p => p.style.display = 'none');
       const panel = document.getElementById('rvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
       if (panel) panel.style.display = '';

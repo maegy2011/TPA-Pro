@@ -10,12 +10,12 @@ const MODAL_REVIEW = `
         </div>
         <div class="modal-body">
           <div class="rv-context-bar" id="rvContextBar">—</div>
-          <div class="rv-tabs">
-            <button type="button" class="rv-tab active" data-rv-tab="input">1. الإدخال</button>
-            <button type="button" class="rv-tab" data-rv-tab="exceptions">2. الاستثناءات <span class="rv-tab-count" id="rvExcCount">0</span></button>
-            <button type="button" class="rv-tab" data-rv-tab="final">3. المراجعة النهائية</button>
+          <div class="rv-tabs" role="tablist">
+            <button type="button" class="rv-tab active" role="tab" aria-selected="true" data-rv-tab="input">1. الإدخال</button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="exceptions">2. الاستثناءات <span class="rv-tab-count" id="rvExcCount">0</span></button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="final">3. المراجعة النهائية</button>
           </div>
-          <div class="rv-tab-panel" id="rvTabInput">
+          <div class="rv-tab-panel" id="rvTabInput" role="tabpanel">
           <button type="button" class="btn-sm ghost" id="rvViewTimelineBtn" style="width:100%;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;stroke:currentColor"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
             عرض الخط الزمني
@@ -60,10 +60,10 @@ const MODAL_REVIEW = `
             </div>
           </div>
         </div>
-          <div class="rv-tab-panel" id="rvTabExceptions" style="display:none">
+          <div class="rv-tab-panel" id="rvTabExceptions" role="tabpanel" style="display:none">
             <div id="rvExceptions"></div>
           </div>
-          <div class="rv-tab-panel" id="rvTabFinal" style="display:none">
+          <div class="rv-tab-panel" id="rvTabFinal" role="tabpanel" style="display:none">
             <div id="rvFinalNumbers"></div>
             <div id="rvFinalReasons"></div>
             <div id="rvFinalChecklist"></div>
