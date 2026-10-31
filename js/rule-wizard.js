@@ -114,6 +114,15 @@ function wizValidate(step){
     if(wizState.to && wizState.to < wizState.from){ showWarning('تنبيه','النهاية بعد'); return false; }
     return true;
   }
+  if(step === 4){
+    const c = wizState.conditions || { logic:'AND', rules:[] };
+    const rules = c.rules || [];
+    for (const r of rules) {
+      if (r.logic && Array.isArray(r.rules)) continue;
+      if (!r.field || !r.op) { showWarning('تنبيه','أكمل شروط الخطوة 4 أو امسحها'); return false; }
+    }
+    return true;
+  }
   return true;
 }
 function wizGoTo(step){
@@ -125,7 +134,7 @@ function wizNext(){ wizSyncInputs(); if(!wizValidate(wizState.step)) return; if(
 function wizBack(){ wizSyncInputs(); if(wizState.step > 1){ wizState.step--; wizRenderStep(); } }
 function wizSave(){
   wizSyncInputs();
-  if(!wizValidate(5)) return;
+  for (const s of [1,2,3,4,5]) { if (!wizValidate(s)) { wizState.step = s; wizRenderStep(); return; } }
   const y = new Date(wizState.from).getFullYear(), pre = 'DR-'+y+'-';
   let m = 0;
   deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });

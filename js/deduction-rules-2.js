@@ -41,7 +41,18 @@ function saveDr(){
 }
 function deleteDr(id){
   const r = deductionRules.find(x=>x.id===id); if(!r) return;
-  showDelete('حذف', `"${r.name}".`, () => { deductionRules = deductionRules.filter(x=>x.id!==id); closeDrModal(); renderDeductionRules(); showSuccess('تم','تم'); });
+  showDelete('حذف', `"${r.name}".`, () => {
+    deductionRules = deductionRules.filter(x=>x.id!==id);
+    // clean up dependencies
+    deductionRules.forEach(x => {
+      if (x.requires && Array.isArray(x.requires.ruleIds)) x.requires.ruleIds = x.requires.ruleIds.filter(rid => rid !== id);
+      if (x.compositeConfig && Array.isArray(x.compositeConfig.childRuleIds)) x.compositeConfig.childRuleIds = x.compositeConfig.childRuleIds.filter(rid => rid !== id);
+    });
+    closeDrModal(); renderDeductionRules(); showSuccess('تم','تم');
+    if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+    if (typeof persistData === 'function') persistData(true);
+    if (typeof renderAll === 'function') renderAll();
+  });
 }
 function openPaProcModal(code){
   editingPaProcCode = code || null;
@@ -75,7 +86,11 @@ function testDeductionRule(id){
   ctx.line.lineBase = line.qty * (line.tariffUnit != null ? Math.min(line.billedUnit, line.tariffUnit) : line.billedUnit);
   const refDate = claim.date || claim.receivedDate || daysFromNow(0);
   const matched = ruleMatchesContext(rule, ctx, refDate);
-  const res = evaluateRuleAction(rule, ctx, ctx.line.lineBase);
+  const applied = new Set();
+  const res = rule.isComposite
+    ? evaluateCompositeRule(rule, ctx, refDate)
+    : evaluateRuleAction(rule, ctx, ctx.line.lineBase);
+  const requiresOk = checkRequires(rule, applied);
   const msg = `القاعدة: ${escapeHtml(rule.name)}<br>مطابقة: ${matched ? '✅ نعم' : '❌ لا'}<br>الأساس: ${fmt(ctx.line.lineBase)}<br>النتيجة: ${res.newApproved !== undefined ? fmt(res.newApproved) : fmt(ctx.line.lineBase - (res.deduct||0))}<br>الخصم: ${fmt(res.deduct || (ctx.line.lineBase - (res.newApproved||ctx.line.lineBase)))}`;
   showInfo('اختبار قاعدة', msg);
 }
