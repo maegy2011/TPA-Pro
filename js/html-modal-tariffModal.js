@@ -7,7 +7,6 @@ const MODAL_TARIFF = `
         <div class="modal-body">
           <div class="tf-tabs">
             <button type="button" class="tf-tab active" data-tf-tab="basic">أساسية</button>
-            <button type="button" class="tf-tab" data-tf-tab="services">أسعار</button>
             <button type="button" class="tf-tab" data-tf-tab="annual">زيادات</button>
             <button type="button" class="tf-tab" data-tf-tab="links">ربط</button>
           </div>
@@ -22,26 +21,6 @@ const MODAL_TARIFF = `
               <div class="fg"><label>الرقم</label><input id="tfNumber" readonly></div>
               <div class="fg full"><label>الوصف</label><textarea id="tfDescription"></textarea></div>
             </div>
-          </div>
-          <div class="tf-panel" data-tf-panel="services">
-            <div class="adjust-box">
-              <h4>تطبيق نسبة على الخدمات</h4>
-              <div class="adjust-grid">
-                <div class="fg"><label>النوع</label><select id="tfAdjustType"><option value="none">بدون</option><option value="discount">خصم</option><option value="increase">زيادة</option></select></div>
-                <div class="fg"><label>النسبة %</label><input id="tfAdjustRate" type="number" min="0" max="100" step="0.5"></div>
-              </div>
-              <div class="adjust-actions">
-                <button type="button" class="btn-apply" id="tfApplyAll">الجميع</button>
-                <button type="button" class="btn-apply out" id="tfApplySelected" disabled>المحدد (<span id="tfSelCount">0</span>)</button>
-                <button type="button" class="btn-apply out" id="tfResetBase">أساسي</button>
-              </div>
-              <div class="adjust-preview" id="tfAdjustPreview">لا خدمات</div>
-            </div>
-            <div class="bulk-bar" id="tfBulkBar"><span>محدد: <b id="tfBulkCount">0</b></span><button type="button" id="tfBulkDelete" data-i18n="common.delete">حذف</button></div>
-            <div class="services-head"><h4>الخدمات (<span id="tfServicesCount">0</span>)</h4>
-              <button type="button" class="btn-add-sm" id="tfAddServiceBtn">+ إضافة</button>
-            </div>
-            <div class="services-wrap"><table class="services-table"><thead><tr><th style="width:34px"><input type="checkbox" id="tfSelectAll"></th><th>الكود</th><th>الخدمة</th><th>الأساسي</th><th>الحالي</th><th>التغطية</th><th></th></tr></thead><tbody id="tfServicesBody"></tbody></table></div>
           </div>
           <div class="tf-panel" data-tf-panel="annual">
             <div class="form-grid">

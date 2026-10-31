@@ -138,17 +138,7 @@ function bindTariffsControls(){
   }));
   const lpl = $('#linkProvidersList'); if(lpl) lpl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
   const lcl = $('#linkContractsList'); if(lcl) lcl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
-  $('#tfAdjustType').addEventListener('change', updateAdjustPreview);
-  $('#tfAdjustRate').addEventListener('input', updateAdjustPreview);
-  $('#tfApplyAll').addEventListener('click', applyAdjustAll);
-  $('#tfApplySelected').addEventListener('click', applyAdjustSelected);
-  $('#tfResetBase').addEventListener('click', resetAllToBase);
   $('#tfApplyAnnual').addEventListener('click', applyAnnualIncrease);
-  $('#tfAddServiceBtn').addEventListener('click', () => openServiceModal(null));
-  $('#tfServicesBody').addEventListener('click', e => { const ed = e.target.closest('[data-edit-svc]'); if(ed) openServiceModal(Number(ed.dataset.editSvc)); const del = e.target.closest('[data-del-svc]'); if(del) deleteService(Number(del.dataset.delSvc)); });
-  $('#tfServicesBody').addEventListener('change', e => { if(e.target.classList.contains('svc-cb')) updateBulkState(); });
-  $('#tfSelectAll').addEventListener('change', e => { $$('#tfServicesBody .svc-cb').forEach(cb => { cb.checked = e.target.checked; }); updateBulkState(); });
-  $('#tfBulkDelete').addEventListener('click', bulkDeleteServices);
   $$('[data-close-service]').forEach(el => el.addEventListener('click', closeServiceModal));
   $('#saveService').addEventListener('click', saveService);
   $('#svcSyncBtn').addEventListener('click', () => { const mul = getAdjustMultiplier(); const base = Number($('#svcBasePrice').value)||0; $('#svcCurrentPrice').value = Math.round(base*mul); });
