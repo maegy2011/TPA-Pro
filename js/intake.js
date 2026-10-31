@@ -89,7 +89,6 @@ function openBatchModal(id){
     $('#btStatus').value = b.status;
     $('#btNumber').value = b.id;
     $('#btNotes').value = b.notes||'';
-    $('#btPatient').value = b.patient||'';
     $('#btClaimDate').value = b.claimDate||'';
     $('#btClaimReceivedDate').value = b.claimReceivedDate||'';
     $('#btBilled').value = b.totalBilled||0;
@@ -102,7 +101,6 @@ function openBatchModal(id){
     $('#btStatus').value = 'new';
     $('#btNumber').value = nextReceivedNumber();
     $('#btNotes').value = '';
-    $('#btPatient').value = '';
     $('#btClaimDate').value = today;
     $('#btClaimReceivedDate').value = today;
     $('#btBilled').value = '';
@@ -110,8 +108,7 @@ function openBatchModal(id){
   }
   $('#btMonth').onchange = () => { if(!isEdit) $('#btNumber').value = nextReceivedNumber(); };
   $('#batchModal').classList.add('open'); document.body.style.overflow = 'hidden';
-  setTimeout(() => $('#btPatient').focus(), 200);
-}
+  setTimeout(() => $('#btMonth')?.focus(), 200);}
 function closeBatchModal(){ if(!$('#batchModal').classList.contains('open')) return; $('#batchModal').classList.remove('open'); _unlockBodyScroll(); editingBatchId = null; workingBatchClaim = null; }
 function saveBatch(another){
   const providerId = $('#btProvider').value;
@@ -119,7 +116,6 @@ function saveBatch(another){
   const month = $('#btMonth').value.trim();
   const receivedDate = $('#btReceivedDate').value;
   const status = $('#btStatus').value;
-  const patient = $('#btPatient').value.trim();
   const claimDate = $('#btClaimDate').value;
   const claimReceivedDate = $('#btClaimReceivedDate').value;
   const billed = Number($('#btBilled').value);
@@ -127,19 +123,18 @@ function saveBatch(another){
   if(!providerId){ showWarning('تنبيه','اختر الجهة'); return; }
   if(!month){ showWarning('تنبيه','أدخل الشهر'); return; }
   if(!receivedDate){ showWarning('تنبيه','أدخل تاريخ الاستلام'); return; }
-  if(!patient){ showWarning('تنبيه','أدخل اسم المريض'); return; }
   if(!claimDate){ showWarning('تنبيه','أدخل تاريخ المطالبة'); return; }
   if(!billed || billed <= 0){ showWarning('تنبيه','أدخل القيمة الإجمالية'); return; }
   const p = getProviderById(providerId);
   const batchId = editingBatchId || ('BTH-'+month.split(',')[0]+'-'+$('#btNumber').value);
   if(editingBatchId){
     const b = getBatchById(editingBatchId);
-    if(b){ b.providerId = providerId; b.month = month; b.periodType = periodType; b.receivedDate = receivedDate; b.status = status; b.notes = notes; b.patient = patient; b.claimDate = claimDate; b.claimReceivedDate = claimReceivedDate; b.totalBilled = billed; b.claimsCount = 1; }
+    if(b){ b.providerId = providerId; b.month = month; b.periodType = periodType; b.receivedDate = receivedDate; b.status = status; b.notes = notes; b.claimDate = claimDate; b.claimReceivedDate = claimReceivedDate; b.totalBilled = billed; b.claimsCount = 1; }
   } else {
-    batches.push({ id: batchId, providerId, month, periodType, receivedDate, status, notes, patient, claimDate, claimReceivedDate, claimsCount:1, totalBilled:billed });
+    batches.push({ id: batchId, providerId, month, periodType, receivedDate, status, notes, patient: '', claimDate, claimReceivedDate, claimsCount:1, totalBilled:billed });
     // create a claim with status 'new' and total billed
     const claimId = generateClaimId();
-    claims.push({ id: claimId, patient, provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber: $('#btNumber').value, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed });
+    claims.push({ id: claimId, patient: '', provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber: $('#btNumber').value, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed });
     // set billed on claim
     const c = claims[claims.length-1]; c.billed = billed; c.approved = 0; c.eligible = billed;
   }

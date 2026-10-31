@@ -18,7 +18,6 @@ const MODAL_BATCH = `
             <div class="fg"><label>تاريخ الاستلام *</label><input id="btReceivedDate" type="date"></div>
             <div class="fg"><label>الحالة</label><select id="btStatus"><option value="new">جديدة</option><option value="received">وارد جديد</option><option value="under-review">قيد المعالجة</option><option value="completed">مكتمل</option></select></div>
             <div class="fg"><label>رقم وارد المطالبة</label><input id="btNumber" readonly></div>
-            <div class="fg"><label>اسم المريض *</label><input id="btPatient" placeholder="اسم المريض"></div>
             <div class="fg"><label>تاريخ المطالبة *</label><input id="btClaimDate" type="date"></div>
             <div class="fg"><label>تاريخ وارد المطالبة</label><input id="btClaimReceivedDate" type="date"></div>
             <div class="fg"><label>القيمة الإجمالية (ج.م) *</label><input id="btBilled" type="number" min="0" placeholder="0"></div>
