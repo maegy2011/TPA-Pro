@@ -83,6 +83,7 @@ function bindLineAutocomplete(){
   document.addEventListener('click', e => { if(!e.target.closest('#lineModal') || e.target.closest('.ln-suggest') || e.target.closest('#lnCode') || e.target.closest('#lnName')) return; suggest.innerHTML = ''; });
 }
 function openLineEditor(patIdx, lineIdx) {
+  if (activeClaim && activeClaim._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
   const inv = workingInvoices[rvActiveInvoiceIdx];
   const pat = inv && inv.patients ? inv.patients[patIdx] : null;
   if (!pat) return;
@@ -150,6 +151,7 @@ function openLineEditor(patIdx, lineIdx) {
   setTimeout(() => sel.focus(), 120);
 }
 function saveLineEditor() {
+  if (activeClaim && activeClaim._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
   markSessionDirty();
   const inv = workingInvoices[rvActiveInvoiceIdx];
   const pat = inv && inv.patients ? inv.patients[rvActivePatientIdx] : null;

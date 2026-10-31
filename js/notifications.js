@@ -13,3 +13,11 @@ function updateTrashBadge(){
   if(tb){ tb.textContent = items.length; tb.style.display = items.length > 0 ? 'inline-flex' : 'none'; }
   const st = $('#settingsTrashCount'); if(st) st.textContent = items.length;
 }
+
+function checkOverdueClaims(){
+  try {
+    const now = new Date();
+    const overdue = (typeof claims !== 'undefined' ? claims : []).filter(c => c.status === 'pending' && c.receivedDate && (now - new Date(c.receivedDate)) > 7*86400000);
+    if (overdue.length) showToast(`⚠️ ${overdue.length} مطالبة معلّقة منذ أكثر من 7 أيام`);
+  } catch(e){}
+}

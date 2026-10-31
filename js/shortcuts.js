@@ -3,6 +3,7 @@ function bindShortcuts(){
     const ctrl = e.ctrlKey || e.metaKey;
     if(ctrl && e.key === 'k'){ e.preventDefault(); navHistory=[]; navigateTo('search',{noPush:true}); const inp = document.getElementById('srchQuery')||document.getElementById('searchInput'); if(inp) setTimeout(()=>inp.focus(),50); return; }
     if(ctrl && e.key === 'n'){ e.preventDefault(); if(currentPage!=='intake') navigateTo('intake',{noPush:true}); setTimeout(()=>{ const b=document.getElementById('addBatchBtn'); if(b) b.click(); },50); return; }
+  if(ctrl && e.key === 's'){ e.preventDefault(); if(typeof saveReview === 'function' && document.getElementById('reviewModal')?.classList.contains('open')) saveReview(); else if(typeof saveLineEditor === 'function' && document.getElementById('lineModal')?.classList.contains('open')) saveLineEditor(); return; }
     if(e.key === 'Escape'){
       const openModal = document.querySelector('.modal.open, .dialog-overlay.open');
       if(openModal){

@@ -136,5 +136,6 @@ function initApp(){
     loadSessions(); updateSessionsBadge();
   }
   renderAll();
+  if (typeof checkOverdueClaims === 'function') setTimeout(checkOverdueClaims, 1000);
   setTimeout(() => { if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); }, 0);
 }
