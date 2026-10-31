@@ -70,7 +70,8 @@ function evaluateCondition(cond, ctx){
   return true;
 }
 function evaluateConditionTree(node, ctx){
-  if(!node || !node.rules || !node.rules.length) return true;
+  if(!node || !Array.isArray(node.rules)) return true;
+  if(!node.rules.length) return node.logic === 'OR' ? false : true;
   const res = node.rules.map(item => {
     if(item.logic && Array.isArray(item.rules)) return evaluateConditionTree(item, ctx);
     return evaluateCondition(item, ctx);

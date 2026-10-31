@@ -16,7 +16,8 @@ function topoSortRules(rules){
   if(cycles.length){
     console.warn('⚠️ حلقات دائرية:', cycles);
   }
-  return sorted;
+  const cyclicIds = new Set(cycles.flatMap(c => c.split(' → ')));
+  return sorted.filter(r => !cyclicIds.has(r.id));
 }
 function checkRequires(rule, appliedIds){
   if(!rule.requires || !rule.requires.ruleIds || !rule.requires.ruleIds.length) return true;
@@ -28,8 +29,9 @@ function checkRequires(rule, appliedIds){
 }
 function ruleMatchesContext(rule, ctx, refDate){
   if(rule.enabled === false || rule.active === false) return false;
-  if(rule.effectiveFrom && refDate < rule.effectiveFrom) return false;
-  if(rule.effectiveTo && refDate > rule.effectiveTo) return false;
+  const rDate = (typeof toDate === 'function') ? toDate(refDate) : new Date(refDate);
+  if(rule.effectiveFrom && rDate < toDate(rule.effectiveFrom)) return false;
+  if(rule.effectiveTo && rDate > toDate(rule.effectiveTo)) return false;
   const claim = ctx.claim;
   if(rule.scope?.claimTypes?.length && !rule.scope.claimTypes.includes(claim.type || 'employee')) return false;
   if(rule.scope?.providerIds?.length){
@@ -55,10 +57,10 @@ function evaluateRuleAction(rule, ctx, baseAmount){
   }
   switch(rule.action){
     case 'reject_line': return { newApproved: 0 };
-    case 'reduce_by_percent': return { newApproved: Math.round(amt*(1-rate/100)) };
+    case 'reduce_by_percent': return { newApproved: Math.max(0, Math.round(amt*(1-Math.min(100,rate)/100))) };
     case 'reduce_by_fixed': return { newApproved: Math.max(0, amt-rate) };
-    case 'cap_to_amount': return { newApproved: Math.min(amt, rate) };
-    case 'set_to_percent': return { newApproved: Math.round(amt*rate/100) };
+    case 'cap_to_amount': return { newApproved: Math.min(amt, Math.max(0, rate)) };
+    case 'set_to_percent': return { newApproved: Math.min(amt, Math.max(0, Math.round(amt*Math.min(100,rate)/100))) };
     case 'apply_cap': return { deduct: Math.round(amt*rate/100) };
     case 'apply_copay': return { deduct: Math.round(amt*rate/100) };
     default: return { newApproved: amt };
@@ -66,7 +68,7 @@ function evaluateRuleAction(rule, ctx, baseAmount){
 }
 function evaluateCompositeRule(rule, ctx, refDate){
   const cfg = rule.compositeConfig || {};
-  const childRules = (cfg.childRuleIds||[]).map(id => deductionRules.find(r => r.id === id)).filter(r => r && r.enabled !== false && isLineLevelAction(r.action));
+  const childRules = (cfg.childRuleIds||[]).map(id => deductionRules.find(r => r.id === id)).filter(r => r && r.enabled !== false && r.active !== false && isLineLevelAction(r.action));
   if(!childRules.length) return null;
   const requireAll = cfg.requireAllMatch !== false;
   const matched = childRules.map(child => ({ rule:child, matched: ruleMatchesContext(child, ctx, refDate) })).filter(r => r.matched);

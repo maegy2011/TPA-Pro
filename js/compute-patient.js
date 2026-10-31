@@ -32,7 +32,8 @@ function computePatient(pat, claim, refDate, invoice){
     l.lineBaseAfterContract = Math.round(lesser * (1 - rate / 100));
     l._contractRejected = false;
   });
-  const lineRules = topoSortRules(allRules.filter(r => r.isComposite || isLineLevelAction(r.action)));
+  const compositeChildren = new Set((allRules.filter(r => r.isComposite)).flatMap(r => r.compositeConfig?.childRuleIds || []));
+  const lineRules = topoSortRules(allRules.filter(r => r.isComposite || (isLineLevelAction(r.action) && !compositeChildren.has(r.id))));
   pat.lines.forEach(l => {
     const lctx = { ...ctx, line: l };
     const appliedIds = new Set();
