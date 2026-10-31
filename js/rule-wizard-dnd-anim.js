@@ -1,3 +1,4 @@
+// rule-wizard-dnd-anim.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function createGhost(sourceEl, e){
   const clone = sourceEl.cloneNode(true);
   clone.classList.add('drag-ghost');

@@ -1,3 +1,4 @@
+// html-modal-reviewModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_REVIEW = `
 <!-- نافذة المراجعة -->
     <div class="modal" id="reviewModal">

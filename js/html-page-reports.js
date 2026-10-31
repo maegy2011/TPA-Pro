@@ -1,3 +1,4 @@
+// html-page-reports.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_REPORTS = `
 <section class="page" id="page-reports">
       <div class="toolbar" style="margin-bottom:18px">

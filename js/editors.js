@@ -1,3 +1,4 @@
+// editors.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function toggleInpatientFields(){
   const on = $('#invType').value === 'inpatient';
   ['#invInp1','#invInp2','#invInp3'].forEach(s => { $(s).style.display = on ? 'block' : 'none'; });

@@ -1,3 +1,4 @@
+// html-page-dashboard.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_DASHBOARD = `
 <section class="page active" id="page-dashboard">
       <div class="toolbar" style="justify-content:flex-end;margin-bottom:14px">

@@ -1,3 +1,4 @@
+// item-editor.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function getApplicableTariffs(providerName){
   const provider = providers.find(p => p.name === providerName);
   let list = [], fallback = false;

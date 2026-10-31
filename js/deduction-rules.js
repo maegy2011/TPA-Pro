@@ -1,3 +1,4 @@
+// deduction-rules.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let drFilter = 'all', drSearch = '', editingDrId = null;
 let editingPaProcCode = null;
 function bindDeductionRulesControls(){

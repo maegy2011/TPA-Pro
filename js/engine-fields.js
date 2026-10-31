@@ -1,3 +1,4 @@
+// engine-fields.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function resolveFieldPath(path, ctx){
   if(!path) return null;
   if(path === 'line.billedTotal') return ctx.line ? ctx.line.qty * ctx.line.billedUnit : null;

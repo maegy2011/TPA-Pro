@@ -1,3 +1,4 @@
+// html-modal-drModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_DR = `
 <!-- نافذة قاعدة الخصم -->
     <div class="modal" id="drModal">

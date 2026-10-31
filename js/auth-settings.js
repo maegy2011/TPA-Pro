@@ -1,3 +1,4 @@
+// auth-settings.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function logoutWithReminder(){
   if(hasRecentBackup(3600000) && !(typeof activeClaim !== 'undefined' && activeClaim)){
     openDialog({ type:'info', title:'تسجيل الخروج', message:`آخر نسخة ${getLastBackupAgo()}. خروج؟`, confirmText:'خروج', cancelText:'إلغاء',

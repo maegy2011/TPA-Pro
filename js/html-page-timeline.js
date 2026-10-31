@@ -1,3 +1,4 @@
+// html-page-timeline.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_TIMELINE = `
 <section class="page" id="page-timeline">
       <div class="tl-page-header">

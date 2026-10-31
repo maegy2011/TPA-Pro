@@ -1,3 +1,4 @@
+// translate-dict-3.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 Object.assign(window.TRANSLATE_DICT = window.TRANSLATE_DICT || {}, {
   'سبب الاستقطاع': 'Deduction Reason',
   'سجل الزيادات': 'Increase History',

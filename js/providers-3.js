@@ -1,3 +1,4 @@
+// providers-3.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let editingServiceTariffId = null;
 let workingLinkedServices = [];
 function renderTariffs(){

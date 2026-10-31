@@ -1,3 +1,4 @@
+// html-modal-lineModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_LINE = `
 <!-- نافذة البند -->
     <div class="modal" id="lineModal">

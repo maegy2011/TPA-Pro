@@ -1,3 +1,4 @@
+// html-page-tariffs.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_TARIFFS = `
 <section class="page" id="page-tariffs">
       <div class="grid-kpi" id="tariffKpi"></div>

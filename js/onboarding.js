@@ -1,3 +1,4 @@
+// onboarding.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function showOnboardingError(msg){ const e = document.getElementById('onbErr'); if(e){ e.querySelector('span').textContent = msg; e.classList.add('show'); } }
 function clearOnboardingError(){ const e = document.getElementById('onbErr'); if(e){ e.classList.remove('show'); } }
 function bindOnboarding(){

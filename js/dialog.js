@@ -1,3 +1,4 @@
+// dialog.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let dialogState = { open:false, onConfirm:null, onCancel:null, interval:null };
 function _unlockBodyScroll(){ if(!document.querySelector('.modal.open, .dialog-overlay.open')) document.body.style.overflow = ''; }
 const DIALOG_ICONS = {

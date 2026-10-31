@@ -1,3 +1,4 @@
+// render-3.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function buildClaimTimeline(claim){
   const events = [];
   if(claim.receivedDate) events.push({ date: claim.receivedDate, type:'received', icon:'inbox', title:'استلام المطالبة', description:`من ${claim.provider} برقم ${claim.receivedNumber||'—'}` });

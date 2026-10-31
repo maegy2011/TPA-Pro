@@ -1,3 +1,4 @@
+// html-modal-invoiceModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_INVOICE = `
 <!-- نافذة الفاتورة -->
     <div class="modal" id="invoiceModal">

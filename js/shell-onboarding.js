@@ -1,3 +1,4 @@
+// shell-onboarding.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const SHELL_ONBOARDING = `
 <div id="onboarding" class="screen">
   <button class="onb-lang" id="onbLangBtn" type="button">EN</button>

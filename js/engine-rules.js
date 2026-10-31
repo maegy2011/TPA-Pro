@@ -1,3 +1,4 @@
+// engine-rules.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function isLineLevelAction(a){ return ['reject_line','reduce_by_percent','reduce_by_fixed','cap_to_amount','set_to_percent'].includes(a); }
 function topoSortRules(rules){
   const byId = {}; rules.forEach(r => byId[r.id] = r);

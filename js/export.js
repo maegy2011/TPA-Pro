@@ -1,3 +1,4 @@
+// export.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const EXPORT_BRAND = { name: appSettings.company.brand, sub: appSettings.company.tagline, version: appSettings.company.version };
 const EXPORT_COLORS = { navy:'#0B2545', teal:'#0E7C7B', gold:'#C8A24A' };
 function getExportDocStyles(){

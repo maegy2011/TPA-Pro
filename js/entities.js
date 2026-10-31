@@ -1,3 +1,4 @@
+// entities.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function getProviderById(id){ return providers.find(p=>p.id===id); }
 function getContractById(id){ return contracts.find(c=>c.id===id); }
 function getTariffById(id){ return tariffs.find(t=>t.id===id); }

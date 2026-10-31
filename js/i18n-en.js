@@ -1,3 +1,4 @@
+// i18n-en.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 I18N.en = {
     'kpi.totalClaims': 'Total Claims',
     'kpi.billed': 'Billed',

@@ -1,3 +1,4 @@
+// backup-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function confirmFullImport(parsed){
   const d = parsed.data || {}, hasS = !!parsed.settings, hasSess = !!parsed.session, hasWS = Array.isArray(d.workSessions) && d.workSessions.length > 0;
   const meta = parsed.sessionsMeta || {};

@@ -1,3 +1,4 @@
+// html-page-providers.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_PROVIDERS = `
 <section class="page" id="page-providers">
       <div class="grid-kpi" id="providerKpi"></div>

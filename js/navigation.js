@@ -1,3 +1,4 @@
+// navigation.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let navHistory = [];
 let currentPage = 'dashboard';
 let viewState = { type:null, id:null };

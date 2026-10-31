@@ -1,3 +1,4 @@
+// shell-loading.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const SHELL_LOADING = `
 <div id="loading" class="screen">
   <div class="ld-wrap">

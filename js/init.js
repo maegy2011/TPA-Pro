@@ -1,3 +1,4 @@
+// init.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const LOAD_STEPS = ['تهيئة محرك المراجعة...','تحميل المطالبات...','تحميل اللوائح...','تجهيز التصدير...'];
 let loadingDone = false;
 function startLoading(){

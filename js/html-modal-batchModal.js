@@ -1,3 +1,4 @@
+// html-modal-batchModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_BATCH = `
 <!-- نافذة الدفعة -->
     <div class="modal" id="batchModal">

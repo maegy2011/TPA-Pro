@@ -1,3 +1,4 @@
+// review-state.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let activeClaim = null;
 let workingInvoices = [];
 let _sessionDirty = false;

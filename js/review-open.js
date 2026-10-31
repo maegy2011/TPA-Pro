@@ -1,3 +1,4 @@
+// review-open.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function openReview(id){
   const c = getClaimById(id); if(!c) return;
   const existing = findSessionByClaim(id);

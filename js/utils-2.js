@@ -1,3 +1,4 @@
+// utils-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function levenshtein(a, b){
   a = String(a||''); b = String(b||'');
   if(!a.length) return b.length; if(!b.length) return a.length;

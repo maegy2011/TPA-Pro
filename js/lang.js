@@ -1,3 +1,4 @@
+// lang.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function applyTranslations(){
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');

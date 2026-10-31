@@ -1,3 +1,4 @@
+// storage.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let _persistTimer = null;
 function persistData(immediate){
   if(_persistTimer) clearTimeout(_persistTimer);

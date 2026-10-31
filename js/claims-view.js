@@ -1,3 +1,4 @@
+// claims-view.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function renderReviewInvoices(){
   if(!workingInvoices.length){
     $('#rvInvoiceTabs').innerHTML = '<button type="button" class="rv-add-tab" data-add-invoice="1">+ إضافة فاتورة</button>';

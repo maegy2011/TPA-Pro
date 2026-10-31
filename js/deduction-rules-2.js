@@ -1,3 +1,4 @@
+// deduction-rules-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function renderPaProcedures(){
   const body = $('#paProcBody'); if(!body) return;
   if(!paProcedures.length){ body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--muted)">لا إجراءات</td></tr>'; return; }

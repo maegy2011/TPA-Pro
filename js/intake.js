@@ -1,3 +1,4 @@
+// intake.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let intakeMonthFilter = 'all', intakeStatusFilter = 'all', intakeSearch = '', editingBatchId = null;
 let workingBatchClaim = null;
 function renderProviderOptions(filter){

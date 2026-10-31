@@ -1,3 +1,4 @@
+// html-page-intake.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_INTAKE = `
 <section class="page" id="page-intake">
       <div class="grid-kpi" id="intakeKpi"></div>

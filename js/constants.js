@@ -1,3 +1,4 @@
+// constants.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const STATUS = { new:{label:'جديدة',cls:'info'}, pending:{label:'قيد المراجعة',cls:'warn'}, approved:{label:'معتمدة',cls:'ok'}, partial:{label:'معتمدة جزئياً',cls:'info'}, rejected:{label:'مرفوضة',cls:'bad'} };
 const CONTRACT_STATUS = { active:{label:'مفعل',cls:'ok'}, 'under-review':{label:'تحت الفحص',cls:'warn'}, pending:{label:'معلق',cls:'info'}, terminated:{label:'مفسوخ',cls:'bad'}, expiring:{label:'قريب الانتهاء',cls:'warn'}, upcoming:{label:'لم يبدأ',cls:'info'}, expired:{label:'منتهي',cls:'bad'} };
 const TARIFF_TYPES = { general:{label:'لائحة عامة',cls:'t-general'}, private:{label:'لائحة خاصة',cls:'t-private'}, supplementary:{label:'لائحة مكملة',cls:'t-supplementary'} };

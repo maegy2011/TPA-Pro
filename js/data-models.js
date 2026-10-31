@@ -1,3 +1,4 @@
+// data-models.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function mkLine(code, name, category, qty, billedUnit, tariffUnit, approved, note){
   const billed = qty * billedUnit;
   const hasT = (tariffUnit !== undefined && tariffUnit !== null);

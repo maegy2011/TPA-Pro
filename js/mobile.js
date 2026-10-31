@@ -1,3 +1,4 @@
+// mobile.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function openSidebar(){
   const sb = document.querySelector('.sidebar');
   const ov = document.getElementById('sidebarOverlay');

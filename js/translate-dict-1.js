@@ -1,3 +1,4 @@
+// translate-dict-1.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 Object.assign(window.TRANSLATE_DICT = window.TRANSLATE_DICT || {}, {
   '(أو جلسات المراجعة).': '(or review sessions).',
   '(سقف/تحمل) حسب العقود.': '(cap/copay) per contracts.',

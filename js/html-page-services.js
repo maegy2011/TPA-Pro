@@ -1,3 +1,4 @@
+// html-page-services.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_SERVICES = `
 <section class="page" id="page-services">
   <div class="grid-kpi" id="servicesKpi"></div>

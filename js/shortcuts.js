@@ -1,3 +1,4 @@
+// shortcuts.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function bindShortcuts(){
   document.addEventListener('keydown', e => {
     const ctrl = e.ctrlKey || e.metaKey;

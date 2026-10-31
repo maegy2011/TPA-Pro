@@ -1,3 +1,4 @@
+// html-modal-providerModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_PROVIDER = `
 <!-- نافذة الجهة -->
     <div class="modal" id="providerModal">

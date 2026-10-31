@@ -1,3 +1,4 @@
+// review-bind.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function bindReviewModal(){
   $$('[data-close]').forEach(el => el.addEventListener('click', () => closeReview()));
   $('#paStatus').addEventListener('change', updatePAWarning);

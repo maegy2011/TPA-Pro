@@ -1,3 +1,4 @@
+// html-modal-serviceModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_SERVICE = `
 <!-- نافذة الخدمة -->
     <div class="modal" id="serviceModal">

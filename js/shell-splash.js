@@ -1,3 +1,4 @@
+// shell-splash.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const SHELL_SPLASH = `
 <div id="splash" class="screen active">
   <div class="sp-wrap">

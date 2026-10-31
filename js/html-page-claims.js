@@ -1,3 +1,4 @@
+// html-page-claims.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_CLAIMS = `
 <section class="page" id="page-claims">
       <div class="toolbar">

@@ -1,3 +1,4 @@
+// rule-wizard-dnd.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let dragSrcPath = null, dragSrcParent = null, dragSrcIndex = -1;
 let dragGhost = null, dropTarget = null, flipFirst = null, rafId = null;
 let dragThresholdMet = false, dragStartX = 0, dragStartY = 0;

@@ -1,3 +1,4 @@
+// sessions.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let workSessions = [];
 let activeSessionId = null;
 let sessionsFilter = 'all';

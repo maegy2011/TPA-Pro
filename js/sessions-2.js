@@ -1,3 +1,4 @@
+// sessions-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function bindSessionsControls(){
   const s = document.getElementById('sessionsSearch');
   const c = document.getElementById('sessionsFilterChips');

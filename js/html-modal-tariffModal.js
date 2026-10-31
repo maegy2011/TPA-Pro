@@ -1,3 +1,4 @@
+// html-modal-tariffModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_TARIFF = `
 <!-- نافذة اللائحة -->
     <div class="modal" id="tariffModal">

@@ -1,3 +1,4 @@
+// trash.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let trashFilter = 'all', trashSearch = '', trashDebounce = null;
 function bindTrashControls(){
   $('#trashSearch').addEventListener('input', e => { clearTimeout(trashDebounce); trashDebounce = setTimeout(() => { trashSearch = e.target.value.trim().toLowerCase(); renderTrash(); }, 200); });

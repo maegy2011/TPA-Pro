@@ -1,3 +1,4 @@
+// services.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let servicesSearchTerm = '', servicesFilter = 'all', servicesSort = 'name', servicesSortDir = 'asc';
 let servicesAdv = { code:'', name:'', category:'', tariff:'', min:'', max:'' };
 let servicesAdvOpen = false;

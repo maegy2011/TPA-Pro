@@ -1,3 +1,4 @@
+// render.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function kpiIcon(name){
   const svgs = {
     file:'<path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>',

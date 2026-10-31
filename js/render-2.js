@@ -1,3 +1,4 @@
+// render-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function renderClaims(){
   const _prevSel = new Set($$('#claimsBody .claim-cb:checked').map(cb => cb.dataset.id));
   const list = claims.filter(c => {

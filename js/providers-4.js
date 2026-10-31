@@ -1,3 +1,4 @@
+// providers-4.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function deleteTariffWithDialog(id){
   const t = getTariffById(id); if(!t) return;
   showDelete('حذف اللائحة', `سيتم نقل "${t.name}".`, () => {

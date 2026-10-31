@@ -1,3 +1,4 @@
+// html-modal-drWizardModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_DRWIZARD = `
 <!-- معالج القواعد -->
     <div class="modal" id="drWizardModal">

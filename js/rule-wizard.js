@@ -1,3 +1,4 @@
+// rule-wizard.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let wizState = { step:1, type:null, name:'', rate:0, from:'', to:'', notes:'', ctypes:['employee'], providerIds:[], contractIds:[], action:'apply_cap', conditions:{logic:'AND',rules:[]}, requires:{mode:'any',ruleIds:[]}, compositeConfig:{childRuleIds:[],applyMode:'atomic',requireAllMatch:true} };
 function wizRenderRatePresets(){ $('#wizRatePresets').innerHTML = WIZ_RATE_PRESETS.map(v=>`<button type="button" data-wiz-rate="${v}">${v}%</button>`).join(''); }
 function wizRenderTiers(){

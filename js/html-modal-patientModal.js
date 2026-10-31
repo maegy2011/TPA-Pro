@@ -1,3 +1,4 @@
+// html-modal-patientModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_PATIENT = `
 <!-- نافذة المريض -->
     <div class="modal" id="patientModal">

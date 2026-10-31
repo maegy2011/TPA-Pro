@@ -1,3 +1,4 @@
+// html-page-sessions.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_SESSIONS = `
 <section class="page" id="page-sessions">
       <div class="grid-kpi" id="sessionsKpi"></div>

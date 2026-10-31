@@ -1,3 +1,4 @@
+// html-page-trash.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_TRASH = `
 <section class="page" id="page-trash">
 

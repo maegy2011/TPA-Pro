@@ -1,3 +1,4 @@
+// notifications-v2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let toastTimer;
 function showToast(msg){
   const tm = $('#toastMsg'); if(tm) tm.textContent = msg;

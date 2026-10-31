@@ -1,3 +1,4 @@
+// i18n-core.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let currentLang = (typeof localStorage !== 'undefined') ? (localStorage.getItem('tpa_lang') || 'ar') : 'ar';
 function setLang(lang){
   if(!I18N[lang]) return;

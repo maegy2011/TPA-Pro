@@ -1,3 +1,4 @@
+// engine-fields-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function compareValues(actual, op, exp, ctx){
   ctx = ctx || {};
   if(isDateOperator(op)) return compareDates(actual, op, exp, ctx);

@@ -1,3 +1,4 @@
+// app.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function renderAll(){
   renderKPIs(); renderRecent(); renderDonut(); renderReasonBars('#reasonBars');
   renderClaims(); renderIntake(); renderProviders(); renderContracts();

@@ -1,3 +1,4 @@
+// html-modal-contractModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_CONTRACT = `
 <!-- نافذة العقد -->
     <div class="modal" id="contractModal">

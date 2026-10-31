@@ -1,3 +1,4 @@
+// backup.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function syncActiveSessionBeforeExport(){
   try { if(activeClaim && document.getElementById('reviewModal') && document.getElementById('reviewModal').classList.contains('open')) upsertCurrentSession(); } catch(e){}
 }

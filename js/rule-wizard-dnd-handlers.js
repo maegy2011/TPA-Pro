@@ -1,3 +1,4 @@
+// rule-wizard-dnd-handlers.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function clearDragState(){
   document.querySelectorAll('.dragging,.drop-before,.drop-after,.drop-before-group,.drop-after-group,.drop-into,.drop-target-end,.drop-active').forEach(el => {
     el.classList.remove('dragging','drop-before','drop-after','drop-before-group','drop-after-group','drop-into','drop-target-end','drop-active');

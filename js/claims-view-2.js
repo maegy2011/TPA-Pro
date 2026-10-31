@@ -1,3 +1,4 @@
+// claims-view-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function applyMaxLabsRule(pat){
   markSessionDirty();
   const max = REVIEW_RULES.maxLabsPerVisit;

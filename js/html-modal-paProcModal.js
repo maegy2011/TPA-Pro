@@ -1,3 +1,4 @@
+// html-modal-paProcModal.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const MODAL_PAPROC = `
 <!-- نافذة الإجراء -->
     <div class="modal" id="paProcModal">

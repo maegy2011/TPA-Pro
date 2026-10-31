@@ -1,3 +1,4 @@
+// rule-wizard-consts.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const WIZ_RATE_PRESETS = [5,10,15,20,25,30,40,50];
 const WIZ_PERIOD_PRESETS = [
   { label:'هذا الشهر', from:()=>{ const d=new Date(); return d.toISOString().slice(0,8)+'01'; }, to:()=>{ const d=new Date(); d.setMonth(d.getMonth()+1,0); return d.toISOString().slice(0,10); } },
