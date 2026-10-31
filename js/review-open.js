@@ -35,7 +35,7 @@ function openReview(id){
   } else (el => { if (el) el.style.display = 'none'; })($('#priorApprovalBox'));
   $$('.rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
   renderReviewInvoices();
-  if (typeof renderExceptions === 'function') renderExceptions();
+  if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
   const s = upsertCurrentSession();
   if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); }
   clearSessionDirty();

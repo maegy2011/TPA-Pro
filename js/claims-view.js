@@ -113,7 +113,7 @@ function renderActiveInvoice(){
     ${rules}
     <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>#</th><th>الكود</th><th>البند</th><th>كمية</th><th>فاتورة</th><th>لائحة</th><th>الأقل</th><th>معتمد</th><th>فرق</th><th>حالة</th><th></th></tr></thead><tbody>${linesHtml}</tbody></table></div>
     <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button></div>`;
-  if (typeof renderExceptions === 'function') renderExceptions();
+  if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
 }
 function collectExceptions(){
   const pending = [], processed = [], pa = [];
