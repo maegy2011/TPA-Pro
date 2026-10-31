@@ -59,6 +59,10 @@ const SHELL_APP = `
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 7 L22 17 L12 22 L2 17 L2 7 Z"/><path d="M12 8v4M12 16h.01"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.tariffs">اللوائح المالية</span><span class="nav-sub" data-i18n="nav.tariffs.sub">الأسعار والخدمات</span></span>
           </button>
+          <button class="nav-item" data-page="services">
+            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>
+            <span class="nav-info"><span class="nav-label">الخدمات</span><span class="nav-sub">قائمة الخدمات</span></span>
+          </button>
           <button class="nav-item" data-page="deduction-rules">
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 6 V12 C20 17 16 20.5 12 22 C8 20.5 4 17 4 12 V6 Z"/><path d="M9 12l2 2 4-4"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.deduction">قواعد الخصم</span><span class="nav-sub" data-i18n="nav.deduction.sub">سقف وتحمل</span></span>

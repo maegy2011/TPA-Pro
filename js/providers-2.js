@@ -1,3 +1,22 @@
+let selectedContractServices = [];
+function getAllServiceNames(){
+  const set = new Set();
+  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s && s.name) set.add(s.name); }));
+  if(!set.size){ ['جميع الخدمات','الخدمات الأساسية','الطوارئ','العلاج الطبيعي'].forEach(x => set.add(x)); }
+  return [...set];
+}
+function renderContractServicesOptions(q){
+  const box = $('#ctrServicesList'); if(!box) return;
+  const term = (q||'').trim().toLowerCase();
+  const list = getAllServiceNames().filter(s => !term || s.toLowerCase().includes(term));
+  box.innerHTML = list.map(s => `<label style="display:block;margin:2px 0"><input type="checkbox" value="${escapeHtml(s)}" ${selectedContractServices.includes(s)?'checked':''}> ${escapeHtml(s)}</label>`).join('');
+  box.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked){ if(!selectedContractServices.includes(cb.value)) selectedContractServices.push(cb.value); }
+      else selectedContractServices = selectedContractServices.filter(x => x !== cb.value);
+    });
+  });
+}
 function renderContracts(){
   const activeN = contracts.filter(c=>effectiveContractStatus(c)==='active').length;
   const expN = contracts.filter(c=>effectiveContractStatus(c)==='expiring').length;
@@ -57,15 +76,18 @@ function openContractModal(id){
     $('#ctrNumber').value = c.id; $('#ctrStatus').value = c.status||'active';
     $('#ctrStart').value = c.startDate; $('#ctrEnd').value = c.endDate;
     $('#ctrDiscount').value = c.discountRate; $('#ctrPayment').value = c.paymentTerms||'30 يوم';
-    $('#ctrServices').value = c.coveredServices||'جميع الخدمات';
+    selectedContractServices = isEdit ? (c.coveredServices ? String(c.coveredServices).split('، ').map(x=>x.trim()).filter(Boolean) : []) : ['جميع الخدمات'];
     $('#ctrNotes').value = c.notes||''; (el => { if (el) el.style.display = 'block'; })($('#deleteContract'));
   } else {
     const today = daysFromNow(0);
+    selectedContractServices = ['جميع الخدمات'];
     $('#ctrStatus').value = 'active'; $('#ctrStart').value = today; $('#ctrEnd').value = daysFromNow(365);
     $('#ctrDiscount').value = 10; $('#ctrPayment').value = '30 يوم';
-    $('#ctrServices').value = 'جميع الخدمات'; $('#ctrNotes').value = ''; $('#ctrNumber').value = nextContractNumber(today);
+    $('#ctrNotes').value = ''; $('#ctrNumber').value = nextContractNumber(today);
     (el => { if (el) el.style.display = 'none'; })($('#deleteContract'));
   }
+  const ss = $('#ctrServicesSearch'); if(ss) ss.value = '';
+  renderContractServicesOptions('');
   if(!isEdit) $('#ctrStart').onchange = function(){ $('#ctrNumber').value = nextContractNumber(this.value); };
   else $('#ctrStart').onchange = null;
   $('#contractModal').classList.add('open'); document.body.style.overflow = 'hidden';
@@ -76,7 +98,7 @@ function saveContract(){
   const s = $('#ctrStart').value, e = $('#ctrEnd').value;
   if(!s || !e){ showWarning('تنبيه','أدخل التواريخ'); return; }
   if(new Date(e) <= new Date(s)){ showWarning('تنبيه','النهاية بعد البداية'); return; }
-  const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), paymentTerms:$('#ctrPayment').value, coveredServices:$('#ctrServices').value, autoRenew:true, status:$('#ctrStatus').value||'active', notes:$('#ctrNotes').value.trim() };
+  const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), paymentTerms:$('#ctrPayment').value, coveredServices:selectedContractServices.join('، '), autoRenew:true, status:$('#ctrStatus').value||'active', notes:$('#ctrNotes').value.trim() };
   if(editingContractId){ const c = getContractById(editingContractId); if(!c) return; Object.assign(c, data); syncContractToProvider(c); showSuccess('تم','تم التحديث'); }
   else { const nid = nextContractNumber(s); contracts.push({ id:nid, ...data }); syncContractToProvider({ id:nid, ...data }); showSuccess('تم','تمت الإضافة'); }
   closeContractModal(); renderAll();

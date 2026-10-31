@@ -10,6 +10,7 @@ const PAGE_META = {
   intake:['استلام الدفعات','استلام وإدارة الدفعات الشهرية من الجهات'],
   providers:['مقدمو الخدمات','إدارة جهات تقديم الخدمات الطبية وعقودها'],
   contracts:['العقود','متابعة وإدارة عقود الجهات الطبية'],
+  services:['الخدمات','إدارة خدمات اللوائح الطبية'],
   tariffs:['اللوائح','إدارة لوائح الأسعار والخدمات الطبية'],
   'deduction-rules':['قواعد الخصم','إنشاء وإدارة قواعد الخصم (سقف، تحمل، مخصص، سوبر)'],
   reports:['التقارير والتحليلات','تحليل مالي شامل للمطالبات'],
@@ -49,6 +50,7 @@ function applyPage(page){
   window.scrollTo({top:0, behavior:'smooth'});
   setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 0);
   if(page === 'search') renderSearch();
+  if(page === 'services') renderServices();
   if(page === 'trash') renderTrash();
   if(page === 'deduction-rules') renderDeductionRules();
   if(page === 'reports') renderReports();
