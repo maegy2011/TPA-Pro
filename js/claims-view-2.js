@@ -55,4 +55,13 @@ function finalizeReview(){
   renderAll();
   if(currentTimelineClaimId === cid) renderTimeline();
   showSuccess('تم','تم حفظ المراجعة');
+  // Phase 4: انتقال للجلسة التالية
+  const next = workSessions.find(s => s.status === 'paused');
+  if (next) {
+    setTimeout(() => {
+      if (confirm(`هناك ${workSessions.length} جلسة موقوفة. فتح التالية (${next.claimId})؟`)) {
+        resumeSession(next.id);
+      }
+    }, 400);
+  }
 }
