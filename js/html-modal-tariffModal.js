@@ -44,7 +44,6 @@ const MODAL_TARIFF = `
             <div class="services-wrap"><table class="services-table"><thead><tr><th style="width:34px"><input type="checkbox" id="tfSelectAll"></th><th>الكود</th><th>الخدمة</th><th>الأساسي</th><th>الحالي</th><th>التغطية</th><th></th></tr></thead><tbody id="tfServicesBody"></tbody></table></div>
           </div>
           <div class="tf-panel" data-tf-panel="annual">
-            <label class="increase-toggle" style="margin-bottom:14px"><input type="checkbox" id="tfIncreaseEnabled"><span>تفعيل الزيادة السنوية</span></label>
             <div class="form-grid">
               <div class="fg"><label>النسبة %</label><input id="tfIncreaseRate" type="number" min="0" max="100" step="0.5"></div>
               <div class="fg"><label>آخر زيادة</label><input id="tfLastIncrease" type="date"></div>
