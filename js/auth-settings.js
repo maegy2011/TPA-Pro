@@ -78,3 +78,4 @@ function applyAppSettingsToUI(){
     if(typeof EXPORT_BRAND !== 'undefined' && EXPORT_BRAND){ try { EXPORT_BRAND.name = appSettings.company.brand; EXPORT_BRAND.sub = appSettings.company.tagline; EXPORT_BRAND.version = appSettings.company.version; } catch(e){} }
   } catch(e){ console.warn('applyAppSettingsToUI', e); }
 }
+function logout(){ if(typeof logoutWithReminder === 'function') logoutWithReminder(); }
