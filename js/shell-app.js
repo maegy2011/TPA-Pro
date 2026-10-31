@@ -74,23 +74,7 @@ const SHELL_APP = `
           </button>
         </div>
 
-        <!-- النظام -->
-        <div class="nav-section">
-          <div class="nav-section-title" data-i18n="nav.system">النظام</div>
-          <button class="nav-item" data-page="trash">
-            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg></span>
-            <span class="nav-info"><span class="nav-label" data-i18n="nav.trash">المحذوفات</span><span class="nav-sub" data-i18n="nav.trash.sub">سلة المحذوفات</span></span>
-            <span class="nav-count" id="trashCount" style="display:none">0</span>
-          </button>
-          <button class="nav-item" data-page="help">
-            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
-            <span class="nav-info"><span class="nav-label" data-i18n="nav.help">المساعدة</span><span class="nav-sub" data-i18n="nav.help.sub">دليل وتوثيق</span></span>
-          </button>
-          <button class="nav-item" data-page="settings">
-            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
-            <span class="nav-info"><span class="nav-label" data-i18n="nav.settings">الإعدادات</span><span class="nav-sub" data-i18n="nav.settings.sub">الحساب والنظام</span></span>
-          </button>
-        </div>
+      </nav>
       </nav>
 
       <div class="sidebar-foot">
@@ -116,8 +100,9 @@ const SHELL_APP = `
           <h1 id="pageTitle">لوحة التحكم</h1>
         </div>
         <div class="tb-right">
-          <button class="tb-action-btn" id="tbSearchBtn" title="بحث سريع">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <button class="tb-action-btn" id="tbTrashBtn" title="المحذوفات">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
+            <span class="tb-badge" id="tbTrashCount" style="display:none">0</span>
           </button>
           <button class="tb-action-btn" id="tbLangBtn" title="Language" style="font-size:11px;font-weight:800;min-width:38px">EN</button>
           <button class="tb-action-btn" id="tbBackupBtn" title="نسخة احتياطية">
