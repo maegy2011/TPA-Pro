@@ -1,4 +1,6 @@
 let providerStatusFilter = 'all', providerSearch = '', editingProviderId = null;
+const EGYPT_PROVINCES = ['القاهرة','الجيزة','الإسكندرية','الدقهلية','البحيرة','المنوفية','القليوبية','الشرقية','الغربية','كفر الشيخ','دمياط','بورسعيد','الإسماعيلية','السويس','شمال سيناء','جنوب سيناء','بني سويف','الفيوم','المنيا','أسيوط','سوهاج','قنا','الأقصر','أسوان','البحر الأحمر','مطروح','الوادي الجديد'];
+let selectedProvinces = [];
 let contractStatusFilter = 'all', contractSearch = '', editingContractId = null;
 let tariffFilter = 'all', tariffSearch = '', editingTariffId = null;
 let workingServices = [], workingIncreaseHistory = [], editingServiceIndex = null;
@@ -17,6 +19,7 @@ function bindProvidersControls(){
   });
   $$('[data-close-provider]').forEach(el => el.addEventListener('click', closeProviderModal));
   $('#saveProvider').addEventListener('click', saveProvider);
+  const ps = $('#pvProvinceSearch'); if(ps) ps.addEventListener('input', e => renderProvinceOptions(e.target.value));
   $('#deleteProvider').addEventListener('click', () => { if(editingProviderId) deleteProviderWithDialog(editingProviderId); });
 }
 function renderProviders(){
@@ -51,20 +54,35 @@ function renderProviders(){
     </tr>`;
   }).join('');
 }
+function renderProvinceOptions(q){
+  const box = $('#pvProvinceList'); if(!box) return;
+  const term = (q||'').trim().toLowerCase();
+  const list = EGYPT_PROVINCES.filter(p => !term || p.toLowerCase().includes(term));
+  box.innerHTML = list.map(p => `<label style="display:block;margin:2px 0"><input type="checkbox" value="${escapeHtml(p)}" ${selectedProvinces.includes(p)?'checked':''}> ${escapeHtml(p)}</label>`).join('');
+  box.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked){ if(!selectedProvinces.includes(cb.value)) selectedProvinces.push(cb.value); }
+      else selectedProvinces = selectedProvinces.filter(x => x !== cb.value);
+    });
+  });
+}
 function openProviderModal(id){
   editingProviderId = id || null; const isEdit = !!id;
   const p = isEdit ? getProviderById(id) : null; if(isEdit && !p) return;
   $('#prvModalTitle').textContent = isEdit ? 'تعديل جهة' : 'إضافة جهة';
   $('#prvModalSub').textContent = isEdit ? p.name : 'بيانات جديدة';
+  selectedProvinces = isEdit ? (Array.isArray(p.province) ? [...p.province] : (p.city ? p.city.split('، ').map(x=>x.trim()).filter(Boolean) : [])) : [];
   if(isEdit){
-    $('#pvName').value = p.name; $('#pvType').value = p.type; $('#pvCity').value = p.city;
+    $('#pvName').value = p.name; $('#pvType').value = p.type;
     $('#pvContact').value = p.contact||''; $('#pvPhone').value = p.phone||'';
     $('#pvEmail').value = p.email||''; $('#pvNotes').value = p.notes||'';
     $('#deleteProvider').style.display = 'block';
   } else {
-    ['pvName','pvCity','pvContact','pvPhone','pvEmail','pvNotes'].forEach(x => $('#'+x).value = '');
+    ['pvName','pvContact','pvPhone','pvEmail','pvNotes'].forEach(x => { const el = $('#'+x); if(el) el.value = ''; });
     $('#pvType').value = 'مستشفى'; $('#deleteProvider').style.display = 'none';
   }
+  const s = $('#pvProvinceSearch'); if(s) s.value = '';
+  renderProvinceOptions('');
   $('#providerModal').classList.add('open'); document.body.style.overflow = 'hidden';
 }
 function closeProviderModal(){ if(!$('#providerModal').classList.contains('open')) return; $('#providerModal').classList.remove('open'); _unlockBodyScroll(); editingProviderId = null; }
@@ -72,7 +90,8 @@ function saveProvider(){
   const name = $('#pvName').value.trim();
   if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
   if(providers.find(p => p.name === name && p.id !== editingProviderId)){ showWarning('تنبيه','الاسم مستخدم'); return; }
-  const data = { name, type:$('#pvType').value, city:$('#pvCity').value.trim(), contact:$('#pvContact').value.trim(), phone:$('#pvPhone').value.trim(), email:$('#pvEmail').value.trim(), notes:$('#pvNotes').value.trim() };
+  const provinceList = [...selectedProvinces];
+  const data = { name, type:$('#pvType').value, province: provinceList, city: provinceList.join('، '), contact:$('#pvContact').value.trim(), phone:$('#pvPhone').value.trim(), email:$('#pvEmail').value.trim(), notes:$('#pvNotes').value.trim() };
   if(editingProviderId){ const p = getProviderById(editingProviderId); if(!p) return; const old = p.name; Object.assign(p, data); if(old !== name) renameProviderClaims(old, name); showSuccess('تم','تم التحديث'); }
   else { const maxN = providers.reduce((m,p)=>{ const n = parseInt(p.id.split('-')[1], 10); return Math.max(m, isNaN(n)?0:n); }, 0); providers.push({ id:'PRV-'+String(maxN+1).padStart(3,'0'), ...data }); showSuccess('تم','تمت الإضافة'); }
   closeProviderModal(); renderAll();

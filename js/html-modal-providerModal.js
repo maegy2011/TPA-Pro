@@ -7,7 +7,10 @@ const MODAL_PROVIDER = `
         <div class="modal-body"><div class="form-grid">
           <div class="fg full"><label>اسم الجهة *</label><input id="pvName"></div>
           <div class="fg"><label>النوع</label><select id="pvType"><option>مستشفى</option><option>مجمع طبي</option><option>عيادة</option><option>مركز تخصصي</option><option>صيدلية</option><option>معمل</option></select></div>
-          <div class="fg"><label>المدينة</label><input id="pvCity"></div>
+          <div class="fg full"><label>المحافظة</label>
+            <input id="pvProvinceSearch" placeholder="بحث في المحافظات..." style="margin-bottom:6px">
+            <div id="pvProvinceList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
+          </div>
           <div class="fg"><label>التواصل</label><input id="pvContact"></div>
           <div class="fg"><label>الهاتف</label><input id="pvPhone" type="tel"></div>
           <div class="fg full"><label>البريد</label><input id="pvEmail" type="email"></div>
