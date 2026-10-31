@@ -134,6 +134,13 @@ function wizNext(){ wizSyncInputs(); if(!wizValidate(wizState.step)) return; if(
 function wizBack(){ wizSyncInputs(); if(wizState.step > 1){ wizState.step--; wizRenderStep(); } }
 function wizSave(){
   wizSyncInputs();
+  // tiers overlap check
+  if (wizState.tiersEnabled && Array.isArray(wizState.tiers) && wizState.tiers.length > 1) {
+    const sorted = [...wizState.tiers].sort((a,b) => (Number(a.from)||0) - (Number(b.from)||0));
+    for (let i = 1; i < sorted.length; i++) {
+      if ((Number(sorted[i].from)||0) < (Number(sorted[i-1].to)||Infinity)) { showWarning('تنبيه','تداخل في شرائح التسعير'); wizState.step = 2; wizRenderStep(); return; }
+    }
+  }
   for (const s of [1,2,3,4,5]) { if (!wizValidate(s)) { wizState.step = s; wizRenderStep(); return; } }
   const y = new Date(wizState.from).getFullYear(), pre = 'DR-'+y+'-';
   let m = 0;
