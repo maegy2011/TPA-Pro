@@ -1291,6 +1291,7 @@ FILE: /home/administrator/TPA/index.html
 <script src="js/engine-fields.js"></script>
 <script src="js/engine-fields-2.js"></script>
 <script src="js/engine-rules.js"></script>
+<script src="js/engine-validate.js"></script>
 <script src="js/compute-patient.js"></script>
 <script src="js/dialog.js"></script>
 <script src="js/navigation.js"></script>
@@ -1787,6 +1788,16 @@ FILE: /home/administrator/TPA/css/modals-1.css
 .rv-invoice-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .rv-inv-tab{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:#475569;display:flex;align-items:center;gap:8px;transition:.18s}
 .rv-inv-tab:hover{border-color:var(--teal);color:var(--teal)}
+
+.rv-tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.rv-tab{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px}
+.rv-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.rv-context-bar{padding:8px 12px;background:#EFF6F6;border:1px solid #C7E9E8;border-radius:8px;font-size:12px;font-weight:700;margin-bottom:10px;color:#0E7C7B}
+
+.rv-exc-card{transition:opacity .2s,transform .2s}
+.rv-exc-section-title{font-weight:800;color:var(--navy);margin:10px 0 6px;font-size:13px}
+.rv-empty{padding:18px;text-align:center;color:var(--muted)}
+.rv-exc-filter .btn-sm{font-size:11px}
 
 ================================================================================
 FILE: /home/administrator/TPA/css/modals-2.css
@@ -2623,6 +2634,7 @@ function initApp(){
     loadSessions(); updateSessionsBadge();
   }
   renderAll();
+  if (typeof checkOverdueClaims === 'function') setTimeout(checkOverdueClaims, 1000);
   setTimeout(() => { if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); }, 0);
 }
 
@@ -3031,6 +3043,10 @@ function saveReview(){
 }
 function finalizeReview(){
   if(!activeClaim) return;
+  if (typeof collectExceptions === 'function') {
+    const excs = collectExceptions();
+    if (excs.length > 0) { showWarning('استثناءات معلّقة', `بقي ${excs.length} استثناء. عالجها أو تجاوز الفحوصات.`); return; }
+  }
   const cid = activeClaim.id;
   activeClaim.invoices = JSON.parse(JSON.stringify(workingInvoices));
   activeClaim.invoices.forEach(inv => (inv.patients||[]).forEach(p => computePatient(p, activeClaim, inv.date, inv)));
@@ -3053,6 +3069,15 @@ function finalizeReview(){
   renderAll();
   if(currentTimelineClaimId === cid) renderTimeline();
   showSuccess('تم','تم حفظ المراجعة');
+  // Phase 4: انتقال للجلسة التالية
+  const next = workSessions.find(s => s.status === 'paused');
+  if (next) {
+    setTimeout(() => {
+      if (confirm(`هناك ${workSessions.length} جلسة موقوفة. فتح التالية (${next.claimId})؟`)) {
+        resumeSession(next.id);
+      }
+    }, 400);
+  }
 }
 
 ================================================================================
@@ -3173,6 +3198,175 @@ function renderActiveInvoice(){
     ${rules}
     <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>#</th><th>الكود</th><th>البند</th><th>كمية</th><th>فاتورة</th><th>لائحة</th><th>الأقل</th><th>معتمد</th><th>فرق</th><th>حالة</th><th></th></tr></thead><tbody>${linesHtml}</tbody></table></div>
     <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button></div>`;
+  if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
+}
+function collectExceptions(){
+  const pending = [], processed = [], pa = [];
+  (workingInvoices||[]).forEach((inv, ii) => (inv.patients||[]).forEach((pat, pi) => (pat.lines||[]).forEach((ln, li) => {
+    const item = { inv, ii, pat, pi, ln, li };
+    const d = ln._decision;
+    if (d === 'needs-attention') pending.push(item);
+    else if (d === 'pa-pending') pa.push(item);
+    else processed.push(item);
+  })));
+  return { pending, processed, pa };
+}
+function _excFilter(){ return (window._excFilterVal || 'all'); }
+function setExcFilter(v){ window._excFilterVal = v; renderExceptions(); }
+function renderExceptions(){
+  const box = document.getElementById('rvExceptions');
+  if (!box) return;
+  const data = collectExceptions();
+  const pending = data.pending || [], processed = data.processed || [], pa = data.pa || [];
+  const cnt = document.getElementById('rvExcCount');
+  const totalPending = pending.length + pa.length;
+  if (cnt) cnt.textContent = totalPending;
+  const filter = _excFilter();
+  const showPending = (filter === 'all' || filter === 'pending');
+  const showProcessed = (filter === 'all' || filter === 'processed');
+  const showPA = (filter === 'all' || filter === 'pa');
+
+  let html = '';
+  html += `<div class="rv-exc-summary">${pending.length} معلّقة · ${pa.length} بانتظار PA · ${processed.length} معالجة</div>`;
+  html += `<div class="rv-exc-filter" style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap">
+    <button type="button" class="btn-sm ${filter==='all'?'solid':'ghost'}" onclick="setExcFilter('all')">الكل</button>
+    <button type="button" class="btn-sm ${filter==='pending'?'solid':'ghost'}" onclick="setExcFilter('pending')">معلّقة (${pending.length})</button>
+    <button type="button" class="btn-sm ${filter==='processed'?'solid':'ghost'}" onclick="setExcFilter('processed')">معالجة (${processed.length})</button>
+    <button type="button" class="btn-sm ${filter==='pa'?'solid':'ghost'}" onclick="setExcFilter('pa')">بانتظار PA (${pa.length})</button>
+  </div>`;
+
+  function cardPending(e){
+    const ln = e.ln;
+    const reasons = (ln._checksFailed||[]).map(r => reasonLabel(r)).join('، ') || '—';
+    const billed = (Number(ln.qty)||0)*(Number(ln.billedUnit)||0);
+    const tariffTotal = ln.tariffUnit !== null && ln.tariffUnit !== undefined ? (Number(ln.qty)||0)*Number(ln.tariffUnit) : null;
+    const lesser = ln.lineBase !== undefined ? ln.lineBase : (tariffTotal !== null ? Math.min(billed, tariffTotal) : billed);
+    const rate = ln._contractRate || 0;
+    const after = ln._contractCovered ? Math.round(lesser*(1-rate/100)) : 0;
+    const sev = (ln._checksFailed||[]).some(r => isRejectReason(r)) ? 'reject' : 'attention';
+    const color = sev === 'reject' ? '#FEF2F2' : '#FFFBEB';
+    return `<div class="rv-exc-card" data-exc="${e.ii}-${e.pi}-${e.li}" style="background:${color};border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-weight:800;color:var(--navy)">${escapeHtml(ln.code)} · ${escapeHtml(ln.name)}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1}</div>
+      <div style="font-size:12px;margin:6px 0">فاتورة ${fmt(billed)} · لائحة ${tariffTotal!==null?fmt(tariffTotal):'—'} · الأقل ${fmt(lesser)} · خصم ${rate}% → معتمد مقترح ${fmt(after)}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--warn)">⚠ ${escapeHtml(reasons)}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:4px 0">الاقتراح: ${escapeHtml(ln._suggestedAction?.type||'review')}</div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button type="button" class="btn-sm" data-exc-act="approve" data-exc-key="${e.ii}-${e.pi}-${e.li}">اعتماد</button>
+        <button type="button" class="btn-sm" data-exc-act="reduce" data-exc-key="${e.ii}-${e.pi}-${e.li}">تخفيض</button>
+        <button type="button" class="btn-sm danger" data-exc-act="reject" data-exc-key="${e.ii}-${e.pi}-${e.li}">رفض</button>
+        ${(ln._checksFailed||[]).some(r=>String(r).startsWith('pa')) ? `<button type="button" class="btn-sm" data-exc-act="pa" data-exc-key="${e.ii}-${e.pi}-${e.li}">طلب موافقة</button>` : ''}
+      </div>
+      <div class="rv-exc-note-wrap" style="margin-top:8px">
+        <input type="text" class="rv-exc-note" data-exc-note="${e.ii}-${e.pi}-${e.li}" placeholder="ملاحظة (إلزامية للرفض/التخفيض)">
+      </div>
+      <div class="rv-exc-reduce-wrap" style="display:none;margin-top:6px" data-exc-reduce="${e.ii}-${e.pi}-${e.li}">
+        <input type="number" class="rv-exc-reduce-val" data-exc-reduce-val="${e.ii}-${e.pi}-${e.li}" min="0" max="${after}" value="${after}" placeholder="مبلغ معتمد">
+      </div>
+    </div>`;
+  }
+
+  function cardProcessed(e){
+    const ln = e.ln;
+    const billed = (Number(ln.qty)||0)*(Number(ln.billedUnit)||0);
+    const status = ln._decision || 'auto-approved';
+    const icon = status.includes('reject') ? '⛔' : (status.includes('reduce') ? '🔻' : '✅');
+    const color = status.includes('reject') ? '#FEF2F2' : (status.includes('reduce') ? '#FFFBEB' : '#ECFDF5');
+    const decided = ln._decidedAt ? new Date(ln._decidedAt).toLocaleString() : 'تلقائي';
+    const by = ln._decidedBy || 'المحرك';
+    const note = ln._decisionNote || ln.note || '';
+    const reasons = (ln._checksFailed||[]).map(r=>reasonLabel(r)).join('، ') || '—';
+    return `<div class="rv-exc-card" style="background:${color};border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;opacity:.85">
+      <div style="font-weight:800;color:var(--navy)">${icon} ${escapeHtml(ln.code)} · ${escapeHtml(ln.name)}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1} · ${fmt(billed)}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:4px 0">سبب: ${escapeHtml(reasons)}</div>
+      ${note?`<div style="font-size:11.5px;margin:4px 0">ملاحظة: ${escapeHtml(note)}</div>`:''}
+      <div style="font-size:10.5px;color:var(--muted);margin:4px 0">بواسطة: ${escapeHtml(by)} · ${escapeHtml(decided)}</div>
+      <div style="margin-top:6px"><button type="button" class="btn-sm ghost" data-exc-reopen="${e.ii}-${e.pi}-${e.li}">إعادة فتح</button></div>
+    </div>`;
+  }
+
+  function cardPA(e){
+    const ln = e.ln;
+    const billed = (Number(ln.qty)||0)*(Number(ln.billedUnit)||0);
+    return `<div class="rv-exc-card" style="background:#EFF6FF;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-weight:800;color:var(--navy)">⏳ ${escapeHtml(ln.code)} · ${escapeHtml(ln.name)}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1} · ${fmt(billed)}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button type="button" class="btn-sm" data-exc-act="approve" data-exc-key="${e.ii}-${e.pi}-${e.li}">الموافقة صادرة</button>
+        <button type="button" class="btn-sm danger" data-exc-act="reject" data-exc-key="${e.ii}-${e.pi}-${e.li}">رفض</button>
+      </div>
+    </div>`;
+  }
+
+  if (showPending && pending.length) {
+    html += `<div class="rv-exc-section-title">معلّقة (${pending.length})</div>` + pending.map(cardPending).join('');
+  } else if (showPending) {
+    html += `<div class="rv-empty" style="padding:12px;color:var(--ok);font-weight:700">✅ لا استثناءات معلّقة</div>`;
+  }
+  if (showProcessed && processed.length) {
+    html += `<div class="rv-exc-section-title">معالجة (${processed.length})</div>` + processed.map(cardProcessed).join('');
+  }
+  if (showPA && pa.length) {
+    html += `<div class="rv-exc-section-title">بانتظار PA (${pa.length})</div>` + pa.map(cardPA).join('');
+  }
+
+  if (!pending.length && !processed.length && !pa.length) {
+    html = '<div class="rv-empty" style="text-align:center;padding:24px;color:var(--muted)">لا بنود بعد — أضف فاتورة أولًا</div>';
+  }
+
+  box.innerHTML = html;
+  const btn = document.getElementById('finalizeReviewBtn');
+  if (btn) btn.disabled = (pending.length + pa.length) > 0;
+}
+function renderFinalSummary(){
+  // numbers
+  const nb = document.getElementById('rvFinalNumbers');
+  if (nb) {
+    const billed = (activeClaim && activeClaim.billed) ? activeClaim.billed : 0;
+    let approved = 0, ded = 0;
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => { approved += (p._final||0); }));
+    ded = billed - approved;
+    nb.innerHTML = `<div class="calc-box"><div class="calc-item"><span>المطالب به</span><b>${fmt(billed)}</b></div><div class="calc-item ded"><span>الاستقطاع</span><b>${fmt(ded)}</b></div><div class="calc-item rate"><span>النسبة</span><b>${billed?Math.round(ded/billed*100):0}%</b></div><div class="calc-item ok"><span>المعتمد</span><b>${fmt(approved)}</b></div></div>`;
+  }
+  // reasons breakdown
+  const rb = document.getElementById('rvFinalReasons');
+  if (rb) {
+    const counts = {};
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
+      const r = l._decisionReason || l.note || 'أخرى';
+      counts[r] = (counts[r]||0) + ((Number(l.qty)||0)*(Number(l.billedUnit)||0) - (Number(l.approved)||0));
+    })));
+    const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+    rb.innerHTML = '<div class="rv-section-title">توزيع الأسباب</div>' + Object.entries(counts).map(([k,v]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span>${escapeHtml(k)}</span><span>${fmt(v)} (${Math.round(v/total*100)}%)</span></div>`).join('');
+  }
+  // checklist
+  const cb = document.getElementById('rvFinalChecklist');
+  if (cb) {
+    const _ce = typeof collectExceptions === 'function' ? collectExceptions() : {pending:[],processed:[],pa:[]};
+    const excs = (_ce.pending||[]).concat(_ce.pa||[]);
+    const billed = activeClaim ? (Number(activeClaim.billed)||0) : 0;
+    let entered = 0;
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
+    const mismatch = Math.abs(billed - entered) > 1;
+    const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
+    const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+    const items = [
+      { ok: !mismatch, text: `الإجمالي مُطابق (${fmt(billed)} = ${fmt(entered)})` },
+      { ok: excs.length === 0, text: `كل الاستثناءات معالجة (${excs.length} متبقٍ)` },
+      { ok: paPending === 0, text: `لا توجد بنود بانتظار موافقة PA (${paPending})` },
+      { ok: missingDocs === 0, text: `المستندات مكتملة (${missingDocs} ناقصة)` },
+    ];
+    cb.innerHTML = '<div class="rv-section-title">قائمة الفحوصات</div>' + items.map(it => `<div style="font-size:12px;padding:4px 0;color:${it.ok?'var(--ok)':'var(--bad)'}">${it.ok?'☑':'☐'} ${escapeHtml(it.text)}</div>`).join('');
+  }
+  // default decision
+  const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
+  const billed2 = activeClaim ? (Number(activeClaim.billed)||0) : 0;
+  let def = 'partial';
+  if (approved === 0) def = 'rejected';
+  else if (approved >= billed2 && billed2 > 0) def = 'approved';
+  const r = document.querySelector(`input[name="rvDecision"][value="${def}"]`);
+  if (r) r.checked = true;
 }
 function recalcReview(){
   let billed = 0, eligible = 0, finalApproved = 0;
@@ -3211,20 +3405,34 @@ function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
   const allRules = deductionRules.filter(r => r.enabled !== false);
   const ctx = { claim, patient: pat, invoice: invoice || null };
+  const _ctx = getContractContext(claim);
   (pat.lines||[]).forEach(l => {
-    const billed = l.qty * l.billedUnit;
+    const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
     const hasT = (l.tariffUnit !== null && l.tariffUnit !== undefined);
-    const tariffTotal = hasT ? l.qty * l.tariffUnit : billed;
+    const tariffTotal = hasT ? (Number(l.qty)||0) * (Number(l.tariffUnit)||0) : billed;
     const lesser = hasT ? Math.min(billed, tariffTotal) : billed;
     l.lineBase = lesser;
     if(l._overrideMode === undefined) l._overrideMode = 'auto';
+
+    const covered = !l._manualEntry && isServiceCovered(_ctx, l.code) && hasT;
+    if(!covered){
+      l._autoApproved = 0;
+      l._contractRejected = true;
+      l._contractRate = 0;
+      l.lineBaseAfterContract = 0;
+      return;
+    }
+    const rate = getContractRateForService(_ctx, l.code);
+    l._contractRate = rate;
+    l.lineBaseAfterContract = Math.round(lesser * (1 - rate / 100));
+    l._contractRejected = false;
   });
   const lineRules = topoSortRules(allRules.filter(r => r.isComposite || isLineLevelAction(r.action)));
   pat.lines.forEach(l => {
     const lctx = { ...ctx, line: l };
     const appliedIds = new Set();
     const compositeLog = [];
-    let current = l.lineBase;
+    let current = (l.lineBaseAfterContract !== undefined ? l.lineBaseAfterContract : l.lineBase);
     let lastRuleId = null, lastRuleName = '', lastRuleRate = 0;
     for(const rule of lineRules){
       if(!checkRequires(rule, appliedIds)) continue;
@@ -3256,6 +3464,13 @@ function computePatient(pat, claim, refDate, invoice){
   });
   // ✅ F6: الأولوية لـ _maxlabsForced قبل القواعد العادية
   pat.lines.forEach(l => {
+    if(l._contractRejected){
+      l.approved = 0;
+      l._overrideMode = 'manual';
+      l._manualValue = 0;
+      if(!l.note) l.note = l._manualEntry ? 'إدخال يدوي غير مدرج' : 'غير مغطاة/غير مدرجة';
+      return;
+    }
     if(l._maxlabsForced){
       l.approved = 0;
       l._autoApproved = 0;
@@ -4049,6 +4264,233 @@ function hasValidPriorApproval(claim){ return claim.priorApproval && claim.prior
 function lineRequiresPA(line){ if(line.requiresPriorApproval) return true; return paProcedures.some(p => p.code === line.code); }
 
 ================================================================================
+FILE: /home/administrator/TPA/js/engine-validate.js
+================================================================================
+/* ============================================================
+   engine-validate.js — محرك الفحص التلقائي
+   يعمل بعد engine-rules.js وقبل compute-patient.js
+   ============================================================ */
+
+/* ---------- قائمة الأسباب الموحّدة ---------- */
+const VALIDATION_REASONS = {
+  'not-in-tariff':      { label: 'غير مدرجة في اللائحة',        severity: 'reject',    category: 'coverage' },
+  'not-covered':        { label: 'غير مغطاة بالعقد',            severity: 'reject',    category: 'coverage' },
+  'pa-rejected':        { label: 'الموافقة المسبقة مرفوضة',     severity: 'reject',    category: 'pa' },
+  'pa-expired':         { label: 'الموافقة المسبقة منتهية',     severity: 'reject',    category: 'pa' },
+  'manual-entry':       { label: 'إدخال يدوي غير مدرج',          severity: 'reject',    category: 'coverage' },
+
+  'pa-required':        { label: 'تتطلب موافقة مسبقة — لم تُطلب', severity: 'attention', category: 'pa' },
+  'pa-pending':         { label: 'موافقة مسبقة قيد الطلب',       severity: 'attention', category: 'pa' },
+  'duplicate':          { label: 'بند مكرر',                     severity: 'attention', category: 'duplication' },
+  'over-frequency':     { label: 'تجاوز حد التكرار',             severity: 'attention', category: 'duplication' },
+  'unbundling':         { label: 'تفكيك إجراء',                  severity: 'attention', category: 'unbundling' },
+  'waiting-period':     { label: 'داخل فترة الانتظار',            severity: 'attention', category: 'eligibility' },
+
+  'tariff-limit':       { label: 'تجاوز سعر اللائحة',            severity: 'reduce',    category: 'pricing' },
+  'contract-discount':  { label: 'خصم العقد',                    severity: 'reduce',    category: 'contract' },
+};
+
+function getContractContext(claim) {
+  const empty = { provider: null, contract: null, tariff: null, serviceOverrides: {} };
+  if (!claim) return empty;
+
+  const provider = (typeof providers !== 'undefined' ? providers : []).find(p => p.name === claim.provider) || null;
+  if (!provider) return { ...empty, provider };
+
+  const contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => c.providerId === provider.id) || null;
+
+  let tariff = null;
+  if (contract?.tariffId) {
+    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId) || null;
+  }
+  if (!tariff && contract) {
+    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t =>
+      (t.linkedContractIds || []).includes(contract.id) ||
+      (t.linkedProviderIds || []).includes(provider.id)
+    ) || null;
+  }
+  if (!tariff) {
+    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => (typeof effectiveTariffStatus === 'function' ? effectiveTariffStatus(t) === 'active' : t.status === 'active')) || null;
+  }
+
+  const serviceOverrides = contract?.serviceOverrides || {};
+
+  return { provider, contract, tariff, serviceOverrides };
+}
+
+function getContractRateForService(ctx, code) {
+  const ov = ctx?.serviceOverrides?.[code];
+  if (ov && ov.discountRate !== null && ov.discountRate !== undefined) {
+    return Number(ov.discountRate) || 0;
+  }
+  return Number(ctx?.contract?.discountRate) || 0;
+}
+
+function isServiceCovered(ctx, code) {
+  const ov = ctx?.serviceOverrides?.[code];
+  if (ov && ov.covered === false) return false;
+  return true;
+}
+
+function validateLine(line, ctx) {
+  const { claim, patient, invoice, contract, tariff, serviceOverrides } = ctx;
+  const ctxFull = { claim, patient, invoice, contract, tariff, serviceOverrides: serviceOverrides || (contract?.serviceOverrides || {}) };
+  const passed = [];
+  const failed = [];
+  const reductions = [];
+
+  const billedTotal = (Number(line.qty) || 0) * (Number(line.billedUnit) || 0);
+  const code = String(line.code || '').trim();
+
+  const tariffSvc = (tariff?.services || []).find(s => String(s.code) === code) || null;
+  if (!tariffSvc || line._manualEntry) {
+    failed.push(line._manualEntry ? 'manual-entry' : 'not-in-tariff');
+  } else {
+    passed.push('in-tariff');
+  }
+
+  if (tariffSvc && !line._manualEntry) {
+    if (!isServiceCovered(ctxFull, code)) {
+      failed.push('not-covered');
+    } else {
+      passed.push('covered');
+    }
+  }
+
+  if (tariffSvc && !line._manualEntry) {
+    const ov = (ctxFull.serviceOverrides || {})[code] || {};
+    const requiresPA = ov.requiresPA === true || tariffSvc.requiresPriorApproval === true;
+    if (requiresPA) {
+      const pa = claim?.priorApproval;
+      if (!pa || !pa.required) {
+        failed.push('pa-required');
+      } else if (pa.status === 'rejected') {
+        failed.push('pa-rejected');
+      } else if (pa.status === 'pending' || pa.status === 'not-requested') {
+        failed.push('pa-pending');
+      } else if (pa.status === 'approved') {
+        const lineDate = invoice?.date || claim?.date;
+        if (pa.date && lineDate && new Date(pa.date) < new Date(lineDate)) {
+          failed.push('pa-expired');
+        } else {
+          passed.push('pa-valid');
+        }
+      }
+    }
+  }
+
+  const tariffUnit = tariffSvc?.currentPrice ?? null;
+  const tariffTotal = tariffUnit !== null ? (Number(line.qty) || 0) * tariffUnit : null;
+
+  if (tariffSvc && tariffTotal !== null) {
+    if (billedTotal > tariffTotal + 0.01) {
+      passed.push('price-exceeds');
+      reductions.push('tariff-limit');
+    } else {
+      passed.push('price-ok');
+    }
+  }
+
+  if (patient && invoice) {
+    const siblings = (patient.lines || []).filter(l => l !== line && String(l.code) === code);
+    if (siblings.length > 0) {
+      failed.push('duplicate');
+    } else {
+      passed.push('no-duplicate');
+    }
+  }
+
+  let decision = 'auto-approved';
+  let suggestedAction = null;
+
+  const hasReject = failed.some(f => VALIDATION_REASONS[f]?.severity === 'reject');
+  const hasAttention = failed.some(f => VALIDATION_REASONS[f]?.severity === 'attention');
+
+  if (hasReject) {
+    decision = 'auto-rejected';
+    suggestedAction = { type: 'reject', reason: failed.find(f => VALIDATION_REASONS[f]?.severity === 'reject') };
+  } else if (hasAttention) {
+    decision = 'needs-attention';
+    const first = failed.find(f => VALIDATION_REASONS[f]?.severity === 'attention');
+    suggestedAction = {
+      type: first?.startsWith('pa') ? 'request-pa' : 'review',
+      reason: first
+    };
+  } else if (reductions.length > 0) {
+    decision = 'auto-reduced';
+    suggestedAction = { type: 'reduce', reason: reductions[0] };
+  }
+
+  const contractRate = getContractRateForService(ctxFull, code);
+  const covered = !line._manualEntry && isServiceCovered(ctxFull, code) && !!tariffSvc;
+  const lesser = tariffTotal !== null ? Math.min(billedTotal, tariffTotal) : billedTotal;
+  const afterContract = covered ? Math.round(lesser * (1 - contractRate / 100)) : 0;
+
+  return {
+    passed,
+    failed,
+    reductions,
+    decision,
+    suggestedAction,
+    tariffSvc,
+    tariffUnit,
+    tariffTotal,
+    billedTotal,
+    lesser,
+    contractRate,
+    covered,
+    afterContract,
+  };
+}
+
+function validateInvoice(inv, ctx) {
+  const passed = [];
+  const failed = [];
+  const missingDocs = [];
+  const DOC_ITEMS_LOCAL = (typeof DOC_ITEMS !== 'undefined' ? DOC_ITEMS : []);
+  DOC_ITEMS_LOCAL.forEach(d => {
+    if (!inv.documents || !inv.documents[d.key]) missingDocs.push(d.label);
+  });
+  if (missingDocs.length) {
+    failed.push('missing-docs');
+  } else {
+    passed.push('docs-present');
+  }
+  return { passed, failed, missingDocs };
+}
+
+function validateClaim(claim) {
+  const failed = [];
+  const entered = (claim.invoices || []).reduce((s, inv) =>
+    s + (inv.patients || []).reduce((a, p) =>
+      a + (p.lines || []).reduce((c, l) => c + (Number(l.qty) || 0) * (Number(l.billedUnit) || 0), 0), 0), 0);
+
+  const target = Number(claim.billed) || 0;
+  const remaining = target - entered;
+
+  if (Math.abs(remaining) > 1) failed.push('invoice-mismatch');
+
+  const pendingExceptions = [];
+  (claim.invoices || []).forEach(inv => (inv.patients || []).forEach(p => (p.lines || []).forEach(l => {
+    if (l._decision === 'needs-attention' && l._overrideMode === 'auto') {
+      pendingExceptions.push({ code: l.code, reasons: l._checksFailed || [] });
+    }
+  })));
+
+  return { failed, entered, target, remaining, pendingExceptions };
+}
+
+function isRejectReason(code) {
+  return VALIDATION_REASONS[code]?.severity === 'reject';
+}
+function isAttentionReason(code) {
+  return VALIDATION_REASONS[code]?.severity === 'attention';
+}
+function reasonLabel(code) {
+  return VALIDATION_REASONS[code]?.label || code;
+}
+
+================================================================================
 FILE: /home/administrator/TPA/js/entities.js
 ================================================================================
 function getProviderById(id){ return providers.find(p=>p.id===id); }
@@ -4293,6 +4735,15 @@ const screenDataCollectors = {
       columns:['فاتورة','نوع','مريض','كود','بند','فئة','كمية','مطالب','معتمد','استقطاع'], rows };
   }
 };
+function exportSessionSummary(){
+  if(!workSessions || !workSessions.length){ showWarning('لا جلسات','لا توجد جلسات للتصدير'); return; }
+  const rows = [['ID','Claim','Status','LastActive']];
+  workSessions.forEach(s => rows.push([s.id, s.claimId, s.status, s.lastActiveAt]));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'sessions-summary.csv'; a.click(); URL.revokeObjectURL(url);
+}
 function exportScreen(screen, format){
   const collector = screenDataCollectors[screen];
   if(!collector){ showWarning('خطأ','لا بيانات'); return; }
@@ -4558,26 +5009,36 @@ const MODAL_LINE = `
 <!-- نافذة البند -->
     <div class="modal" id="lineModal">
       <div class="modal-bg" data-close-line></div>
-      <div class="modal-panel" style="max-width:560px">
+      <div class="modal-panel" style="max-width:640px">
         <div class="modal-head"><div><h3 id="lnModalTitle">إضافة بند</h3><p id="lnModalSub">—</p></div><button class="close-btn" data-close-line><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
         <div class="modal-body">
+
           <div class="ln-source-banner" id="lnSourceBanner">—</div>
+
+          <div class="fg full" style="margin-bottom:12px">
+            <label>الخدمة *</label>
+            <select id="lnServiceSelect">
+              <option value="">— اختر من لائحة العقد —</option>
+            </select>
+          </div>
+
           <div class="form-grid">
-            <div class="fg"><label>الكود *</label><input id="lnCode" autocomplete="off"></div>
-            <div class="fg"><label>الفئة</label><select id="lnCategory">
-              <option>مختبر</option><option>أشعة</option><option>استشارة</option><option>عمليات</option>
-              <option>أدوية</option><option>طوارئ</option><option>علاج طبيعي</option><option>أسنان</option>
-              <option>عيون</option><option>إقامة</option><option>أخرى</option>
-            </select></div>
-            <div class="fg full"><label>الاسم *</label><input id="lnName" autocomplete="off"></div>
+            <div class="fg"><label>الكود</label><input id="lnCode" readonly></div>
+            <div class="fg"><label>الفئة</label><input id="lnCategory" readonly></div>
+            <div class="fg full"><label>اسم الخدمة</label><input id="lnName" readonly></div>
+            <div class="fg"><label>سعر اللائحة</label><input id="lnTariffUnit" readonly></div>
+            <div class="fg"><label>خصم العقد %</label><input id="lnContractDiscount" readonly></div>
             <div class="fg"><label>الكمية *</label><input id="lnQty" type="number" min="1" step="1" value="1"></div>
             <div class="fg"><label>سعر الفاتورة *</label><input id="lnBilledUnit" type="number" min="0" step="0.01"></div>
-            <div class="fg"><label>سعر اللائحة</label><input id="lnTariffUnit" type="number" min="0" step="0.01"></div>
           </div>
-          <div class="ln-suggest" id="lnSuggest"></div>
-          <div class="ln-source-result" id="lnSourceResult"></div>
+
+          <div class="ln-source-result" id="lnComputedPreview"></div>
+
         </div>
-        <div class="modal-foot"><button class="btn solid" id="saveLineBtn" data-i18n="common.save">حفظ</button><button class="btn out" data-close-line data-i18n="common.cancel">إلغاء</button></div>
+        <div class="modal-foot">
+          <button class="btn solid" id="saveLineBtn" data-i18n="common.save">حفظ</button>
+          <button class="btn out" data-close-line data-i18n="common.cancel">إلغاء</button>
+        </div>
       </div>
     </div>
 `;
@@ -4661,6 +5122,13 @@ const MODAL_REVIEW = `
           <button class="close-btn" data-close><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="modal-body">
+          <div class="rv-context-bar" id="rvContextBar">—</div>
+          <div class="rv-tabs" role="tablist">
+            <button type="button" class="rv-tab active" role="tab" aria-selected="true" data-rv-tab="input">1. الإدخال</button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="exceptions">2. الاستثناءات <span class="rv-tab-count" id="rvExcCount">0</span></button>
+            <button type="button" class="rv-tab" role="tab" aria-selected="false" data-rv-tab="final">3. المراجعة النهائية</button>
+          </div>
+          <div class="rv-tab-panel" id="rvTabInput" role="tabpanel">
           <button type="button" class="btn-sm ghost" id="rvViewTimelineBtn" style="width:100%;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;stroke:currentColor"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
             عرض الخط الزمني
@@ -4702,6 +5170,34 @@ const MODAL_REVIEW = `
               <div class="fg"><label>الحالة</label><select id="paStatus"><option value="not-requested">لم تُطلب</option><option value="pending">قيد الطلب</option><option value="approved">موافق عليها</option><option value="rejected">مرفوضة</option></select></div>
               <div class="fg"><label>رقم الموافقة</label><input id="paRefNumber"></div>
               <div class="fg"><label>التاريخ</label><input id="paDate" type="date"></div>
+            </div>
+          </div>
+        </div>
+          <div class="rv-tab-panel" id="rvTabExceptions" role="tabpanel" style="display:none">
+            <div id="rvExceptions"></div>
+          </div>
+          <div class="rv-tab-panel" id="rvTabFinal" role="tabpanel" style="display:none">
+            <div id="rvFinalNumbers"></div>
+            <div id="rvFinalReasons"></div>
+            <div id="rvFinalChecklist"></div>
+            <div class="form-grid" style="margin-top:12px">
+              <div class="fg full"><label>القرار</label>
+                <div style="display:flex;gap:12px">
+                  <label><input type="radio" name="rvDecision" value="approved"> اعتماد كامل</label>
+                  <label><input type="radio" name="rvDecision" value="partial" checked> اعتماد جزئي</label>
+                  <label><input type="radio" name="rvDecision" value="rejected"> رفض كامل</label>
+                </div>
+              </div>
+              <div class="fg full" id="rvReasonWrap"><label>سبب الاستقطاع العام</label>
+                <select id="rvFinalReason">
+                  <option value="">— اختر —</option>
+                  <option>خدمات غير مغطاة</option><option>تجاوز اللائحة</option><option>تكرار</option><option>نقص مستندات</option><option>موافقة مسبقة</option><option>فترة انتظار</option><option>أخرى</option>
+                </select>
+              </div>
+              <div class="fg full"><label>ملاحظات</label><textarea id="rvFinalNotes"></textarea></div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn solid" id="finalizeReviewBtn">إنهاء المراجعة والتوقيع</button>
             </div>
           </div>
         </div>
@@ -5898,15 +6394,32 @@ function renderLineSourceBanner(){
     banner.innerHTML = `📋 اللوائح: <b>${names}${shown.length>3?' (+'+(shown.length-3)+')':''}</b>`;
   } else { banner.className = 'ln-source-banner warn'; banner.innerHTML = '⚠ لا لائحة نشطة'; }
 }
-function applyServiceToLine(svc){
-  $('#lnCode').value = svc.code; $('#lnName').value = svc.name; $('#lnCategory').value = svc.category;
-  const b = $('#lnBilledUnit'); if(!b.value) b.value = svc.currentPrice;
-  $('#lnTariffUnit').value = svc.currentPrice; lnSelectedTariffId = svc.tariffId;
-  $('#lnSuggest').innerHTML = '';
-  const t = tariffs.find(x => x.id === svc.tariffId);
-  const src = $('#lnSourceResult'); src.classList.add('show');
-  src.innerHTML = `✅ من: <b>${escapeHtml(t?t.name:svc.tariffName)}</b> · كود <b>${escapeHtml(svc.code)}</b>`;
-  b.focus(); b.select();
+function applyServiceToLine(svc) {
+  const ctx = getContractContext(activeClaim);
+  const override = ctx.serviceOverrides?.[svc.code] || {};
+  const contractRate = override.discountRate ?? (Number(ctx.contract?.discountRate) || 0);
+  const covered = override.covered !== false;
+
+  $('#lnCode').value = svc.code;
+  $('#lnName').value = svc.name;
+  $('#lnCategory').value = svc.category || 'أخرى';
+  $('#lnTariffUnit').value = svc.currentPrice;
+  $('#lnBilledUnit').value = svc.currentPrice;
+  $('#lnContractDiscount').value = covered ? contractRate : '—';
+
+  lnSelectedTariffId = svc.tariffId || ctx.contract?.tariffId || ctx.tariff?.id || '';
+
+  const banner = $('#lnSourceBanner');
+  if (!covered) {
+    banner.className = 'ln-source-banner warn';
+    banner.innerHTML = '⛔ <b>غير مغطاة بالعقد</b> — سيُرفض البند تلقائيًا';
+  } else {
+    banner.className = 'ln-source-banner';
+    banner.innerHTML = `✅ مغطاة · اللائحة <b>${escapeHtml(ctx.tariff?.name || '—')}</b> · خصم العقد <b>${contractRate}%</b>`;
+  }
+
+  updateComputedPreview();
+  setTimeout(() => $('#lnBilledUnit').focus(), 50);
 }
 function bindLineAutocomplete(){
   const codeInp = $('#lnCode'), nameInp = $('#lnName'), suggest = $('#lnSuggest');
@@ -5926,41 +6439,286 @@ function bindLineAutocomplete(){
   codeInp.addEventListener('change', () => { const v = codeInp.value.trim().toLowerCase(); if(!v||lnSelectedTariffId) return; const all = searchTariffServices(v, lnApplicableTariffs); const exact = all.find(s => s.code.toLowerCase()===v); if(exact) applyServiceToLine(exact); });
   document.addEventListener('click', e => { if(!e.target.closest('#lineModal') || e.target.closest('.ln-suggest') || e.target.closest('#lnCode') || e.target.closest('#lnName')) return; suggest.innerHTML = ''; });
 }
-function openLineEditor(patIdx, lineIdx){
-  const inv = workingInvoices[rvActiveInvoiceIdx]; const pat = inv&&inv.patients?inv.patients[patIdx]:null; if(!pat) return;
+function openLineEditor(patIdx, lineIdx) {
+  if (activeClaim && activeClaim._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
+  const inv = workingInvoices[rvActiveInvoiceIdx];
+  const pat = inv && inv.patients ? inv.patients[patIdx] : null;
+  if (!pat) return;
+
   rvEditLineIdx = (lineIdx === undefined || lineIdx === null) ? -1 : lineIdx;
   const l = rvEditLineIdx >= 0 ? pat.lines[rvEditLineIdx] : null;
+
   $('#lnModalTitle').textContent = l ? 'تعديل البند' : 'إضافة بند';
   $('#lnModalSub').textContent = `${inv.id} · ${pat.name}`;
-  $('#lnCode').value = l ? l.code : ''; $('#lnName').value = l ? l.name : ''; $('#lnCategory').value = l ? l.category : 'مختبر';
-  $('#lnQty').value = l ? l.qty : 1; $('#lnBilledUnit').value = l ? l.billedUnit : '';
-  $('#lnTariffUnit').value = (l && l.tariffUnit !== null && l.tariffUnit !== undefined) ? l.tariffUnit : '';
-  lnApplicableTariffs = getApplicableTariffs(activeClaim?activeClaim.provider:'');
-  lnSelectedTariffId = (l && l.tariffId) ? l.tariffId : null;
-  renderLineSourceBanner(); $('#lnSuggest').innerHTML = '';
-  const src = $('#lnSourceResult'); src.classList.remove('show'); src.innerHTML = '';
-  $('#lineModal').classList.add('open'); setTimeout(()=>$('#lnCode').focus(), 120);
+
+  const ctx = getContractContext(activeClaim);
+  const services = ctx.tariff?.services || [];
+
+  const sel = $('#lnServiceSelect');
+  if (!services.length) {
+    sel.innerHTML = '<option value="">— لا خدمات في اللائحة —</option>' +
+      '<option value="__manual__">— إدخال يدوي (سيُرفض) —</option>';
+  } else {
+    sel.innerHTML = '<option value="">— اختر من لائحة العقد —</option>' +
+      services.map(s => `<option value="${escapeHtml(s.code)}">${escapeHtml(s.code)} — ${escapeHtml(s.name)} (${fmt(s.currentPrice)} ج.م)</option>`).join('') +
+      '<option value="__manual__">— إدخال يدوي (سيُرفض تلقائيًا) —</option>';
+  }
+
+  if (l) {
+    const inTariff = services.some(s => String(s.code) === String(l.code));
+    if (inTariff) {
+      sel.value = l.code;
+      const svc = services.find(s => String(s.code) === String(l.code));
+      applyServiceToLine(svc);
+      $('#lnQty').value = l.qty;
+      if (l.billedUnit !== null && l.billedUnit !== undefined) $('#lnBilledUnit').value = l.billedUnit;
+    } else {
+      sel.value = '__manual__';
+      $('#lnCode').value = l.code || '';
+      $('#lnName').value = l.name || '';
+      $('#lnCategory').value = l.category || 'أخرى';
+      $('#lnTariffUnit').value = '';
+      $('#lnContractDiscount').value = '—';
+      toggleManualFields(true);
+      $('#lnQty').value = l.qty;
+      $('#lnBilledUnit').value = l.billedUnit;
+    }
+  } else {
+    sel.value = '';
+    $('#lnCode').value = '';
+    $('#lnName').value = '';
+    $('#lnCategory').value = '';
+    $('#lnTariffUnit').value = '';
+    $('#lnContractDiscount').value = '';
+    $('#lnQty').value = 1;
+    $('#lnBilledUnit').value = '';
+    toggleManualFields(false);
+  }
+
+  if (!ctx.contract || !ctx.tariff) {
+    $('#lnSourceBanner').className = 'ln-source-banner warn';
+    $('#lnSourceBanner').innerHTML = '⚠ <b>لا عقد/لائحة مرتبطة بالجهة</b> — اربط العقد بلائحة أولًا، أو استخدم الإدخال اليدوي (سيُرفض).';
+  } else {
+    $('#lnSourceBanner').className = 'ln-source-banner';
+    $('#lnSourceBanner').innerHTML = `📋 <b>${escapeHtml(ctx.contract.id)}</b> · ${escapeHtml(ctx.tariff.name)} · خصم عام ${Number(ctx.contract.discountRate) || 0}%`;
+  }
+
+  updateComputedPreview();
+  $('#lineModal').classList.add('open');
+  setTimeout(() => sel.focus(), 120);
 }
-function saveLineEditor(){
+function saveLineEditor() {
+  if (activeClaim && activeClaim._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
   markSessionDirty();
-  const inv = workingInvoices[rvActiveInvoiceIdx]; const pat = inv&&inv.patients?inv.patients[rvActivePatientIdx]:null; if(!pat) return;
-  const code = $('#lnCode').value.trim(), name = $('#lnName').value.trim(), cat = $('#lnCategory').value;
-  const qty = Math.max(1, Number($('#lnQty').value)||1), bu = Number($('#lnBilledUnit').value)||0;
-  const tuRaw = $('#lnTariffUnit').value.trim(); const tu = tuRaw===''?null:Number(tuRaw);
-  if(!code){ showWarning('تنبيه','أدخل الكود'); return; }
-  if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
-  if(bu <= 0){ showWarning('تنبيه','أدخل السعر'); return; }
-  if(qty > 10000){ showWarning('تنبيه','الكمية كبيرة'); return; }
-  if(bu > 10000000){ showWarning('تنبيه','السعر مرتفع'); return; }
-  if(tu !== null && tu < 0){ showWarning('تنبيه','سعر اللائحة سالب'); return; }
-  const billed = qty*bu; const tt = tu !== null ? qty*tu : null;
-  const lesser = tt !== null ? Math.min(billed, tt) : billed;
-  const data = { code, name, category:cat, qty, billedUnit:bu, tariffUnit:tu, approved:lesser, note:'', tariffId:lnSelectedTariffId||'' };
-  if(rvEditLineIdx >= 0 && pat.lines[rvEditLineIdx]) pat.lines[rvEditLineIdx] = data;
-  else { if(!pat.lines) pat.lines = []; pat.lines.push(data); }
-  closeLineEditor(); renderActiveInvoice(); recalcReview();
+  const inv = workingInvoices[rvActiveInvoiceIdx];
+  const pat = inv && inv.patients ? inv.patients[rvActivePatientIdx] : null;
+  if (!pat) return;
+
+  const isManual = $('#lnServiceSelect').value === '__manual__';
+  const code = $('#lnCode').value.trim();
+  const name = $('#lnName').value.trim();
+  const cat = $('#lnCategory').value.trim() || 'أخرى';
+  const qty = Math.max(1, Number($('#lnQty').value) || 1);
+  const bu = Number($('#lnBilledUnit').value) || 0;
+  const tuRaw = $('#lnTariffUnit').value.trim();
+  const tu = (tuRaw === '' || tuRaw === '—') ? null : Number(tuRaw);
+
+  if (!code) { showWarning('تنبيه', 'أدخل الكود'); return; }
+  if (!name) { showWarning('تنبيه', 'أدخل الاسم'); return; }
+  if (bu <= 0) { showWarning('تنبيه', 'أدخل السعر'); return; }
+  if (qty > 10000) { showWarning('تنبيه', 'الكمية كبيرة'); return; }
+  if (bu > 10000000) { showWarning('تنبيه', 'السعر مرتفع'); return; }
+  if (tu !== null && tu < 0) { showWarning('تنبيه', 'سعر اللائحة سالب'); return; }
+
+  const ctx = getContractContext(activeClaim);
+
+  const data = {
+    code, name,
+    category: cat,
+    qty,
+    billedUnit: bu,
+    tariffUnit: tu,
+    tariffId: lnSelectedTariffId || ctx.contract?.tariffId || ctx.tariff?.id || '',
+    _manualEntry: isManual,
+    _contractRate: 0,
+    _contractCovered: true,
+    note: '',
+    approved: 0,
+    _overrideMode: 'auto',
+  };
+
+  const validation = validateLine(data, {
+    claim: activeClaim,
+    patient: pat,
+    invoice: inv,
+    contract: ctx.contract,
+    tariff: ctx.tariff,
+    serviceOverrides: ctx.serviceOverrides,
+  });
+
+  data._decision = validation.decision;
+  data._checksPassed = validation.passed;
+  data._checksFailed = validation.failed;
+  data._flaggedReasons = [...validation.failed, ...(validation.reductions || [])];
+  data._suggestedAction = validation.suggestedAction;
+  data._contractRate = validation.contractRate;
+  data._contractCovered = validation.covered;
+  data.approved = validation.afterContract;
+
+  if (validation.decision === 'auto-rejected') {
+    data.approved = 0;
+    data._overrideMode = 'manual';
+    data._manualValue = 0;
+    data.note = reasonLabel(validation.suggestedAction?.reason || 'not-in-tariff');
+  } else if (validation.decision === 'auto-reduced') {
+    data.note = reasonLabel('tariff-limit');
+  } else if (validation.decision === 'needs-attention') {
+    data.note = reasonLabel(validation.suggestedAction?.reason || '');
+  }
+
+  if (rvEditLineIdx >= 0 && pat.lines[rvEditLineIdx]) {
+    pat.lines[rvEditLineIdx] = data;
+  } else {
+    if (!pat.lines) pat.lines = [];
+    pat.lines.push(data);
+  }
+
+  closeLineEditor();
+  renderActiveInvoice();
+  recalcReview();
+
+  if (validation.decision === 'auto-rejected') {
+    showToast(`⛔ رُفض البند — ${data.note}`);
+  } else if (validation.decision === 'auto-reduced') {
+    showToast(`🔻 خُفّض البند — ${data.note}`);
+  } else if (validation.decision === 'needs-attention') {
+    showToast(`⚠️ يحتاج مراجعة — ${data.note}`);
+  }
 }
 function closeLineEditor(){ if(!$('#lineModal').classList.contains('open')) return; $('#lineModal').classList.remove('open'); rvEditLineIdx = -1; }
+
+function updateComputedPreview() {
+  const box = $('#lnComputedPreview');
+  if (!box) return;
+
+  const qty = Math.max(0, Number($('#lnQty').value) || 0);
+  const billed = qty * (Number($('#lnBilledUnit').value) || 0);
+  const isManual = $('#lnServiceSelect').value === '__manual__';
+
+  if (!qty || !billed) {
+    box.classList.remove('show');
+    box.innerHTML = '';
+    return;
+  }
+
+  box.classList.add('show');
+
+  if (isManual) {
+    box.className = 'ln-source-result show';
+    box.style.background = '#FEF2F2';
+    box.style.borderColor = '#FECACA';
+    box.style.color = '#B91C1C';
+    box.innerHTML = `⛔ <b>غير مدرجة في اللائحة</b> — المعتمد: <b>0</b> (رفض تلقائي)`;
+    return;
+  }
+
+  const ctx = getContractContext(activeClaim);
+  const code = $('#lnCode').value.trim();
+  const tariffUnit = Number($('#lnTariffUnit').value) || 0;
+  const tariffTotal = qty * tariffUnit;
+  const lesser = Math.min(billed, tariffTotal);
+  const rate = getContractRateForService(ctx, code);
+  const covered = isServiceCovered(ctx, code);
+  const after = covered ? Math.round(lesser * (1 - rate / 100)) : 0;
+
+  if (!covered) {
+    box.className = 'ln-source-result show';
+    box.style.background = '#FEF2F2';
+    box.style.borderColor = '#FECACA';
+    box.style.color = '#B91C1C';
+    box.innerHTML = `⛔ <b>غير مغطاة بالعقد</b> — المعتمد: <b>0</b>`;
+    return;
+  }
+
+  box.className = 'ln-source-result show';
+  box.style.background = '';
+  box.style.borderColor = '';
+  box.style.color = '';
+
+  const exceeds = billed > tariffTotal + 0.01;
+  const exceedsBadge = exceeds ? ' · <span style="color:#B45309;font-weight:800">تجاوز اللائحة</span>' : '';
+
+  box.innerHTML = `
+    فاتورة <b>${fmt(billed)}</b>
+    · لائحة <b>${fmt(tariffTotal)}</b>
+    · الأقل <b>${fmt(lesser)}</b>
+    · خصم ${rate}%${exceedsBadge}
+    → المعتمد <b style="color:#047857;font-size:14px">${fmt(after)}</b>
+  `;
+}
+
+function toggleManualFields(enabled) {
+  ['lnCode', 'lnName', 'lnCategory'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.readOnly = !enabled;
+  });
+  if (enabled) {
+    const tu = $('#lnTariffUnit'); if (tu) tu.value = '';
+    const cd = $('#lnContractDiscount'); if (cd) cd.value = '—';
+    const banner = $('#lnSourceBanner');
+    if (banner) {
+      banner.className = 'ln-source-banner warn';
+      banner.innerHTML = '⚠ <b>إدخال يدوي</b> — البند غير مدرج في اللائحة وسيُرفض تلقائيًا';
+    }
+  }
+}
+
+function bindLineSmartForm() {
+  const sel = $('#lnServiceSelect');
+  const qty = $('#lnQty');
+  const bu = $('#lnBilledUnit');
+
+  if (sel && !sel.dataset.bound) {
+    sel.dataset.bound = '1';
+    sel.addEventListener('change', () => {
+      const code = sel.value;
+      if (code === '__manual__') {
+        toggleManualFields(true);
+        $('#lnCode').value = '';
+        $('#lnName').value = '';
+        $('#lnCategory').value = 'أخرى';
+        updateComputedPreview();
+        setTimeout(() => $('#lnCode').focus(), 50);
+        return;
+      }
+      if (!code) {
+        toggleManualFields(false);
+        $('#lnCode').value = '';
+        $('#lnName').value = '';
+        $('#lnCategory').value = '';
+        $('#lnTariffUnit').value = '';
+        $('#lnContractDiscount').value = '';
+        updateComputedPreview();
+        return;
+      }
+      const ctx = getContractContext(activeClaim);
+      const svc = (ctx.tariff?.services || []).find(s => String(s.code) === code);
+      if (svc) {
+        toggleManualFields(false);
+        applyServiceToLine(svc);
+      }
+    });
+  }
+
+  if (qty && !qty.dataset.bound) {
+    qty.dataset.bound = '1';
+    qty.addEventListener('input', updateComputedPreview);
+  }
+  if (bu && !bu.dataset.bound) {
+    bu.dataset.bound = '1';
+    bu.addEventListener('input', updateComputedPreview);
+  }
+}
 function updatePAWarning(){
   const status = $('#paStatus').value;
   const box = $('#priorApprovalBox'), w = $('#paWarningText');
@@ -6227,6 +6985,14 @@ function updateTrashBadge(){
   const tb = $('#tbTrashCount');
   if(tb){ tb.textContent = items.length; tb.style.display = items.length > 0 ? 'inline-flex' : 'none'; }
   const st = $('#settingsTrashCount'); if(st) st.textContent = items.length;
+}
+
+function checkOverdueClaims(){
+  try {
+    const now = new Date();
+    const overdue = (typeof claims !== 'undefined' ? claims : []).filter(c => c.status === 'pending' && c.receivedDate && (now - new Date(c.receivedDate)) > 7*86400000);
+    if (overdue.length) showToast(`⚠️ ${overdue.length} مطالبة معلّقة منذ أكثر من 7 أيام`);
+  } catch(e){}
 }
 
 ================================================================================
@@ -7046,6 +7812,17 @@ function buildClaimTimeline(claim){
     else if(pa.status === 'pending') events.push({ date: pa.date||claim.receivedDate, type:'pa-pending', icon:'clock', title:'قيد الدراسة', refNumber: pa.refNumber });
     else events.push({ date: claim.receivedDate, type:'note', icon:'alert', title:'موافقة غير مطلوبة' });
   }
+  // قرارات البنود
+  (claim.invoices||[]).forEach(inv => (inv.patients||[]).forEach(pat => (pat.lines||[]).forEach(l => {
+    if(l._decidedAt){
+      const map = { 'manual-approved':'اعتماد بند', 'manual-reduced':'تخفيض بند', 'manual-rejected':'رفض بند', 'pa-pending':'بانتظار PA' };
+      const title = map[l._decision] || l._decision || 'قرار بند';
+      events.push({ date: l._decidedAt.slice(0,10), type:'note', icon:'file', title:`${title} — ${l.code}`, description: l._decisionNote || '' });
+    }
+  })));
+  if(claim._overrideChecklist && claim._overrideChecklist.length){
+    claim._overrideChecklist.forEach(o => events.push({ date: (o.at||'').slice(0,10), type:'note', icon:'alert', title:'تجاوز الفحوصات', description: o.reason }));
+  }
   if(claim.status !== 'pending'){
     const sm = { approved:{type:'review-approved',icon:'check',title:'اعتماد كامل'}, partial:{type:'review-partial',icon:'file',title:'اعتماد جزئي'}, rejected:{type:'review-rejected',icon:'x',title:'رفض'} };
     const s = sm[claim.status];
@@ -7433,7 +8210,163 @@ function bindReviewModal(){
   $$('[data-close-line]').forEach(el => el.addEventListener('click', closeLineEditor));
   $('#saveLineBtn').addEventListener('click', saveLineEditor);
   $('#rvViewTimelineBtn').addEventListener('click', () => { const id = $('#rvId').value; if(!id) return; closeReview(); openTimeline(id); });
-  bindLineAutocomplete();
+  bindLineSmartForm();
+
+  // تبويبات المراجعة
+  const rvTabs = document.querySelector('#reviewModal .rv-tabs');
+  if (rvTabs && !rvTabs.dataset.bound) {
+    rvTabs.dataset.bound = '1';
+    rvTabs.addEventListener('click', e => {
+      const btn = e.target.closest('[data-rv-tab]'); if(!btn) return;
+      const tab = btn.dataset.rvTab;
+      $$('.rv-tab').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); });
+      $$('.rv-tab-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById('rvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      if (panel) panel.style.display = '';
+      if (tab === 'exceptions') renderExceptions();
+      if (tab === 'final') {
+        if (typeof renderFinalSummary === 'function') renderFinalSummary();
+      }
+    });
+  }
+
+  // binding exceptions
+  const excBox = document.getElementById('rvExceptions');
+  if (excBox && !excBox.dataset.bound) {
+    excBox.dataset.bound = '1';
+    excBox.addEventListener('click', e => {
+      const reopen = e.target.closest('[data-exc-reopen]');
+      if (reopen) {
+        const key = reopen.dataset.excReopen;
+        const [ii, pi, li] = key.split('-').map(Number);
+        const inv = workingInvoices[ii]; const pat = inv && inv.patients ? inv.patients[pi] : null; const ln = pat && pat.lines ? pat.lines[li] : null;
+        if (!ln) return;
+        markSessionDirty();
+        delete ln._decidedBy; delete ln._decidedAt; delete ln._decisionNote; delete ln._manualValue;
+        ln._decision = 'needs-attention';
+        ln._overrideMode = 'auto';
+        ln._suggestedAction = ln._suggestedAction || { type: 'review', reason: (ln._checksFailed||[])[0] };
+        workingInvoices.forEach(inv2 => (inv2.patients||[]).forEach(p => computePatient(p, activeClaim, inv2.date, inv2)));
+        recalcReview();
+        renderExceptions();
+        renderActiveInvoice();
+        return;
+      }
+      const btn = e.target.closest('[data-exc-act]'); if(!btn) return;
+      const key = btn.dataset.excKey;
+      const [ii, pi, li] = key.split('-').map(Number);
+      const inv = workingInvoices[ii]; const pat = inv && inv.patients ? inv.patients[pi] : null; const ln = pat && pat.lines ? pat.lines[li] : null;
+      if (!ln) return;
+      const noteInput = excBox.querySelector(`[data-exc-note="${key}"]`);
+      const note = noteInput ? noteInput.value.trim() : '';
+      const act = btn.dataset.excAct;
+      markSessionDirty();
+      if (act === 'approve') {
+        ln._decision = 'manual-approved';
+        ln._overrideMode = 'manual';
+        ln._manualValue = ln._contractCovered ? (ln.lineBaseAfterContract !== undefined ? ln.lineBaseAfterContract : ln.lineBase) : 0;
+        ln.approved = ln._manualValue;
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      } else if (act === 'reject') {
+        if (!note) { showWarning('تنبيه','الملاحظة إلزامية للرفض'); return; }
+        ln._decision = 'manual-rejected';
+        ln._overrideMode = 'manual';
+        ln._manualValue = 0;
+        ln.approved = 0;
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      } else if (act === 'reduce') {
+        const reduceWrap = excBox.querySelector(`[data-exc-reduce="${key}"]`);
+        if (reduceWrap) reduceWrap.style.display = '';
+        const valInput = excBox.querySelector(`[data-exc-reduce-val="${key}"]`);
+        if (!valInput) return;
+        const v = Number(valInput.value);
+        if (isNaN(v) || v < 0) { showWarning('تنبيه','أدخل مبلغًا صالحًا'); return; }
+        if (v > (ln._contractCovered ? (ln.lineBaseAfterContract||ln.lineBase||0) : 0)) { showWarning('تنبيه','المبلغ يتجاوز المعتمد'); return; }
+        if (v < (ln._contractCovered ? (ln.lineBaseAfterContract||ln.lineBase||0) : 0) && !note) { showWarning('تنبيه','الملاحظة إلزامية للتخفيض'); return; }
+        ln._decision = 'manual-reduced';
+        ln._overrideMode = 'manual';
+        ln._manualValue = v;
+        ln.approved = v;
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      } else if (act === 'pa') {
+        ln._decision = 'pa-pending';
+        ln._overrideMode = 'auto';
+        ln._decidedBy = 'reviewer';
+        ln._decidedAt = new Date().toISOString();
+        ln._decisionReason = (ln._checksFailed||[])[0] || '';
+        ln._decisionNote = note;
+      }
+      // recalc
+      workingInvoices.forEach(inv2 => (inv2.patients||[]).forEach(p => computePatient(p, activeClaim, inv2.date, inv2)));
+      recalcReview();
+      renderExceptions();
+      renderActiveInvoice();
+    });
+  }
+
+  const finBtn = document.getElementById('finalizeReviewBtn');
+  if (finBtn && !finBtn.dataset.bound) {
+    finBtn.dataset.bound = '1';
+    finBtn.addEventListener('click', () => {
+      // validation
+      const excs = typeof collectExceptions === 'function' ? collectExceptions() : [];
+      const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
+      const billed = activeClaim ? (Number(activeClaim.billed)||0) : 0;
+      let entered = 0;
+      (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
+      const mismatch = Math.abs(billed - entered) > 1;
+      const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+      const finalReason = document.getElementById('rvFinalReason') ? document.getElementById('rvFinalReason').value : '';
+      const decision = (document.querySelector('input[name="rvDecision"]:checked')||{}).value || 'partial';
+      const needsReason = (decision !== 'approved');
+      const missing = [];
+      if (excs.length) missing.push(`${excs.length} بند غير معالج`);
+      if (paPending) missing.push(`${paPending} بند بانتظار PA`);
+      if (mismatch) missing.push('الإجمالي غير مُطابق');
+      if (missingDocs) missing.push(`${missingDocs} مستند ناقص`);
+      if (needsReason && !finalReason) missing.push('سبب الاستقطاع العام');
+
+      if (missing.length) {
+        const msg = 'لا يمكن إتمام التوقيع — ' + missing.length + ' نقص:\n\n• ' + missing.join('\n• ') + '\n\n[العودة للمعالجة]   [تجاوز وتوقيع مع توثيق]';
+        const ok = confirm(msg + '\n\nتجاوز وتوقيع؟');
+        if (!ok) return;
+        const overrideReason = prompt('سبب التجاوز (إلزامي):');
+        if (!overrideReason || !overrideReason.trim()) { showWarning('تنبيه','سبب التجاوز إلزامي'); return; }
+        if (!activeClaim._overrideChecklist) activeClaim._overrideChecklist = [];
+        activeClaim._overrideChecklist.push({ by: 'reviewer', at: new Date().toISOString(), reason: overrideReason.trim(), missing: missing.slice() });
+      }
+
+      // signature dialog
+      const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
+      const ded = billed - approved;
+      const sig = confirm(`توقيع المراجعة\n\nالمطالبة: ${activeClaim.id}\nالمطالب: ${fmt(billed)}\nالمعتمد: ${fmt(approved)}\nالاستقطاع: ${fmt(ded)}\nالقرار: ${decision}\nالسبب: ${finalReason||'—'}\n\nأقر بأنني راجعت هذه المطالبة.`);
+      if (!sig) return;
+
+      // apply decision to claim
+      activeClaim._signedOff = true;
+      activeClaim._reviewedBy = 'reviewer';
+      activeClaim._reviewedAt = new Date().toISOString();
+      activeClaim._locked = true;
+      activeClaim._decision = decision;
+      activeClaim.reason = finalReason || activeClaim.reason || '';
+      activeClaim.notes = (document.getElementById('rvFinalNotes') ? document.getElementById('rvFinalNotes').value.trim() : '') || activeClaim.notes || '';
+
+      // sync rvReason select
+      const rvReason = document.getElementById('rvReason');
+      if (rvReason && finalReason) rvReason.value = finalReason;
+
+      saveReview();
+    });
+  }
 
   // تتبع التعديلات الحقيقية
   const rvModal = $('#reviewModal');
@@ -7455,11 +8388,8 @@ function openReview(id){
     if(activeSessionId && activeClaim){ upsertCurrentSession(); activeClaim = null; workingInvoices = []; }
     resumeSession(existing.id); return;
   }
-  let baseInvoices = c.invoices;
-  if(!baseInvoices || !baseInvoices.length){
-    const lines = [mkLine('GEN-001','بند مطالبة غير مفصل','أخرى',1,Number(c.billed)||0,Number(c.billed)||0,Number(c.approved)||0)];
-    baseInvoices = [mkInvoice(c.id+'-1','outpatient',c.date,[mkPatient(c.id+'-P1',c.patient||'—','',lines)])];
-  }
+  let baseInvoices = c.invoices || [];
+  if (!Array.isArray(baseInvoices)) baseInvoices = [];
   activeClaim = c;
   workingInvoices = JSON.parse(JSON.stringify(baseInvoices));
   rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
@@ -7469,6 +8399,11 @@ function openReview(id){
     if(p.beneficiaryType === undefined) p.beneficiaryType = c.type || 'employee';
   }));
   $('#rvSub').textContent = `${c.id} • ${c.patient}`;
+  const ctxBar = document.getElementById('rvContextBar');
+  if (ctxBar) {
+    const ctx = getContractContext(c);
+    ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · عقد ${ctx.contract?ctx.contract.id:'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
+  }
   $('#rvId').value = c.id; $('#rvDate').value = c.date; $('#rvReceivedNumber').value = c.receivedNumber||'—';
   $('#rvReceivedDate').value = c.receivedDate||'—'; $('#rvPatient').value = c.patient; $('#rvProvider').value = c.provider;
   $('#rvReason').value = c.reason||''; $('#rvNotes').value = c.notes||'';
@@ -7481,6 +8416,7 @@ function openReview(id){
   } else (el => { if (el) el.style.display = 'none'; })($('#priorApprovalBox'));
   $$('.rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
   renderReviewInvoices();
+  if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
   const s = upsertCurrentSession();
   if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); }
   clearSessionDirty();
@@ -8922,6 +9858,7 @@ function bindShortcuts(){
     const ctrl = e.ctrlKey || e.metaKey;
     if(ctrl && e.key === 'k'){ e.preventDefault(); navHistory=[]; navigateTo('search',{noPush:true}); const inp = document.getElementById('srchQuery')||document.getElementById('searchInput'); if(inp) setTimeout(()=>inp.focus(),50); return; }
     if(ctrl && e.key === 'n'){ e.preventDefault(); if(currentPage!=='intake') navigateTo('intake',{noPush:true}); setTimeout(()=>{ const b=document.getElementById('addBatchBtn'); if(b) b.click(); },50); return; }
+  if(ctrl && e.key === 's'){ e.preventDefault(); if(typeof saveReview === 'function' && document.getElementById('reviewModal')?.classList.contains('open')) saveReview(); else if(typeof saveLineEditor === 'function' && document.getElementById('lineModal')?.classList.contains('open')) saveLineEditor(); return; }
     if(e.key === 'Escape'){
       const openModal = document.querySelector('.modal.open, .dialog-overlay.open');
       if(openModal){
@@ -9857,4 +10794,74 @@ function roundToNearest(v, step){ const s = parseNumber(step)||1; return Math.ro
 function isMultipleOf(v, step){ const s = parseNumber(step)||1; if(s === 0) return false; const m = Math.abs(parseNumber(v) % s); return m < 0.001 || Math.abs(m-s) < 0.001; }
 function pctOf(v, base){ const b = parseNumber(base); if(b === 0) return null; return (parseNumber(v)/b)*100; }
 function pctDiff(a, b){ const bv = parseNumber(b); if(bv === 0) return null; return Math.abs((parseNumber(a)-bv)/bv*100); }
+
+================================================================================
+FILE: /home/administrator/TPA/tests/test-runner.html
+================================================================================
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>TPA Pro — Tests</title>
+  <link rel="stylesheet" href="../css/modals-1.css">
+</head>
+<body>
+  <h1>TPA Pro Test Runner</h1>
+  <pre id="out"></pre>
+  <script src="../js/translate-dom.js"></script>
+  <script src="../js/lang.js"></script>
+  <script src="../js/utils-2.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/data-seed.js"></script>
+  <script src="../js/data-models.js"></script>
+  <script src="../js/data-claims.js"></script>
+  <script src="../js/entities.js"></script>
+  <script src="../js/storage.js"></script>
+  <script src="../js/engine-fields.js"></script>
+  <script src="../js/engine-fields-2.js"></script>
+  <script src="../js/engine-rules.js"></script>
+  <script src="../js/engine-validate.js"></script>
+  <script src="../js/compute-patient.js"></script>
+  <script src="../tests/tests.js"></script>
+</body>
+</html>
+
+================================================================================
+FILE: /home/administrator/TPA/tests/tests.js
+================================================================================
+(function(){
+  const out = document.getElementById('out');
+  const log = (msg) => { out.textContent += msg + '\n'; console.log(msg); };
+  const assert = (cond, msg) => { if(!cond){ log('❌ FAIL: ' + msg); window.__testFail = (window.__testFail||0)+1; } else { log('✅ PASS: ' + msg); } };
+
+  assert(typeof validateLine === 'function', 'validateLine exists');
+  assert(typeof getContractContext === 'function', 'getContractContext exists');
+  assert(typeof computePatient === 'function', 'computePatient exists');
+  assert(typeof reasonLabel === 'function', 'reasonLabel exists');
+
+  const claim = (typeof claims !== 'undefined' && claims.length) ? claims[0] : null;
+  assert(!!claim, 'claims loaded');
+
+  if (claim) {
+    const ctx = getContractContext(claim);
+    assert(!!ctx, 'contract context built');
+
+    // manual entry should reject
+    const manualLine = { code: 'MANUAL-1', name: 'manual', qty: 1, billedUnit: 100, tariffUnit: null, _manualEntry: true };
+    const r1 = validateLine(manualLine, { claim, patient: null, invoice: null, contract: ctx.contract, tariff: ctx.tariff, serviceOverrides: ctx.serviceOverrides });
+    assert(r1.decision === 'auto-rejected', 'manual entry auto-rejected');
+
+    // in-tariff line if available
+    if (ctx.tariff && ctx.tariff.services && ctx.tariff.services.length) {
+      const svc = ctx.tariff.services[0];
+      const line = { code: svc.code, name: svc.name, qty: 1, billedUnit: svc.currentPrice, tariffUnit: svc.currentPrice, _manualEntry: false };
+      const r2 = validateLine(line, { claim, patient: null, invoice: null, contract: ctx.contract, tariff: ctx.tariff, serviceOverrides: ctx.serviceOverrides });
+      assert(typeof r2.decision === 'string', 'validateLine returns decision for tariff line');
+      log('Tariff line decision: ' + r2.decision);
+    }
+  }
+
+  const fails = window.__testFail || 0;
+  log(fails ? `Done with ${fails} failure(s).` : 'Done — all tests passed.');
+})();
 
