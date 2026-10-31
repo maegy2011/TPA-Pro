@@ -18,6 +18,7 @@ const PAGE_SERVICES = `
     </select>
     <button class="btn-xs" id="servicesAdvToggle">بحث متقدم</button>
     <button class="btn-xs" id="servicesImportBtn">استيراد CSV</button>
+    <button class="btn-xs" id="servicesAddBtn">إضافة خدمة (متقدمة)</button>
     <input type="file" id="servicesImportFile" accept=".csv,.txt" style="display:none">
   </div>
   <div id="servicesAdvPanel" style="display:none;margin-bottom:12px;padding:10px;border:1px solid var(--line,#E2E8F0);border-radius:8px">

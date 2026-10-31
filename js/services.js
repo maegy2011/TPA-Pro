@@ -88,6 +88,16 @@ function importServicesCSV(text){
   showSuccess('تم', `تم استيراد ${count} خدمة`);
 }
 
+function openAdvancedServiceAdd(){
+  if(typeof tariffs === 'undefined') return;
+  if(!tariffs.length){
+    const t = { id: nextTariffNumber(daysFromNow(0)), name:'خدمات عامة', type:'general', status:'active', effectiveDate:daysFromNow(0), expiryDate:'', basePriceLevel:100, services:[] };
+    tariffs.push(t);
+  }
+  const t = tariffs[0];
+  if(typeof openTariffModal === 'function'){ openTariffModal(t.id); }
+  setTimeout(() => { if(typeof openServiceModal === 'function') openServiceModal(null); }, 400);
+}
 function bindServicesControls(){
   const s = $('#servicesSearch'); if(s && !s.dataset.bound){ s.dataset.bound='1'; s.addEventListener('input', e => { servicesSearchTerm = e.target.value.trim(); renderServices(); }); }
   const sort = $('#servicesSort'); if(sort && !sort.dataset.bound){ sort.dataset.bound='1'; sort.addEventListener('change', e => { servicesSort = e.target.value; renderServices(); }); }
@@ -96,6 +106,7 @@ function bindServicesControls(){
   const toggle = $('#servicesAdvToggle'); if(toggle && !toggle.dataset.bound){ toggle.dataset.bound='1'; toggle.addEventListener('click', () => { servicesAdvOpen = !servicesAdvOpen; const p = $('#servicesAdvPanel'); if(p) p.style.display = servicesAdvOpen ? 'block' : 'none'; }); }
   const apply = $('#servicesAdvApply'); if(apply && !apply.dataset.bound){ apply.dataset.bound='1'; apply.addEventListener('click', () => { servicesAdv.code = $('#advCode').value.trim(); servicesAdv.name = $('#advName').value.trim(); servicesAdv.category = $('#advCategory').value.trim(); servicesAdv.tariff = $('#advTariff').value.trim(); servicesAdv.min = $('#advMinPrice').value.trim(); servicesAdv.max = $('#advMaxPrice').value.trim(); renderServices(); }); }
   const reset = $('#servicesAdvReset'); if(reset && !reset.dataset.bound){ reset.dataset.bound='1'; reset.addEventListener('click', () => { servicesAdv = {code:'',name:'',category:'',tariff:'',min:'',max:''}; ['advCode','advName','advCategory','advTariff','advMinPrice','advMaxPrice'].forEach(id=>{const el=$('#'+id); if(el) el.value='';}); renderServices(); }); }
+  const addBtn = $('#servicesAddBtn'); if(addBtn && !addBtn.dataset.bound){ addBtn.dataset.bound='1'; addBtn.addEventListener('click', () => openAdvancedServiceAdd()); }
   const impBtn = $('#servicesImportBtn'); const impFile = $('#servicesImportFile');
   if(impBtn && impFile && !impBtn.dataset.bound){ impBtn.dataset.bound='1'; impBtn.addEventListener('click', () => impFile.click()); impFile.addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(f){ const r = new FileReader(); r.onload = () => importServicesCSV(String(r.result||'')); r.readAsText(f,'utf-8'); } e.target.value=''; }); }
 }
