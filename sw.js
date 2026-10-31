@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tpa-pro-v1.0.0';
+const CACHE_NAME = 'tpa-pro-v1.0.2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

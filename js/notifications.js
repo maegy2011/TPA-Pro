@@ -6,9 +6,10 @@ function showToast(msg){
   toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 function updateTrashBadge(){
+  const items = Array.isArray(trash) ? trash : [];
   const b = $('#trashCount');
-  if(b){ if(trash.length > 0){ b.textContent = trash.length; b.style.display = 'grid'; } else b.style.display = 'none'; }
+  if(b){ b.textContent = items.length; b.style.display = items.length > 0 ? 'grid' : 'none'; }
   const tb = $('#tbTrashCount');
-  if(tb){ if(trash.length > 0){ tb.textContent = trash.length; tb.style.display = 'inline-flex'; } else tb.style.display = 'none'; }
-  const st = $('#settingsTrashCount'); if(st) st.textContent = trash.length;
+  if(tb){ tb.textContent = items.length; tb.style.display = items.length > 0 ? 'inline-flex' : 'none'; }
+  const st = $('#settingsTrashCount'); if(st) st.textContent = items.length;
 }
