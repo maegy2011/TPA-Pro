@@ -32,7 +32,7 @@ function applyNavTranslations(){
     if(sub) sub.textContent = t(key+'.sub');
   });
   document.querySelectorAll('.nav-section-title').forEach((el,i) => {
-    const keys = ['nav.main','nav.ongoing','nav.basic','nav.tools','nav.system'];
+    const keys = ['nav.main','nav.basic','nav.tools','nav.system'];
     if(keys[i]) el.textContent = t(keys[i]);
   });
 }
