@@ -93,8 +93,9 @@ function initApp(){
       const btn = e.target.closest('.tb-menu-item'); if(!btn) return;
       const action = btn.dataset.action;
       const m = document.getElementById('tbUserMenu'); if(m) m.style.display = 'none';
-      if(action === 'help'){ navHistory = []; navigateTo('help', {noPush:true}); }
-      if(action === 'settings'){ navHistory = []; navigateTo('settings', {noPush:true}); }
+    if(action === 'help'){ navHistory = []; navigateTo('help', {noPush:true}); }
+    if(action === 'settings'){ navHistory = []; navigateTo('settings', {noPush:true}); }
+    if(action === 'lang'){ setLang(currentLang === 'ar' ? 'en' : 'ar'); const item = tm.querySelector('[data-action=\"lang\"]'); if(item) item.textContent = currentLang === 'ar' ? 'اللغة: EN' : 'Language: AR'; }
     });
 
     // ⏱️ حفظ تلقائي كل 20 ثانية
