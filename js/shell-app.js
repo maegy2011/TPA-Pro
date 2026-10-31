@@ -33,15 +33,14 @@ const SHELL_APP = `
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.claims">المطالبات</span><span class="nav-sub" data-i18n="nav.claims.sub">إدارة ومراجعة</span></span>
           </button>
-        </div>
-
-        <!-- جلسات العمل -->
-        <div class="nav-section">
-          <div class="nav-section-title" data-i18n="nav.ongoing">العمل الجاري</div>
           <button class="nav-item" data-page="sessions">
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M6.5 3v4M17.5 3v4M2.5 10h19"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.sessions">جلسات العمل</span><span class="nav-sub" data-i18n="nav.sessions.sub">متابعة المراجعات</span></span>
             <span class="nav-count info" id="sessionsCount" style="display:none">0</span>
+          </button>
+          <button class="nav-item" data-page="search">
+            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <span class="nav-info"><span class="nav-label" data-i18n="nav.search">محرك البحث</span><span class="nav-sub" data-i18n="nav.search.sub">البحث في اللوائح</span></span>
           </button>
         </div>
 
@@ -69,10 +68,6 @@ const SHELL_APP = `
         <!-- الأدوات -->
         <div class="nav-section">
           <div class="nav-section-title" data-i18n="nav.tools">الأدوات</div>
-          <button class="nav-item" data-page="search">
-            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
-            <span class="nav-info"><span class="nav-label" data-i18n="nav.search">محرك البحث</span><span class="nav-sub" data-i18n="nav.search.sub">البحث في اللوائح</span></span>
-          </button>
           <button class="nav-item" data-page="reports">
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.reports">التقارير</span><span class="nav-sub" data-i18n="nav.reports.sub">تحليل مالي</span></span>
