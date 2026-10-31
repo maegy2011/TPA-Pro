@@ -3037,8 +3037,8 @@ function saveReview(){
   if(!activeClaim) return;
   const missing = [];
   workingInvoices.forEach((inv,i) => { DOC_ITEMS.forEach(d => { if(!inv.documents[d.key]) missing.push(`فاتورة ${i+1}: ${d.label}`); }); });
-  if(missing.length){ showWarning('مستندات ناقصة', missing.join('<br>')+'<br><br>متابعة؟', () => finalizeReview()); return; }
-  if(activeClaim.priorApproval && activeClaim.priorApproval.required && activeClaim.priorApproval.status !== 'approved'){ showWarning('موافقة ناقصة','متابعة؟', () => finalizeReview()); return; }
+  if(missing.length){ showWarning('مستندات ناقصة', missing.join('<br>')+'<br><br>متابعة؟', () => { if(!activeClaim._overrideChecklist) activeClaim._overrideChecklist=[]; activeClaim._overrideChecklist.push({ by:'reviewer', at:new Date().toISOString(), reason:'missing-docs', missing:missing.slice() }); finalizeReview(); }); return; }
+  if(activeClaim.priorApproval && activeClaim.priorApproval.required && activeClaim.priorApproval.status !== 'approved'){ showWarning('موافقة ناقصة','متابعة؟', () => { if(!activeClaim._overrideChecklist) activeClaim._overrideChecklist=[]; activeClaim._overrideChecklist.push({ by:'reviewer', at:new Date().toISOString(), reason:'prior-approval', missing:['pa'] }); finalizeReview(); }); return; }
   finalizeReview();
 }
 function finalizeReview(){
@@ -3403,13 +3403,21 @@ FILE: /home/administrator/TPA/js/compute-patient.js
 ================================================================================
 function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
-  const allRules = deductionRules.filter(r => r.enabled !== false);
+  const allRules = deductionRules.filter(r => r.enabled !== false && r.active !== false);
   const ctx = { claim, patient: pat, invoice: invoice || null };
   const _ctx = getContractContext(claim);
   (pat.lines||[]).forEach(l => {
     const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
-    const hasT = (l.tariffUnit !== null && l.tariffUnit !== undefined);
-    const tariffTotal = hasT ? (Number(l.qty)||0) * (Number(l.tariffUnit)||0) : billed;
+    // re-read tariff price from current tariff (source of truth)
+    let tariffUnit = (l.tariffUnit !== null && l.tariffUnit !== undefined) ? Number(l.tariffUnit) : null;
+    if (l.tariffId && typeof tariffs !== 'undefined') {
+      const t = tariffs.find(x => x.id === l.tariffId);
+      const svc = t && (t.services||[]).find(s => String(s.code) === String(l.code));
+      if (svc && svc.currentPrice !== undefined && svc.currentPrice !== null) tariffUnit = Number(svc.currentPrice);
+    }
+    l.tariffUnit = tariffUnit;
+    const hasT = (tariffUnit !== null && tariffUnit !== undefined);
+    const tariffTotal = hasT ? (Number(l.qty)||0) * tariffUnit : billed;
     const lesser = hasT ? Math.min(billed, tariffTotal) : billed;
     l.lineBase = lesser;
     if(l._overrideMode === undefined) l._overrideMode = 'auto';
@@ -3427,7 +3435,8 @@ function computePatient(pat, claim, refDate, invoice){
     l.lineBaseAfterContract = Math.round(lesser * (1 - rate / 100));
     l._contractRejected = false;
   });
-  const lineRules = topoSortRules(allRules.filter(r => r.isComposite || isLineLevelAction(r.action)));
+  const compositeChildren = new Set((allRules.filter(r => r.isComposite)).flatMap(r => r.compositeConfig?.childRuleIds || []));
+  const lineRules = topoSortRules(allRules.filter(r => r.isComposite || (isLineLevelAction(r.action) && !compositeChildren.has(r.id))));
   pat.lines.forEach(l => {
     const lctx = { ...ctx, line: l };
     const appliedIds = new Set();
@@ -3441,7 +3450,7 @@ function computePatient(pat, claim, refDate, invoice){
         const cctx = { ...lctx, line: { ...l, lineBase: current } };
         const res = evaluateCompositeRule(rule, cctx, refDate);
         if(res && res.newApproved !== undefined && res.newApproved < current){
-          current = res.newApproved;
+          current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
           (res.appliedChildRules||[]).forEach(cr => appliedIds.add(cr.id));
           compositeLog.push({ id: rule.id, name: rule.name, children: (res.appliedChildRules||[]).map(c=>c.id) });
@@ -3450,7 +3459,7 @@ function computePatient(pat, claim, refDate, invoice){
       } else {
         const res = evaluateRuleAction(rule, lctx, current);
         if(res.newApproved !== undefined && res.newApproved < current){
-          current = res.newApproved;
+          current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
           lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = rule.rate;
         }
@@ -3660,10 +3669,24 @@ function saveDr(){
     showSuccess('تم','تمت');
   }
   closeDrModal(); renderDeductionRules();
+  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+  if (typeof persistData === 'function') persistData(true);
+  if (typeof renderAll === 'function') renderAll();
 }
 function deleteDr(id){
   const r = deductionRules.find(x=>x.id===id); if(!r) return;
-  showDelete('حذف', `"${r.name}".`, () => { deductionRules = deductionRules.filter(x=>x.id!==id); closeDrModal(); renderDeductionRules(); showSuccess('تم','تم'); });
+  showDelete('حذف', `"${r.name}".`, () => {
+    deductionRules = deductionRules.filter(x=>x.id!==id);
+    // clean up dependencies
+    deductionRules.forEach(x => {
+      if (x.requires && Array.isArray(x.requires.ruleIds)) x.requires.ruleIds = x.requires.ruleIds.filter(rid => rid !== id);
+      if (x.compositeConfig && Array.isArray(x.compositeConfig.childRuleIds)) x.compositeConfig.childRuleIds = x.compositeConfig.childRuleIds.filter(rid => rid !== id);
+    });
+    closeDrModal(); renderDeductionRules(); showSuccess('تم','تم');
+    if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+    if (typeof persistData === 'function') persistData(true);
+    if (typeof renderAll === 'function') renderAll();
+  });
 }
 function openPaProcModal(code){
   editingPaProcCode = code || null;
@@ -3697,7 +3720,11 @@ function testDeductionRule(id){
   ctx.line.lineBase = line.qty * (line.tariffUnit != null ? Math.min(line.billedUnit, line.tariffUnit) : line.billedUnit);
   const refDate = claim.date || claim.receivedDate || daysFromNow(0);
   const matched = ruleMatchesContext(rule, ctx, refDate);
-  const res = evaluateRuleAction(rule, ctx, ctx.line.lineBase);
+  const applied = new Set();
+  const res = rule.isComposite
+    ? evaluateCompositeRule(rule, ctx, refDate)
+    : evaluateRuleAction(rule, ctx, ctx.line.lineBase);
+  const requiresOk = checkRequires(rule, applied);
   const msg = `القاعدة: ${escapeHtml(rule.name)}<br>مطابقة: ${matched ? '✅ نعم' : '❌ لا'}<br>الأساس: ${fmt(ctx.line.lineBase)}<br>النتيجة: ${res.newApproved !== undefined ? fmt(res.newApproved) : fmt(ctx.line.lineBase - (res.deduct||0))}<br>الخصم: ${fmt(res.deduct || (ctx.line.lineBase - (res.newApproved||ctx.line.lineBase)))}`;
   showInfo('اختبار قاعدة', msg);
 }
@@ -4003,7 +4030,8 @@ function evaluateCondition(cond, ctx){
   return true;
 }
 function evaluateConditionTree(node, ctx){
-  if(!node || !node.rules || !node.rules.length) return true;
+  if(!node || !Array.isArray(node.rules)) return true;
+  if(!node.rules.length) return node.logic === 'OR' ? false : true;
   const res = node.rules.map(item => {
     if(item.logic && Array.isArray(item.rules)) return evaluateConditionTree(item, ctx);
     return evaluateCondition(item, ctx);
@@ -4176,7 +4204,8 @@ function topoSortRules(rules){
   if(cycles.length){
     console.warn('⚠️ حلقات دائرية:', cycles);
   }
-  return sorted;
+  const cyclicIds = new Set(cycles.flatMap(c => c.split(' → ')));
+  return sorted.filter(r => !cyclicIds.has(r.id));
 }
 function checkRequires(rule, appliedIds){
   if(!rule.requires || !rule.requires.ruleIds || !rule.requires.ruleIds.length) return true;
@@ -4187,9 +4216,10 @@ function checkRequires(rule, appliedIds){
   return true;
 }
 function ruleMatchesContext(rule, ctx, refDate){
-  if(rule.enabled === false) return false;
-  if(rule.effectiveFrom && refDate < rule.effectiveFrom) return false;
-  if(rule.effectiveTo && refDate > rule.effectiveTo) return false;
+  if(rule.enabled === false || rule.active === false) return false;
+  const rDate = (typeof toDate === 'function') ? toDate(refDate) : new Date(refDate);
+  if(rule.effectiveFrom && rDate < toDate(rule.effectiveFrom)) return false;
+  if(rule.effectiveTo && rDate > toDate(rule.effectiveTo)) return false;
   const claim = ctx.claim;
   if(rule.scope?.claimTypes?.length && !rule.scope.claimTypes.includes(claim.type || 'employee')) return false;
   if(rule.scope?.providerIds?.length){
@@ -4215,10 +4245,10 @@ function evaluateRuleAction(rule, ctx, baseAmount){
   }
   switch(rule.action){
     case 'reject_line': return { newApproved: 0 };
-    case 'reduce_by_percent': return { newApproved: Math.round(amt*(1-rate/100)) };
+    case 'reduce_by_percent': return { newApproved: Math.max(0, Math.round(amt*(1-Math.min(100,rate)/100))) };
     case 'reduce_by_fixed': return { newApproved: Math.max(0, amt-rate) };
-    case 'cap_to_amount': return { newApproved: Math.min(amt, rate) };
-    case 'set_to_percent': return { newApproved: Math.round(amt*rate/100) };
+    case 'cap_to_amount': return { newApproved: Math.min(amt, Math.max(0, rate)) };
+    case 'set_to_percent': return { newApproved: Math.min(amt, Math.max(0, Math.round(amt*Math.min(100,rate)/100))) };
     case 'apply_cap': return { deduct: Math.round(amt*rate/100) };
     case 'apply_copay': return { deduct: Math.round(amt*rate/100) };
     default: return { newApproved: amt };
@@ -4226,7 +4256,7 @@ function evaluateRuleAction(rule, ctx, baseAmount){
 }
 function evaluateCompositeRule(rule, ctx, refDate){
   const cfg = rule.compositeConfig || {};
-  const childRules = (cfg.childRuleIds||[]).map(id => deductionRules.find(r => r.id === id)).filter(r => r && r.enabled !== false && isLineLevelAction(r.action));
+  const childRules = (cfg.childRuleIds||[]).map(id => deductionRules.find(r => r.id === id)).filter(r => r && r.enabled !== false && r.active !== false && isLineLevelAction(r.action));
   if(!childRules.length) return null;
   const requireAll = cfg.requireAllMatch !== false;
   const matched = childRules.map(child => ({ rule:child, matched: ruleMatchesContext(child, ctx, refDate) })).filter(r => r.matched);
@@ -4261,7 +4291,7 @@ function evaluateCompositeRule(rule, ctx, refDate){
 }
 function patientBeneficiaryType(pat, claim){ return pat.beneficiaryType || claim.type || 'employee'; }
 function hasValidPriorApproval(claim){ return claim.priorApproval && claim.priorApproval.required && claim.priorApproval.status === 'approved'; }
-function lineRequiresPA(line){ if(line.requiresPriorApproval) return true; return paProcedures.some(p => p.code === line.code); }
+function lineRequiresPA(line){ if(line.requiresPriorApproval) return true; return paProcedures.some(p => (p.code || p.id) === line.code); }
 
 ================================================================================
 FILE: /home/administrator/TPA/js/engine-validate.js
@@ -4297,20 +4327,18 @@ function getContractContext(claim) {
   const provider = (typeof providers !== 'undefined' ? providers : []).find(p => p.name === claim.provider) || null;
   if (!provider) return { ...empty, provider };
 
-  const contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => c.providerId === provider.id) || null;
+  const contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => c.providerId === provider.id && ['active','expiring','upcoming'].includes(effectiveContractStatus(c))) || null;
 
   let tariff = null;
   if (contract?.tariffId) {
-    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId) || null;
+    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId && effectiveTariffStatus(t) === 'active') || null;
   }
   if (!tariff && contract) {
     tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t =>
-      (t.linkedContractIds || []).includes(contract.id) ||
-      (t.linkedProviderIds || []).includes(provider.id)
+      ((t.linkedContractIds || []).includes(contract.id) ||
+       (t.linkedProviderIds || []).includes(provider.id)) &&
+      effectiveTariffStatus(t) === 'active'
     ) || null;
-  }
-  if (!tariff) {
-    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => (typeof effectiveTariffStatus === 'function' ? effectiveTariffStatus(t) === 'active' : t.status === 'active')) || null;
   }
 
   const serviceOverrides = contract?.serviceOverrides || {};
@@ -4329,6 +4357,8 @@ function getContractRateForService(ctx, code) {
 function isServiceCovered(ctx, code) {
   const ov = ctx?.serviceOverrides?.[code];
   if (ov && ov.covered === false) return false;
+  const svc = (ctx?.tariff?.services || []).find(s => String(s.code) === String(code));
+  if (svc && svc.covered === false) return false;
   return true;
 }
 
@@ -4370,7 +4400,7 @@ function validateLine(line, ctx) {
         failed.push('pa-pending');
       } else if (pa.status === 'approved') {
         const lineDate = invoice?.date || claim?.date;
-        if (pa.date && lineDate && new Date(pa.date) < new Date(lineDate)) {
+        if (pa.date && lineDate && new Date(pa.date) > new Date(lineDate)) {
           failed.push('pa-expired');
         } else {
           passed.push('pa-valid');
@@ -6531,6 +6561,7 @@ function saveLineEditor() {
   if (tu !== null && tu < 0) { showWarning('تنبيه', 'سعر اللائحة سالب'); return; }
 
   const ctx = getContractContext(activeClaim);
+  const tariffSvc = (ctx.tariff?.services || []).find(s => String(s.code) === String(code)) || null;
 
   const data = {
     code, name,
@@ -6545,6 +6576,7 @@ function saveLineEditor() {
     note: '',
     approved: 0,
     _overrideMode: 'auto',
+    requiresPriorApproval: !!(tariffSvc && tariffSvc.requiresPriorApproval),
   };
 
   const validation = validateLine(data, {
@@ -9153,6 +9185,15 @@ function wizValidate(step){
     if(wizState.to && wizState.to < wizState.from){ showWarning('تنبيه','النهاية بعد'); return false; }
     return true;
   }
+  if(step === 4){
+    const c = wizState.conditions || { logic:'AND', rules:[] };
+    const rules = c.rules || [];
+    for (const r of rules) {
+      if (r.logic && Array.isArray(r.rules)) continue;
+      if (!r.field || !r.op) { showWarning('تنبيه','أكمل شروط الخطوة 4 أو امسحها'); return false; }
+    }
+    return true;
+  }
   return true;
 }
 function wizGoTo(step){
@@ -9164,12 +9205,22 @@ function wizNext(){ wizSyncInputs(); if(!wizValidate(wizState.step)) return; if(
 function wizBack(){ wizSyncInputs(); if(wizState.step > 1){ wizState.step--; wizRenderStep(); } }
 function wizSave(){
   wizSyncInputs();
-  if(!wizValidate(5)) return;
+  // tiers overlap check
+  if (wizState.tiersEnabled && Array.isArray(wizState.tiers) && wizState.tiers.length > 1) {
+    const sorted = [...wizState.tiers].sort((a,b) => (Number(a.from)||0) - (Number(b.from)||0));
+    for (let i = 1; i < sorted.length; i++) {
+      if ((Number(sorted[i].from)||0) < (Number(sorted[i-1].to)||Infinity)) { showWarning('تنبيه','تداخل في شرائح التسعير'); wizState.step = 2; wizRenderStep(); return; }
+    }
+  }
+  for (const s of [1,2,3,4,5]) { if (!wizValidate(s)) { wizState.step = s; wizRenderStep(); return; } }
   const y = new Date(wizState.from).getFullYear(), pre = 'DR-'+y+'-';
   let m = 0;
   deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
   const rule = { id:pre+String(m+1).padStart(3,'0'), name:wizState.name, type:wizState.type, action:wizState.action, rate:wizState.type === 'composite' ? 0 : wizState.rate, isComposite:wizState.type === 'composite', compositeConfig:wizState.type === 'composite' ? JSON.parse(JSON.stringify(wizState.compositeConfig)) : null, requires:(wizState.requires.ruleIds && wizState.requires.ruleIds.length) ? JSON.parse(JSON.stringify(wizState.requires)) : null, scope:{ providerIds:[...wizState.providerIds], contractIds:[...wizState.contractIds], claimTypes:[...wizState.ctypes] }, conditions:JSON.parse(JSON.stringify(wizState.conditions)), effectiveFrom:wizState.from, effectiveTo:wizState.to||'', active:true, enabled:true, notes:wizState.notes, tiers: (wizState.tiersEnabled && wizState.tiers && wizState.tiers.length) ? JSON.parse(JSON.stringify(wizState.tiers)) : null, tiersEnabled: !!wizState.tiersEnabled };
   deductionRules.push(rule); closeDrWizard(); renderDeductionRules(); showSuccess('تم', rule.id);
+  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
+  if (typeof persistData === 'function') persistData(true);
+  if (typeof renderAll === 'function') renderAll();
 }
 
 
