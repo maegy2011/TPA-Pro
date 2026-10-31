@@ -18,6 +18,11 @@ function openReview(id){
     if(p.beneficiaryType === undefined) p.beneficiaryType = c.type || 'employee';
   }));
   $('#rvSub').textContent = `${c.id} • ${c.patient}`;
+  const ctxBar = document.getElementById('rvContextBar');
+  if (ctxBar) {
+    const ctx = getContractContext(c);
+    ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · عقد ${ctx.contract?ctx.contract.id:'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
+  }
   $('#rvId').value = c.id; $('#rvDate').value = c.date; $('#rvReceivedNumber').value = c.receivedNumber||'—';
   $('#rvReceivedDate').value = c.receivedDate||'—'; $('#rvPatient').value = c.patient; $('#rvProvider').value = c.provider;
   $('#rvReason').value = c.reason||''; $('#rvNotes').value = c.notes||'';
