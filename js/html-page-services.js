@@ -35,6 +35,22 @@ const PAGE_SERVICES = `
     </div>
     <div style="margin-top:8px"><button class="btn-xs" id="servicesAdvApply">تطبيق</button> <button class="btn-xs" id="servicesAdvReset">إعادة</button></div>
   </div>
+  <div id="serviceFormPanel" style="display:none;margin-bottom:12px;padding:12px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">
+      <select id="sfTariff"></select>
+      <input id="sfCode" placeholder="الكود *">
+      <select id="sfCategory"><option>استشارة</option><option>مختبر</option><option>أشعة</option><option>عمليات</option><option>أدوية</option><option>طوارئ</option><option>علاج طبيعي</option><option>أسنان</option><option>أخرى</option></select>
+      <input id="sfName" placeholder="الاسم *">
+      <input id="sfBasePrice" type="number" min="0" placeholder="الأساسي *">
+      <input id="sfCurrentPrice" type="number" min="0" placeholder="الحالي">
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label class="check-row"><input type="checkbox" id="sfCovered" checked> مغطاة</label>
+      <label class="check-row" style="background:#FEF3C7;border-color:#FCD34D"><input type="checkbox" id="sfRequiresPriorApproval"><span style="color:#92400E">⚠ موافقة</span></label>
+      <button class="btn-xs" id="sfSaveBtn">حفظ</button>
+      <button class="btn-xs" id="sfCancelBtn">إلغاء</button>
+    </div>
+  </div>
   <div class="chips" id="servicesFilterChips" style="margin-bottom:10px">
     <button class="chip active" data-sfilter="all">الكل</button>
     <button class="chip" data-sfilter="covered">مغطاة</button>

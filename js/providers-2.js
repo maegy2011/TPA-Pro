@@ -140,8 +140,7 @@ function bindTariffsControls(){
   const lcl = $('#linkContractsList'); if(lcl) lcl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
   const tss = $('#tfServicesSearch'); if(tss && !tss.dataset.bound){ tss.dataset.bound='1'; tss.addEventListener('input', e => renderTariffServicesChecklist(e.target.value)); }
   $('#tfApplyAnnual').addEventListener('click', applyAnnualIncrease);
-  $$('[data-close-service]').forEach(el => el.addEventListener('click', closeServiceModal));
-  $('#saveService').addEventListener('click', saveService);
+
   $('#svcSyncBtn').addEventListener('click', () => { const mul = getAdjustMultiplier(); const base = Number($('#svcBasePrice').value)||0; $('#svcCurrentPrice').value = Math.round(base*mul); });
   $$('[data-close-tariff]').forEach(el => el.addEventListener('click', closeTariffModal));
   $('#saveTariff').addEventListener('click', saveTariff);

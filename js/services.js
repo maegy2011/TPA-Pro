@@ -1,6 +1,7 @@
 let servicesSearchTerm = '', servicesFilter = 'all', servicesSort = 'name', servicesSortDir = 'asc';
 let servicesAdv = { code:'', name:'', category:'', tariff:'', min:'', max:'' };
 let servicesAdvOpen = false;
+let editingServiceForm = {tariffId:null,index:null};
 let servicesTariffFilter = 'all';
 
 function getAllServicesFlat(){
@@ -65,16 +66,60 @@ function renderServices(){
   if(kpi){ kpi.innerHTML = `<div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الخدمات</div><div class="kpi-val">${list.length} <small>خدمة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">من أصل ${getAllServicesFlat().length}</div></div>`; }
 }
 
-function openAdvancedServiceAdd(){
+function showServiceFormPanel(tariffId, idx){
   if(typeof tariffs === 'undefined') return;
   if(!tariffs.length){
     const t = { id: nextTariffNumber(daysFromNow(0)), name:'خدمات عامة', type:'general', status:'active', effectiveDate:daysFromNow(0), expiryDate:'', basePriceLevel:100, services:[] };
     tariffs.push(t);
   }
   const sel = $('#servicesTariffFilter');
-  const tid = (sel && sel.value !== 'all') ? sel.value : tariffs[0].id;
+  const tid = tariffId || ((sel && sel.value !== 'all') ? sel.value : tariffs[0].id);
   const t = tariffs.find(x=>x.id===tid) || tariffs[0];
-  if(typeof openServiceModal === 'function'){ openServiceModal(null, t.id); }
+  // populate tariff select
+  const ts = $('#sfTariff'); if(ts){ ts.innerHTML = tariffs.map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)}</option>`).join(''); ts.value = t.id; }
+  // reset or load
+  const svc = (idx !== null && idx !== undefined && t.services && t.services[idx]) ? t.services[idx] : null;
+  editingServiceForm = { tariffId: t.id, index: (svc? idx : null) };
+  $('#sfCode').value = svc? svc.code : '';
+  $('#sfCategory').value = svc? svc.category : 'استشارة';
+  $('#sfName').value = svc? svc.name : '';
+  $('#sfBasePrice').value = svc? svc.basePrice : '';
+  $('#sfCurrentPrice').value = svc? svc.currentPrice : '';
+  $('#sfCovered').checked = svc? !!svc.covered : true;
+  $('#sfRequiresPriorApproval').checked = svc? !!svc.requiresPriorApproval : false;
+  const panel = $('#serviceFormPanel'); if(panel) panel.style.display = 'block';
+}
+function hideServiceFormPanel(){ const panel = $('#serviceFormPanel'); if(panel) panel.style.display = 'none'; editingServiceForm = {tariffId:null,index:null}; }
+function saveServiceForm(){
+  const tid = $('#sfTariff').value;
+  const t = tariffs.find(x=>x.id===tid); if(!t){ showWarning('تنبيه','اختر اللائحة'); return; }
+  if(!t.services) t.services = [];
+  const code = $('#sfCode').value.trim(), name = $('#sfName').value.trim(), cat = $('#sfCategory').value;
+  const bp = Number($('#sfBasePrice').value)||0, cp = Number($('#sfCurrentPrice').value)||0;
+  if(!code){ showWarning('تنبيه','أدخل الكود'); return; }
+  if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
+  if(bp <= 0){ showWarning('تنبيه','أدخل سعراً'); return; }
+  const data = { code, name, category:cat, basePrice:bp, currentPrice:cp||bp, covered:$('#sfCovered').checked, requiresPriorApproval:$('#sfRequiresPriorApproval').checked };
+  const idx = editingServiceForm.index;
+  if(idx !== null && t.services[idx]){
+    // if tariff changed, move? keep simple: update in original tariff
+    const origT = tariffs.find(x=>x.id===editingServiceForm.tariffId);
+    if(origT && origT !== t){
+      // remove from original
+      if(origT.services) origT.services.splice(idx,1);
+    }
+    // update target
+    const existingIdx = t.services.findIndex(s=>s.code===code && t.services.indexOf(s)!==idx);
+    // just replace if same tariff
+    if(editingServiceForm.tariffId === tid && t.services[idx]) { t.services[idx] = data; }
+    else { if(t.services.some(s=>s.code===code)){ showWarning('تنبيه','الكود مستخدم'); return; } t.services.push(data); }
+    showSuccess('تم','تم');
+  } else {
+    if(t.services.some(s=>s.code===code)){ showWarning('تنبيه','الكود مستخدم'); return; }
+    t.services.push(data); showSuccess('تم','تم');
+  }
+  if(typeof persistData === 'function') persistData(true);
+  hideServiceFormPanel(); renderServices(); renderTariffs();
 }
 
 function editServiceAt(tid, idx){
@@ -144,9 +189,11 @@ function bindServicesControls(){
   const reset = $('#servicesAdvReset'); if(reset && !reset.dataset.bound){ reset.dataset.bound='1'; reset.addEventListener('click', () => { servicesAdv = {code:'',name:'',category:'',tariff:'',min:'',max:''}; ['advCode','advName','advCategory','advTariff','advMinPrice','advMaxPrice'].forEach(id=>{const el=$('#'+id); if(el) el.value='';}); renderServices(); }); }
   const impBtn = $('#servicesImportBtn'); const impFile = $('#servicesImportFile');
   if(impBtn && impFile && !impBtn.dataset.bound){ impBtn.dataset.bound='1'; impBtn.addEventListener('click', () => impFile.click()); impFile.addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(f){ const r = new FileReader(); r.onload = () => importServicesCSV(String(r.result||'')); r.readAsText(f,'utf-8'); } e.target.value=''; }); }
-  const addBtn = $('#servicesAddBtn'); if(addBtn && !addBtn.dataset.bound){ addBtn.dataset.bound='1'; addBtn.addEventListener('click', () => openAdvancedServiceAdd()); }
+  const addBtn = $('#servicesAddBtn'); if(addBtn && !addBtn.dataset.bound){ addBtn.dataset.bound='1'; addBtn.addEventListener('click', () => showServiceFormPanel()); }
+  const sfSave = $('#sfSaveBtn'); if(sfSave && !sfSave.dataset.bound){ sfSave.dataset.bound='1'; sfSave.addEventListener('click', () => saveServiceForm()); }
+  const sfCancel = $('#sfCancelBtn'); if(sfCancel && !sfCancel.dataset.bound){ sfCancel.dataset.bound='1'; sfCancel.addEventListener('click', () => hideServiceFormPanel()); }
   const body = $('#servicesBody'); if(body && !body.dataset.bound){ body.dataset.bound='1'; body.addEventListener('click', e => {
-    const ed = e.target.closest('[data-edit-service]'); if(ed){ const [tid, idx] = ed.dataset.editService.split('|'); editServiceAt(tid, Number(idx)); return; }
+    const ed = e.target.closest('[data-edit-service]'); if(ed){ const [tid, idx] = ed.dataset.editService.split('|'); showServiceFormPanel(tid, Number(idx)); return; }
     const del = e.target.closest('[data-del-service]'); if(del){ const [tid, idx] = del.dataset.delService.split('|'); deleteServiceAt(tid, Number(idx)); return; }
   }); }
 }
