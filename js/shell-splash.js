@@ -1,7 +1,4 @@
 const SHELL_SPLASH = `
-<!-- ============================================================
-     شاشة السبلاش
-     ============================================================ -->
 <div id="splash" class="screen active">
   <div class="sp-wrap">
     <div class="logo-mark">
@@ -14,6 +11,6 @@ const SHELL_SPLASH = `
     <p class="sp-sub" data-i18n="splash.sub">نظام المراجعة المالية للمطالبات الطبية</p>
     <div class="sp-badge" data-i18n="common.version">v1.0</div>
   </div>
-  <div class="sp-foot" data-i18n="splash.footer"> issuance مؤسسي &nbsp;•&nbsp; مراجع واحد &nbsp;•&nbsp; جميع الحقوق محفوظة</div>
+  <div class="sp-foot">© 2026 TPA Pro — جميع الحقوق محفوظة</div>
 </div>
 `;

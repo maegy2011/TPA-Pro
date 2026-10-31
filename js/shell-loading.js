@@ -1,7 +1,4 @@
 const SHELL_LOADING = `
-<!-- ============================================================
-     شاشة التحميل
-     ============================================================ -->
 <div id="loading" class="screen">
   <div class="ld-wrap">
     <div class="ld-head">
@@ -17,12 +14,7 @@ const SHELL_LOADING = `
       <div class="ld-track"><div class="ld-fill" id="ldFill"></div></div>
       <div class="ld-meta" style="margin-top:10px"><span id="ldStatus" data-i18n="loading.start">بدء التشغيل...</span><span class="ld-pct" id="ldPct">0%</span></div>
     </div>
-    <div class="ld-steps" id="ldSteps">
-      <div class="ld-step" data-i="0"><i class="dot"></i><span data-i18n="loading.step1">تهيئة محرك المراجعة المالية</span></div>
-      <div class="ld-step" data-i="1"><i class="dot"></i><span data-i18n="loading.step2">تحميل المطالبات والجهات والعقود</span></div>
-      <div class="ld-step" data-i="2"><i class="dot"></i><span data-i18n="loading.step3">تحميل اللوائح والوارد الشهري</span></div>
-      <div class="ld-step" data-i="3"><i class="dot"></i><span data-i18n="loading.step4">تجهيز التصدير والطباعة</span></div>
-    </div>
   </div>
+  <div class="ld-foot">© 2026 TPA Pro — جميع الحقوق محفوظة</div>
 </div>
 `;
