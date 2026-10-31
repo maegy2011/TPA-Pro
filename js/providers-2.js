@@ -141,7 +141,7 @@ function bindTariffsControls(){
   const tss = $('#tfServicesSearch'); if(tss && !tss.dataset.bound){ tss.dataset.bound='1'; tss.addEventListener('input', e => renderTariffServicesChecklist(e.target.value)); }
   $('#tfApplyAnnual').addEventListener('click', applyAnnualIncrease);
 
-  $('#svcSyncBtn').addEventListener('click', () => { const mul = getAdjustMultiplier(); const base = Number($('#svcBasePrice').value)||0; $('#svcCurrentPrice').value = Math.round(base*mul); });
+
   $$('[data-close-tariff]').forEach(el => el.addEventListener('click', closeTariffModal));
   $('#saveTariff').addEventListener('click', saveTariff);
   $('#deleteTariff').addEventListener('click', () => { if(editingTariffId) deleteTariffWithDialog(editingTariffId); });
