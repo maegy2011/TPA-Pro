@@ -83,10 +83,19 @@ function initApp(){
     });
 
     // شريط علوي
-    const tbS = document.getElementById('tbSearchBtn'), tbB = document.getElementById('tbBackupBtn'), tbU = document.getElementById('tbUserBtn');
+    const tbU = document.getElementById('tbUserBtn');
     if(tbS) tbS.addEventListener('click', () => { navHistory = []; navigateTo('search', {noPush:true}); });
     if(tbB) tbB.addEventListener('click', () => doExportBackup(false));
-    if(tbU) tbU.addEventListener('click', () => { navHistory = []; navigateTo('settings', {noPush:true}); });
+    if(tbU) tbU.addEventListener('click', (e) => { e.stopPropagation(); const m = document.getElementById('tbUserMenu'); if(m) m.style.display = m.style.display === 'none' ? 'flex' : 'none'; });
+    document.addEventListener('click', (e) => { const m = document.getElementById('tbUserMenu'); if(m && !e.target.closest('#tbUserWrap')) m.style.display = 'none'; });
+    const tm = document.getElementById('tbUserMenu');
+    if(tm) tm.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tb-menu-item'); if(!btn) return;
+      const action = btn.dataset.action;
+      const m = document.getElementById('tbUserMenu'); if(m) m.style.display = 'none';
+      if(action === 'help'){ navHistory = []; navigateTo('help', {noPush:true}); }
+      if(action === 'settings'){ navHistory = []; navigateTo('settings', {noPush:true}); }
+    });
 
     // ⏱️ حفظ تلقائي كل 20 ثانية
     if(!window._autosaveInterval){

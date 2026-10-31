@@ -124,13 +124,19 @@ const SHELL_APP = `
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
           </button>
           <div class="tb-divider"></div>
-          <button class="tb-user" id="tbUserBtn" title="الإعدادات">
-            <div class="tb-avatar" id="tbAvatar">أ</div>
-            <div class="tb-user-info">
-              <div class="tb-user-name" id="tbUserName">المراجع</div>
-              <div class="tb-user-role" id="tbUserRole">مراجع مالي معتمد</div>
+          <div class="tb-user-wrap" id="tbUserWrap">
+            <button class="tb-user" id="tbUserBtn" title="الإعدادات">
+              <div class="tb-avatar" id="tbAvatar">أ</div>
+              <div class="tb-user-info">
+                <div class="tb-user-name" id="tbUserName">المراجع</div>
+                <div class="tb-user-role" id="tbUserRole">مراجع مالي معتمد</div>
+              </div>
+            </button>
+            <div class="tb-user-menu" id="tbUserMenu" style="display:none">
+              <button class="tb-menu-item" data-action="help">دليل المساعدة</button>
+              <button class="tb-menu-item" data-action="settings">الإعدادات</button>
             </div>
-          </button>
+          </div>
           <div class="pill">النظام متصل</div>
         </div>
       </header>
