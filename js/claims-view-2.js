@@ -23,8 +23,8 @@ function saveReview(){
   if(!activeClaim) return;
   const missing = [];
   workingInvoices.forEach((inv,i) => { DOC_ITEMS.forEach(d => { if(!inv.documents[d.key]) missing.push(`فاتورة ${i+1}: ${d.label}`); }); });
-  if(missing.length){ showWarning('مستندات ناقصة', missing.join('<br>')+'<br><br>متابعة؟', () => finalizeReview()); return; }
-  if(activeClaim.priorApproval && activeClaim.priorApproval.required && activeClaim.priorApproval.status !== 'approved'){ showWarning('موافقة ناقصة','متابعة؟', () => finalizeReview()); return; }
+  if(missing.length){ showWarning('مستندات ناقصة', missing.join('<br>')+'<br><br>متابعة؟', () => { if(!activeClaim._overrideChecklist) activeClaim._overrideChecklist=[]; activeClaim._overrideChecklist.push({ by:'reviewer', at:new Date().toISOString(), reason:'missing-docs', missing:missing.slice() }); finalizeReview(); }); return; }
+  if(activeClaim.priorApproval && activeClaim.priorApproval.required && activeClaim.priorApproval.status !== 'approved'){ showWarning('موافقة ناقصة','متابعة؟', () => { if(!activeClaim._overrideChecklist) activeClaim._overrideChecklist=[]; activeClaim._overrideChecklist.push({ by:'reviewer', at:new Date().toISOString(), reason:'prior-approval', missing:['pa'] }); finalizeReview(); }); return; }
   finalizeReview();
 }
 function finalizeReview(){
