@@ -1,0 +1,1144 @@
+﻿{
+  "app": "TPA Pro",
+  "version": "1.0",
+  "type": "full-backup",
+  "exportedAt": "2026-10-31T16:58:20.649Z",
+  "settings": {
+    "reviewer": {
+      "name": "مراجع",
+      "title": "مراجع"
+    },
+    "company": {
+      "name": "TPA Pro",
+      "address": "الرياض"
+    }
+  },
+  "data": {
+    "providers": [
+      {
+        "id": "PRV-001",
+        "name": "جهة 1 - مجمع طبي",
+        "type": "مجمع طبي",
+        "province": [
+          "الرياض"
+        ],
+        "city": "الرياض",
+        "contact": "أ. محمد",
+        "phone": "0510000001",
+        "email": "provider1@example.com",
+        "notes": "عقد شهري",
+        "status": "active"
+      },
+      {
+        "id": "PRV-002",
+        "name": "جهة 2 - عيادة",
+        "type": "عيادة",
+        "province": [
+          "جدة"
+        ],
+        "city": "جدة",
+        "contact": "أ. خالد",
+        "phone": "0510000002",
+        "email": "provider2@example.com",
+        "notes": "عقد سنوي",
+        "status": "active"
+      },
+      {
+        "id": "PRV-003",
+        "name": "جهة 3 - مركز تخصصي",
+        "type": "مركز تخصصي",
+        "province": [
+          "الدمام"
+        ],
+        "city": "الدمام",
+        "contact": "أ. سعود",
+        "phone": "0510000003",
+        "email": "provider3@example.com",
+        "notes": "عقد شهري",
+        "status": "active"
+      },
+      {
+        "id": "PRV-004",
+        "name": "جهة 4 - صيدلية",
+        "type": "صيدلية",
+        "province": [
+          "مكة"
+        ],
+        "city": "مكة",
+        "contact": "أ. فهد",
+        "phone": "0510000004",
+        "email": "provider4@example.com",
+        "notes": "عقد سنوي",
+        "status": "active"
+      },
+      {
+        "id": "PRV-005",
+        "name": "جهة 5 - معمل",
+        "type": "معمل",
+        "province": [
+          "المدينة"
+        ],
+        "city": "المدينة",
+        "contact": "أ. أحمد",
+        "phone": "0510000005",
+        "email": "provider5@example.com",
+        "notes": "عقد شهري",
+        "status": "active"
+      },
+      {
+        "id": "PRV-006",
+        "name": "جهة 6 - مستشفى",
+        "type": "مستشفى",
+        "province": [
+          "القصيم"
+        ],
+        "city": "القصيم",
+        "contact": "أ. محمد",
+        "phone": "0510000006",
+        "email": "provider6@example.com",
+        "notes": "عقد سنوي",
+        "status": "active"
+      },
+      {
+        "id": "PRV-007",
+        "name": "جهة 7 - مجمع طبي",
+        "type": "مجمع طبي",
+        "province": [
+          "أبها"
+        ],
+        "city": "أبها",
+        "contact": "أ. خالد",
+        "phone": "0510000007",
+        "email": "provider7@example.com",
+        "notes": "عقد شهري",
+        "status": "active"
+      },
+      {
+        "id": "PRV-008",
+        "name": "جهة 8 - عيادة",
+        "type": "عيادة",
+        "province": [
+          "تبوك"
+        ],
+        "city": "تبوك",
+        "contact": "أ. سعود",
+        "phone": "0510000008",
+        "email": "provider8@example.com",
+        "notes": "عقد سنوي",
+        "status": "active"
+      },
+      {
+        "id": "PRV-009",
+        "name": "جهة 9 - مركز تخصصي",
+        "type": "مركز تخصصي",
+        "province": [
+          "حائل"
+        ],
+        "city": "حائل",
+        "contact": "أ. فهد",
+        "phone": "0510000009",
+        "email": "provider9@example.com",
+        "notes": "عقد شهري",
+        "status": "active"
+      },
+      {
+        "id": "PRV-010",
+        "name": "جهة 10 - صيدلية",
+        "type": "صيدلية",
+        "province": [
+          "نجران"
+        ],
+        "city": "نجران",
+        "contact": "أ. أحمد",
+        "phone": "0510000010",
+        "email": "provider10@example.com",
+        "notes": "عقد سنوي",
+        "status": "inactive"
+      }
+    ],
+    "contracts": [
+      {
+        "id": "CTR-001",
+        "providerId": "PRV-001",
+        "startDate": "2026-09-01",
+        "endDate": "2027-08-27",
+        "discountRate": 5,
+        "paymentTerms": "30 يوم",
+        "coveredServices": "جميع الخدمات",
+        "autoRenew": false,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-002",
+        "providerId": "PRV-002",
+        "startDate": "2026-09-06",
+        "endDate": "2027-08-07",
+        "discountRate": 10,
+        "paymentTerms": "45 يوم",
+        "coveredServices": "استشارة، مختبر",
+        "autoRenew": true,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-003",
+        "providerId": "PRV-003",
+        "startDate": "2026-09-11",
+        "endDate": "2027-07-18",
+        "discountRate": 15,
+        "paymentTerms": "30 يوم",
+        "coveredServices": "جميع الخدمات",
+        "autoRenew": true,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-004",
+        "providerId": "PRV-004",
+        "startDate": "2026-09-16",
+        "endDate": "2027-06-28",
+        "discountRate": 20,
+        "paymentTerms": "45 يوم",
+        "coveredServices": "استشارة، مختبر",
+        "autoRenew": false,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-005",
+        "providerId": "PRV-005",
+        "startDate": "2026-09-21",
+        "endDate": "2027-06-08",
+        "discountRate": 25,
+        "paymentTerms": "30 يوم",
+        "coveredServices": "جميع الخدمات",
+        "autoRenew": true,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-006",
+        "providerId": "PRV-006",
+        "startDate": "2026-09-26",
+        "endDate": "2027-05-19",
+        "discountRate": 30,
+        "paymentTerms": "45 يوم",
+        "coveredServices": "استشارة، مختبر",
+        "autoRenew": true,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-007",
+        "providerId": "PRV-007",
+        "startDate": "2026-10-01",
+        "endDate": "2027-04-29",
+        "discountRate": 5,
+        "paymentTerms": "30 يوم",
+        "coveredServices": "جميع الخدمات",
+        "autoRenew": false,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-008",
+        "providerId": "PRV-008",
+        "startDate": "2026-10-06",
+        "endDate": "2027-04-09",
+        "discountRate": 10,
+        "paymentTerms": "45 يوم",
+        "coveredServices": "استشارة، مختبر",
+        "autoRenew": true,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-009",
+        "providerId": "PRV-009",
+        "startDate": "2026-10-11",
+        "endDate": "2027-03-20",
+        "discountRate": 15,
+        "paymentTerms": "30 يوم",
+        "coveredServices": "جميع الخدمات",
+        "autoRenew": true,
+        "status": "active",
+        "notes": "عقد"
+      },
+      {
+        "id": "CTR-010",
+        "providerId": "PRV-010",
+        "startDate": "2026-10-16",
+        "endDate": "2026-10-26",
+        "discountRate": 20,
+        "paymentTerms": "45 يوم",
+        "coveredServices": "استشارة، مختبر",
+        "autoRenew": false,
+        "status": "expired",
+        "notes": "عقد"
+      }
+    ],
+    "tariffs": [
+      {
+        "id": "TAR-001",
+        "name": "لائحة 1",
+        "type": "general",
+        "description": "لائحة 1 للخدمات",
+        "effectiveDate": "2026-10-21",
+        "expiryDate": "2027-10-21",
+        "status": "active",
+        "basePriceLevel": 100,
+        "annualIncreaseEnabled": true,
+        "annualIncreaseRate": 5,
+        "lastIncreaseDate": "2026-09-21",
+        "lastIncreaseApprovedBy": "الإدارة",
+        "adjustmentType": "none",
+        "adjustmentRate": 0,
+        "linkedProviderIds": [
+          "PRV-001",
+          "PRV-002",
+          "PRV-003",
+          "PRV-010"
+        ],
+        "linkedContractIds": [
+          "CTR-001",
+          "CTR-002",
+          "CTR-003"
+        ],
+        "linkedServiceNames": [
+          "استشارة عامة",
+          "تحليل دم",
+          "أشعة سينية",
+          "عملية بسيطة",
+          "دواء",
+          "طوارئ",
+          "علاج طبيعي",
+          "حشوة أسنان",
+          "أخرى خدمة"
+        ],
+        "increaseHistory": [
+          {
+            "date": "2026-09-21",
+            "rate": 5,
+            "approvedBy": "الإدارة",
+            "fromLevel": 100,
+            "toLevel": 105
+          }
+        ],
+        "services": [
+          {
+            "code": "SVC-11",
+            "name": "استشارة عامة",
+            "category": "استشارة",
+            "basePrice": 110,
+            "currentPrice": 110,
+            "covered": false,
+            "requiresPriorApproval": true
+          },
+          {
+            "code": "SVC-12",
+            "name": "تحليل دم",
+            "category": "مختبر",
+            "basePrice": 160,
+            "currentPrice": 160,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-13",
+            "name": "أشعة سينية",
+            "category": "أشعة",
+            "basePrice": 210,
+            "currentPrice": 210,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-14",
+            "name": "عملية بسيطة",
+            "category": "عمليات",
+            "basePrice": 260,
+            "currentPrice": 260,
+            "covered": false,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-15",
+            "name": "دواء",
+            "category": "أدوية",
+            "basePrice": 310,
+            "currentPrice": 310,
+            "covered": true,
+            "requiresPriorApproval": true
+          },
+          {
+            "code": "SVC-16",
+            "name": "طوارئ",
+            "category": "طوارئ",
+            "basePrice": 360,
+            "currentPrice": 360,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-17",
+            "name": "علاج طبيعي",
+            "category": "علاج طبيعي",
+            "basePrice": 410,
+            "currentPrice": 410,
+            "covered": false,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-18",
+            "name": "حشوة أسنان",
+            "category": "أسنان",
+            "basePrice": 460,
+            "currentPrice": 460,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-19",
+            "name": "أخرى خدمة",
+            "category": "أخرى",
+            "basePrice": 510,
+            "currentPrice": 510,
+            "covered": true,
+            "requiresPriorApproval": true
+          }
+        ]
+      },
+      {
+        "id": "TAR-002",
+        "name": "لائحة 2",
+        "type": "private",
+        "description": "لائحة 2 للخدمات",
+        "effectiveDate": "2026-10-21",
+        "expiryDate": "2027-10-21",
+        "status": "active",
+        "basePriceLevel": 110,
+        "annualIncreaseEnabled": false,
+        "annualIncreaseRate": 0,
+        "lastIncreaseDate": "",
+        "lastIncreaseApprovedBy": "",
+        "adjustmentType": "discount",
+        "adjustmentRate": 10,
+        "linkedProviderIds": [
+          "PRV-004",
+          "PRV-005",
+          "PRV-006"
+        ],
+        "linkedContractIds": [
+          "CTR-004",
+          "CTR-005",
+          "CTR-006"
+        ],
+        "linkedServiceNames": [
+          "استشارة عامة",
+          "تحليل دم",
+          "أشعة سينية",
+          "عملية بسيطة",
+          "دواء",
+          "طوارئ",
+          "علاج طبيعي",
+          "حشوة أسنان",
+          "أخرى خدمة"
+        ],
+        "increaseHistory": [],
+        "services": [
+          {
+            "code": "SVC-21",
+            "name": "استشارة عامة",
+            "category": "استشارة",
+            "basePrice": 120,
+            "currentPrice": 120,
+            "covered": false,
+            "requiresPriorApproval": true
+          },
+          {
+            "code": "SVC-22",
+            "name": "تحليل دم",
+            "category": "مختبر",
+            "basePrice": 170,
+            "currentPrice": 170,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-23",
+            "name": "أشعة سينية",
+            "category": "أشعة",
+            "basePrice": 220,
+            "currentPrice": 220,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-24",
+            "name": "عملية بسيطة",
+            "category": "عمليات",
+            "basePrice": 270,
+            "currentPrice": 270,
+            "covered": false,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-25",
+            "name": "دواء",
+            "category": "أدوية",
+            "basePrice": 320,
+            "currentPrice": 320,
+            "covered": true,
+            "requiresPriorApproval": true
+          },
+          {
+            "code": "SVC-26",
+            "name": "طوارئ",
+            "category": "طوارئ",
+            "basePrice": 370,
+            "currentPrice": 370,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-27",
+            "name": "علاج طبيعي",
+            "category": "علاج طبيعي",
+            "basePrice": 420,
+            "currentPrice": 420,
+            "covered": false,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-28",
+            "name": "حشوة أسنان",
+            "category": "أسنان",
+            "basePrice": 470,
+            "currentPrice": 470,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-29",
+            "name": "أخرى خدمة",
+            "category": "أخرى",
+            "basePrice": 520,
+            "currentPrice": 520,
+            "covered": true,
+            "requiresPriorApproval": true
+          }
+        ]
+      },
+      {
+        "id": "TAR-003",
+        "name": "لائحة 3",
+        "type": "supplementary",
+        "description": "لائحة 3 للخدمات",
+        "effectiveDate": "2026-10-21",
+        "expiryDate": "2027-10-21",
+        "status": "pending",
+        "basePriceLevel": 120,
+        "annualIncreaseEnabled": false,
+        "annualIncreaseRate": 0,
+        "lastIncreaseDate": "",
+        "lastIncreaseApprovedBy": "",
+        "adjustmentType": "none",
+        "adjustmentRate": 0,
+        "linkedProviderIds": [
+          "PRV-007",
+          "PRV-008",
+          "PRV-009"
+        ],
+        "linkedContractIds": [
+          "CTR-007",
+          "CTR-008",
+          "CTR-009"
+        ],
+        "linkedServiceNames": [
+          "استشارة عامة",
+          "تحليل دم",
+          "أشعة سينية",
+          "عملية بسيطة",
+          "دواء",
+          "طوارئ",
+          "علاج طبيعي",
+          "حشوة أسنان",
+          "أخرى خدمة"
+        ],
+        "increaseHistory": [],
+        "services": [
+          {
+            "code": "SVC-31",
+            "name": "استشارة عامة",
+            "category": "استشارة",
+            "basePrice": 130,
+            "currentPrice": 130,
+            "covered": false,
+            "requiresPriorApproval": true
+          },
+          {
+            "code": "SVC-32",
+            "name": "تحليل دم",
+            "category": "مختبر",
+            "basePrice": 180,
+            "currentPrice": 180,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-33",
+            "name": "أشعة سينية",
+            "category": "أشعة",
+            "basePrice": 230,
+            "currentPrice": 230,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-34",
+            "name": "عملية بسيطة",
+            "category": "عمليات",
+            "basePrice": 280,
+            "currentPrice": 280,
+            "covered": false,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-35",
+            "name": "دواء",
+            "category": "أدوية",
+            "basePrice": 330,
+            "currentPrice": 330,
+            "covered": true,
+            "requiresPriorApproval": true
+          },
+          {
+            "code": "SVC-36",
+            "name": "طوارئ",
+            "category": "طوارئ",
+            "basePrice": 380,
+            "currentPrice": 380,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-37",
+            "name": "علاج طبيعي",
+            "category": "علاج طبيعي",
+            "basePrice": 430,
+            "currentPrice": 430,
+            "covered": false,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-38",
+            "name": "حشوة أسنان",
+            "category": "أسنان",
+            "basePrice": 480,
+            "currentPrice": 480,
+            "covered": true,
+            "requiresPriorApproval": false
+          },
+          {
+            "code": "SVC-39",
+            "name": "أخرى خدمة",
+            "category": "أخرى",
+            "basePrice": 530,
+            "currentPrice": 530,
+            "covered": true,
+            "requiresPriorApproval": true
+          }
+        ]
+      }
+    ],
+    "batches": [
+      {
+        "id": "BTH-2026-001",
+        "providerId": "PRV-001",
+        "month": "2026-10",
+        "periodType": "single",
+        "receivedDate": "2026-10-21",
+        "status": "received",
+        "notes": "دفعة 1",
+        "patient": "",
+        "claimDate": "2026-10-21",
+        "claimReceivedDate": "2026-10-21",
+        "claimsCount": 1,
+        "totalBilled": 500
+      },
+      {
+        "id": "BTH-2026-002",
+        "providerId": "PRV-002",
+        "month": "2026-09",
+        "periodType": "range",
+        "receivedDate": "2026-10-22",
+        "status": "under-review",
+        "notes": "دفعة 2",
+        "patient": "مريض 2",
+        "claimDate": "2026-10-22",
+        "claimReceivedDate": "2026-10-22",
+        "claimsCount": 2,
+        "totalBilled": 620
+      },
+      {
+        "id": "BTH-2026-003",
+        "providerId": "PRV-003",
+        "month": "2026-10",
+        "periodType": "range",
+        "receivedDate": "2026-10-23",
+        "status": "completed",
+        "notes": "دفعة 3",
+        "patient": "",
+        "claimDate": "2026-10-23",
+        "claimReceivedDate": "2026-10-23",
+        "claimsCount": 1,
+        "totalBilled": 740
+      },
+      {
+        "id": "BTH-2026-004",
+        "providerId": "PRV-004",
+        "month": "2026-09",
+        "periodType": "single",
+        "receivedDate": "2026-10-24",
+        "status": "completed",
+        "notes": "دفعة 4",
+        "patient": "مريض 4",
+        "claimDate": "2026-10-24",
+        "claimReceivedDate": "2026-10-24",
+        "claimsCount": 2,
+        "totalBilled": 860
+      },
+      {
+        "id": "BTH-2026-005",
+        "providerId": "PRV-005",
+        "month": "2026-10",
+        "periodType": "range",
+        "receivedDate": "2026-10-25",
+        "status": "completed",
+        "notes": "دفعة 5",
+        "patient": "",
+        "claimDate": "2026-10-25",
+        "claimReceivedDate": "2026-10-25",
+        "claimsCount": 1,
+        "totalBilled": 980
+      },
+      {
+        "id": "BTH-2026-006",
+        "providerId": "PRV-006",
+        "month": "2026-09",
+        "periodType": "range",
+        "receivedDate": "2026-10-26",
+        "status": "received",
+        "notes": "دفعة 6",
+        "patient": "مريض 6",
+        "claimDate": "2026-10-26",
+        "claimReceivedDate": "2026-10-26",
+        "claimsCount": 2,
+        "totalBilled": 1100
+      },
+      {
+        "id": "BTH-2026-007",
+        "providerId": "PRV-007",
+        "month": "2026-10",
+        "periodType": "single",
+        "receivedDate": "2026-10-27",
+        "status": "under-review",
+        "notes": "دفعة 7",
+        "patient": "",
+        "claimDate": "2026-10-27",
+        "claimReceivedDate": "2026-10-27",
+        "claimsCount": 1,
+        "totalBilled": 1220
+      },
+      {
+        "id": "BTH-2026-008",
+        "providerId": "PRV-008",
+        "month": "2026-09",
+        "periodType": "range",
+        "receivedDate": "2026-10-28",
+        "status": "completed",
+        "notes": "دفعة 8",
+        "patient": "مريض 8",
+        "claimDate": "2026-10-28",
+        "claimReceivedDate": "2026-10-28",
+        "claimsCount": 2,
+        "totalBilled": 1340
+      },
+      {
+        "id": "BTH-2026-009",
+        "providerId": "PRV-009",
+        "month": "2026-10",
+        "periodType": "range",
+        "receivedDate": "2026-10-29",
+        "status": "completed",
+        "notes": "دفعة 9",
+        "patient": "",
+        "claimDate": "2026-10-29",
+        "claimReceivedDate": "2026-10-29",
+        "claimsCount": 1,
+        "totalBilled": 1460
+      },
+      {
+        "id": "BTH-2026-010",
+        "providerId": "PRV-010",
+        "month": "2026-09",
+        "periodType": "single",
+        "receivedDate": "2026-10-30",
+        "status": "completed",
+        "notes": "دفعة 10",
+        "patient": "مريض 10",
+        "claimDate": "2026-10-30",
+        "claimReceivedDate": "2026-10-30",
+        "claimsCount": 2,
+        "totalBilled": 1580
+      }
+    ],
+    "claims": [
+      {
+        "id": "CLM-0001",
+        "patient": "مريض 1",
+        "provider": "جهة 1 - مجمع طبي",
+        "type": "employee",
+        "date": "2026-10-21",
+        "receivedDate": "2026-10-21",
+        "receivedNumber": "1000",
+        "status": "new",
+        "reason": "استقطاع",
+        "notes": "ملاحظة",
+        "priorApproval": {
+          "required": true,
+          "status": "approved",
+          "refNumber": "PA-1",
+          "date": "2026-10-21"
+        },
+        "batchId": "BTH-2026-001",
+        "invoices": [
+          {
+            "id": "INV-1",
+            "amount": 500,
+            "date": "2026-10-21"
+          }
+        ],
+        "billed": 500,
+        "approved": 0,
+        "eligible": 500
+      },
+      {
+        "id": "CLM-0002",
+        "patient": "مريض 2",
+        "provider": "جهة 2 - عيادة",
+        "type": "dependent",
+        "date": "2026-10-22",
+        "receivedDate": "2026-10-22",
+        "receivedNumber": "1001",
+        "status": "under-review",
+        "reason": "",
+        "notes": "",
+        "priorApproval": {
+          "required": false,
+          "status": "not-requested",
+          "refNumber": "",
+          "date": ""
+        },
+        "batchId": "BTH-2026-002",
+        "invoices": [],
+        "billed": 620,
+        "approved": 0,
+        "eligible": 620
+      },
+      {
+        "id": "CLM-0003",
+        "patient": "مريض 3",
+        "provider": "جهة 3 - مركز تخصصي",
+        "type": "employee",
+        "date": "2026-10-23",
+        "receivedDate": "2026-10-23",
+        "receivedNumber": "1002",
+        "status": "approved",
+        "reason": "",
+        "notes": "",
+        "priorApproval": {
+          "required": false,
+          "status": "not-requested",
+          "refNumber": "",
+          "date": ""
+        },
+        "batchId": "BTH-2026-003",
+        "invoices": [
+          {
+            "id": "INV-3",
+            "amount": 740,
+            "date": "2026-10-23"
+          }
+        ],
+        "billed": 740,
+        "approved": 629,
+        "eligible": 740
+      },
+      {
+        "id": "CLM-0004",
+        "patient": "مريض 4",
+        "provider": "جهة 4 - صيدلية",
+        "type": "dependent",
+        "date": "2026-10-24",
+        "receivedDate": "2026-10-24",
+        "receivedNumber": "1003",
+        "status": "rejected",
+        "reason": "",
+        "notes": "ملاحظة",
+        "priorApproval": {
+          "required": true,
+          "status": "approved",
+          "refNumber": "PA-4",
+          "date": "2026-10-24"
+        },
+        "batchId": "BTH-2026-004",
+        "invoices": [],
+        "billed": 860,
+        "approved": 0,
+        "eligible": 860
+      },
+      {
+        "id": "CLM-0005",
+        "patient": "مريض 5",
+        "provider": "جهة 5 - معمل",
+        "type": "employee",
+        "date": "2026-10-25",
+        "receivedDate": "2026-10-25",
+        "receivedNumber": "1004",
+        "status": "completed",
+        "reason": "استقطاع",
+        "notes": "",
+        "priorApproval": {
+          "required": false,
+          "status": "not-requested",
+          "refNumber": "",
+          "date": ""
+        },
+        "batchId": "BTH-2026-005",
+        "invoices": [
+          {
+            "id": "INV-5",
+            "amount": 980,
+            "date": "2026-10-25"
+          }
+        ],
+        "billed": 980,
+        "approved": 0,
+        "eligible": 980
+      },
+      {
+        "id": "CLM-0006",
+        "patient": "مريض 6",
+        "provider": "جهة 6 - مستشفى",
+        "type": "dependent",
+        "date": "2026-10-26",
+        "receivedDate": "2026-10-26",
+        "receivedNumber": "1005",
+        "status": "new",
+        "reason": "",
+        "notes": "",
+        "priorApproval": {
+          "required": false,
+          "status": "not-requested",
+          "refNumber": "",
+          "date": ""
+        },
+        "batchId": "BTH-2026-006",
+        "invoices": [],
+        "billed": 1100,
+        "approved": 0,
+        "eligible": 1100
+      },
+      {
+        "id": "CLM-0007",
+        "patient": "مريض 7",
+        "provider": "جهة 7 - مجمع طبي",
+        "type": "employee",
+        "date": "2026-10-27",
+        "receivedDate": "2026-10-27",
+        "receivedNumber": "1006",
+        "status": "under-review",
+        "reason": "",
+        "notes": "ملاحظة",
+        "priorApproval": {
+          "required": true,
+          "status": "approved",
+          "refNumber": "PA-7",
+          "date": "2026-10-27"
+        },
+        "batchId": "BTH-2026-007",
+        "invoices": [
+          {
+            "id": "INV-7",
+            "amount": 1220,
+            "date": "2026-10-27"
+          }
+        ],
+        "billed": 1220,
+        "approved": 0,
+        "eligible": 1220
+      },
+      {
+        "id": "CLM-0008",
+        "patient": "مريض 8",
+        "provider": "جهة 8 - عيادة",
+        "type": "dependent",
+        "date": "2026-10-28",
+        "receivedDate": "2026-10-28",
+        "receivedNumber": "1007",
+        "status": "approved",
+        "reason": "",
+        "notes": "",
+        "priorApproval": {
+          "required": false,
+          "status": "not-requested",
+          "refNumber": "",
+          "date": ""
+        },
+        "batchId": "BTH-2026-008",
+        "invoices": [],
+        "billed": 1340,
+        "approved": 1139,
+        "eligible": 1340
+      },
+      {
+        "id": "CLM-0009",
+        "patient": "مريض 9",
+        "provider": "جهة 9 - مركز تخصصي",
+        "type": "employee",
+        "date": "2026-10-29",
+        "receivedDate": "2026-10-29",
+        "receivedNumber": "1008",
+        "status": "rejected",
+        "reason": "استقطاع",
+        "notes": "",
+        "priorApproval": {
+          "required": false,
+          "status": "not-requested",
+          "refNumber": "",
+          "date": ""
+        },
+        "batchId": "BTH-2026-009",
+        "invoices": [
+          {
+            "id": "INV-9",
+            "amount": 1460,
+            "date": "2026-10-29"
+          }
+        ],
+        "billed": 1460,
+        "approved": 0,
+        "eligible": 1460
+      },
+      {
+        "id": "CLM-0010",
+        "patient": "مريض 10",
+        "provider": "جهة 10 - صيدلية",
+        "type": "dependent",
+        "date": "2026-10-30",
+        "receivedDate": "2026-10-30",
+        "receivedNumber": "1009",
+        "status": "completed",
+        "reason": "",
+        "notes": "ملاحظة",
+        "priorApproval": {
+          "required": true,
+          "status": "approved",
+          "refNumber": "PA-10",
+          "date": "2026-10-30"
+        },
+        "batchId": "BTH-2026-010",
+        "invoices": [],
+        "billed": 1580,
+        "approved": 0,
+        "eligible": 1580
+      }
+    ],
+    "trash": [
+      {
+        "id": "TR-1",
+        "type": "provider",
+        "typeLabel": "جهة",
+        "name": "جهة 10 - صيدلية",
+        "data": {
+          "id": "PRV-010",
+          "name": "جهة 10 - صيدلية",
+          "type": "صيدلية",
+          "province": [
+            "نجران"
+          ],
+          "city": "نجران",
+          "contact": "أ. أحمد",
+          "phone": "0510000010",
+          "email": "provider10@example.com",
+          "notes": "عقد سنوي",
+          "status": "inactive"
+        },
+        "deletedAt": "2026-10-29"
+      },
+      {
+        "id": "TR-2",
+        "type": "contract",
+        "typeLabel": "عقد",
+        "name": "CTR-010",
+        "data": {
+          "id": "CTR-010",
+          "providerId": "PRV-010",
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-26",
+          "discountRate": 20,
+          "paymentTerms": "45 يوم",
+          "coveredServices": "استشارة، مختبر",
+          "autoRenew": false,
+          "status": "expired",
+          "notes": "عقد"
+        },
+        "deletedAt": "2026-10-30"
+      }
+    ],
+    "deductionRules": [
+      {
+        "id": "DR-1",
+        "name": "استقطاع 10%",
+        "type": "percentage",
+        "value": 10,
+        "condition": "always",
+        "active": true
+      },
+      {
+        "id": "DR-2",
+        "name": "حد أقصى 500",
+        "type": "cap",
+        "value": 500,
+        "condition": "amount>1000",
+        "active": true
+      }
+    ],
+    "paProcedures": [
+      {
+        "id": "PA-1",
+        "name": "عملية جراحية",
+        "requiresApproval": true,
+        "slaDays": 5
+      },
+      {
+        "id": "PA-2",
+        "name": "أشعة متقدمة",
+        "requiresApproval": true,
+        "slaDays": 3
+      }
+    ],
+    "workSessions": [
+      {
+        "id": "SES-1",
+        "name": "جلسة 1",
+        "status": "active",
+        "createdAt": "2026-10-30",
+        "updatedAt": "2026-10-31"
+      }
+    ]
+  },
+  "session": null
+}
