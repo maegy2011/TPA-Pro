@@ -44,7 +44,7 @@ function applyPage(page){
   $('#pageTitle').textContent = (tTitle && tTitle !== 'page.'+page) ? tTitle : meta[0];
   const pd = document.getElementById('pageDesc'); if(pd) pd.textContent = (tSub && tSub !== 'page.'+page+'.sub') ? tSub : meta[1];
   const backBtn = $('#smartBackBtn');
-  if(page === 'dashboard' || navHistory.length === 0) backBtn.classList.remove('show');
+  if(page === 'dashboard') backBtn.classList.remove('show');
   else backBtn.classList.add('show');
   window.scrollTo({top:0, behavior:'smooth'});
   setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 0);
