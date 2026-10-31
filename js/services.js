@@ -74,14 +74,12 @@ function openAdvancedServiceAdd(){
   const sel = $('#servicesTariffFilter');
   const tid = (sel && sel.value !== 'all') ? sel.value : tariffs[0].id;
   const t = tariffs.find(x=>x.id===tid) || tariffs[0];
-  if(typeof openTariffModal === 'function'){ openTariffModal(t.id); }
-  setTimeout(() => { if(typeof openServiceModal === 'function') openServiceModal(null); }, 400);
+  if(typeof openServiceModal === 'function'){ openServiceModal(null, t.id); }
 }
 
 function editServiceAt(tid, idx){
   const t = tariffs.find(x=>x.id===tid); if(!t || !t.services) return;
-  if(typeof openTariffModal === 'function'){ openTariffModal(t.id); }
-  setTimeout(() => { if(typeof openServiceModal === 'function') openServiceModal(idx); }, 400);
+  if(typeof openServiceModal === 'function'){ openServiceModal(idx, t.id); }
 }
 
 function deleteServiceAt(tid, idx){

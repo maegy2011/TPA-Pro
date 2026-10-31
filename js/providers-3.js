@@ -1,3 +1,4 @@
+let editingServiceTariffId = null;
 function renderTariffs(){
   const activeN = tariffs.filter(t=>effectiveTariffStatus(t)==='active').length;
   const generalN = tariffs.filter(t=>t.type==='general').length;
@@ -98,23 +99,36 @@ function applyAdjustSelected(){ const t = $('#tfAdjustType').value, r = Number($
 function resetAllToBase(){ if(!workingServices.length){ showWarning('تنبيه','لا خدمات'); return; } workingServices.forEach(s => { s.currentPrice = s.basePrice; }); renderServicesTable(); showSuccess('تم','تم'); }
 function bulkDeleteServices(){ const sel = $$('#tfServicesBody .svc-cb:checked'); if(!sel.length) return; showDelete('حذف', `سيتم حذف ${sel.length}.`, () => { const idxs = sel.map(cb=>Number(cb.dataset.index)).sort((a,b)=>b-a); idxs.forEach(i=>workingServices.splice(i,1)); renderServicesTable(); showSuccess('تم',`${idxs.length}`); }); }
 function deleteService(i){ if(!workingServices[i]) return; const s = workingServices[i]; showDelete('حذف', `سيتم حذف "${s.code}".`, () => { workingServices.splice(i,1); renderServicesTable(); showSuccess('تم','تم'); }); }
-function openServiceModal(i){
+function openServiceModal(i, tariffId){
   editingServiceIndex = i;
-  if(i !== null && workingServices[i]){ const s = workingServices[i]; $('#svcModalTitle').textContent = 'تعديل'; $('#svcModalSub').textContent = s.code+' — '+s.name; $('#svcCode').value = s.code; $('#svcCategory').value = s.category; $('#svcName').value = s.name; $('#svcBasePrice').value = s.basePrice; $('#svcCurrentPrice').value = s.currentPrice; $('#svcCovered').checked = !!s.covered; $('#svcRequiresPriorApproval').checked = !!s.requiresPriorApproval; }
+  editingServiceTariffId = tariffId || editingServiceTariffId;
+  // populate tariff selector
+  const sel = $('#svcTariff');
+  if(sel){
+    sel.innerHTML = (tariffs||[]).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
+    if(editingServiceTariffId) sel.value = editingServiceTariffId;
+    else if(tariffs && tariffs.length) { editingServiceTariffId = tariffs[0].id; sel.value = tariffs[0].id; }
+  }
+  const t = tariffs.find(x=>x.id===editingServiceTariffId);
+  const svc = (i !== null && t && t.services && t.services[i]) ? t.services[i] : null;
+  if(svc){ $('#svcModalTitle').textContent = 'تعديل'; $('#svcModalSub').textContent = svc.code+' — '+svc.name; $('#svcCode').value = svc.code; $('#svcCategory').value = svc.category; $('#svcName').value = svc.name; $('#svcBasePrice').value = svc.basePrice; $('#svcCurrentPrice').value = svc.currentPrice; $('#svcCovered').checked = !!svc.covered; $('#svcRequiresPriorApproval').checked = !!svc.requiresPriorApproval; }
   else { $('#svcModalTitle').textContent = 'إضافة'; $('#svcModalSub').textContent = '—'; $('#svcCode').value = ''; $('#svcCategory').value = 'استشارة'; $('#svcName').value = ''; $('#svcBasePrice').value = ''; $('#svcCurrentPrice').value = ''; $('#svcCovered').checked = true; $('#svcRequiresPriorApproval').checked = false; }
   $('#serviceModal').classList.add('open');
 }
 function closeServiceModal(){ if(!$('#serviceModal').classList.contains('open')) return; $('#serviceModal').classList.remove('open'); editingServiceIndex = null; }
 function saveService(){
+  const tid = $('#svcTariff') ? $('#svcTariff').value : editingServiceTariffId;
+  const t = tariffs.find(x=>x.id===tid); if(!t){ showWarning('تنبيه','اختر اللائحة'); return; }
+  if(!t.services) t.services = [];
   const code = $('#svcCode').value.trim(), name = $('#svcName').value.trim(), cat = $('#svcCategory').value;
   const bp = Number($('#svcBasePrice').value)||0, cp = Number($('#svcCurrentPrice').value)||0;
   if(!code){ showWarning('تنبيه','أدخل الكود'); return; }
   if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
   if(bp <= 0){ showWarning('تنبيه','أدخل سعراً'); return; }
   const data = { code, name, category:cat, basePrice:bp, currentPrice:cp||bp, covered:$('#svcCovered').checked, requiresPriorApproval:$('#svcRequiresPriorApproval').checked };
-  if(editingServiceIndex !== null && workingServices[editingServiceIndex]){ workingServices[editingServiceIndex] = data; showSuccess('تم','تم'); }
-  else { if(workingServices.some(s => s.code === code)){ showWarning('تنبيه','الكود مستخدم'); return; } workingServices.push(data); showSuccess('تم','تم'); }
-  closeServiceModal(); renderServicesTable();
+  if(editingServiceIndex !== null && t.services[editingServiceIndex]){ t.services[editingServiceIndex] = data; showSuccess('تم','تم'); }
+  else { if(t.services.some(s => s.code === code)){ showWarning('تنبيه','الكود مستخدم'); return; } t.services.push(data); showSuccess('تم','تم'); }
+  closeServiceModal(); renderServices(); renderTariffs();
 }
 function renderIncreaseHistory(){ const box = $('#tfHistoryList'); if(!workingIncreaseHistory.length){ box.innerHTML = '<p style="font-size:12px;color:var(--muted);text-align:center;padding:12px;background:#F8FAFC;border-radius:9px">لا سجل</p>'; return; } box.innerHTML = workingIncreaseHistory.map(h => `<div class="history-item"><div><div class="hi-date">${escapeHtml(h.date)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(h.approvedBy)}</div></div><div style="text-align:left"><div class="hi-rate">+${escapeHtml(h.rate)}%</div></div></div>`).join(''); }
 function applyAnnualIncrease(){
