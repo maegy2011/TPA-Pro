@@ -128,6 +128,23 @@ function bindReviewModal(){
   if (excBox && !excBox.dataset.bound) {
     excBox.dataset.bound = '1';
     excBox.addEventListener('click', e => {
+      const reopen = e.target.closest('[data-exc-reopen]');
+      if (reopen) {
+        const key = reopen.dataset.excReopen;
+        const [ii, pi, li] = key.split('-').map(Number);
+        const inv = workingInvoices[ii]; const pat = inv && inv.patients ? inv.patients[pi] : null; const ln = pat && pat.lines ? pat.lines[li] : null;
+        if (!ln) return;
+        markSessionDirty();
+        delete ln._decidedBy; delete ln._decidedAt; delete ln._decisionNote; delete ln._manualValue;
+        ln._decision = 'needs-attention';
+        ln._overrideMode = 'auto';
+        ln._suggestedAction = ln._suggestedAction || { type: 'review', reason: (ln._checksFailed||[])[0] };
+        workingInvoices.forEach(inv2 => (inv2.patients||[]).forEach(p => computePatient(p, activeClaim, inv2.date, inv2)));
+        recalcReview();
+        renderExceptions();
+        renderActiveInvoice();
+        return;
+      }
       const btn = e.target.closest('[data-exc-act]'); if(!btn) return;
       const key = btn.dataset.excKey;
       const [ii, pi, li] = key.split('-').map(Number);
