@@ -42,19 +42,24 @@ document.addEventListener('click', e => {
 document.addEventListener('click', e => {
   if(e.target.closest && e.target.closest('#smartBackBtn')){ if(typeof goBack === 'function') goBack(); }
 });
+document.addEventListener('touchstart', e => {
+  if(e.target.closest && e.target.closest('#smartBackBtn')){ if(typeof goBack === 'function') { e.preventDefault(); goBack(); } }
+}, {passive:false});
 document.addEventListener('click', e => {
   const btn = e.target.closest && e.target.closest('#tbTrashBtn');
   if(!btn) return;
   if(currentPage && currentPage !== 'trash') navHistory.push({ page: currentPage, viewType: viewState.type, viewId: viewState.id });
   if(typeof navigateTo === 'function') navigateTo('trash', {noPush:true});
 });
-document.addEventListener('click', e => {
-  const btn = e.target.closest && e.target.closest('#tbUserBtn');
+function toggleUserMenu(e){
+  const btn = e.target && e.target.closest && e.target.closest('#tbUserBtn');
   if(!btn) return;
-  e.stopPropagation();
+  if(e) { e.preventDefault(); e.stopPropagation(); }
   const m = document.getElementById('tbUserMenu');
   if(m) m.style.display = m.style.display === 'none' ? 'flex' : 'none';
-});
+}
+document.addEventListener('click', toggleUserMenu);
+document.addEventListener('touchstart', toggleUserMenu, {passive:false});
 document.addEventListener('click', e => {
   const m = document.getElementById('tbUserMenu');
   if(m && !e.target.closest('#tbUserWrap')) m.style.display = 'none';
