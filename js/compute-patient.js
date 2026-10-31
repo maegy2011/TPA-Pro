@@ -5,8 +5,16 @@ function computePatient(pat, claim, refDate, invoice){
   const _ctx = getContractContext(claim);
   (pat.lines||[]).forEach(l => {
     const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
-    const hasT = (l.tariffUnit !== null && l.tariffUnit !== undefined);
-    const tariffTotal = hasT ? (Number(l.qty)||0) * (Number(l.tariffUnit)||0) : billed;
+    // re-read tariff price from current tariff (source of truth)
+    let tariffUnit = (l.tariffUnit !== null && l.tariffUnit !== undefined) ? Number(l.tariffUnit) : null;
+    if (l.tariffId && typeof tariffs !== 'undefined') {
+      const t = tariffs.find(x => x.id === l.tariffId);
+      const svc = t && (t.services||[]).find(s => String(s.code) === String(l.code));
+      if (svc && svc.currentPrice !== undefined && svc.currentPrice !== null) tariffUnit = Number(svc.currentPrice);
+    }
+    l.tariffUnit = tariffUnit;
+    const hasT = (tariffUnit !== null && tariffUnit !== undefined);
+    const tariffTotal = hasT ? (Number(l.qty)||0) * tariffUnit : billed;
     const lesser = hasT ? Math.min(billed, tariffTotal) : billed;
     l.lineBase = lesser;
     if(l._overrideMode === undefined) l._overrideMode = 'auto';
