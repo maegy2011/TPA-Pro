@@ -63,8 +63,28 @@ const MODAL_REVIEW = `
             <div id="rvExceptions"></div>
           </div>
           <div class="rv-tab-panel" id="rvTabFinal" style="display:none">
-            <div id="rvFinalSummary"></div>
-            <div class="modal-foot" style="margin-top:12px"><button class="btn solid" id="finalizeReviewBtn">إنهاء المراجعة</button></div>
+            <div id="rvFinalNumbers"></div>
+            <div id="rvFinalReasons"></div>
+            <div id="rvFinalChecklist"></div>
+            <div class="form-grid" style="margin-top:12px">
+              <div class="fg full"><label>القرار</label>
+                <div style="display:flex;gap:12px">
+                  <label><input type="radio" name="rvDecision" value="approved"> اعتماد كامل</label>
+                  <label><input type="radio" name="rvDecision" value="partial" checked> اعتماد جزئي</label>
+                  <label><input type="radio" name="rvDecision" value="rejected"> رفض كامل</label>
+                </div>
+              </div>
+              <div class="fg full" id="rvReasonWrap"><label>سبب الاستقطاع العام</label>
+                <select id="rvFinalReason">
+                  <option value="">— اختر —</option>
+                  <option>خدمات غير مغطاة</option><option>تجاوز اللائحة</option><option>تكرار</option><option>نقص مستندات</option><option>موافقة مسبقة</option><option>فترة انتظار</option><option>أخرى</option>
+                </select>
+              </div>
+              <div class="fg full"><label>ملاحظات</label><textarea id="rvFinalNotes"></textarea></div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn solid" id="finalizeReviewBtn">إنهاء المراجعة والتوقيع</button>
+            </div>
           </div>
         </div>
         <div class="modal-foot"><button class="btn solid" id="saveReview">حفظ المراجعة</button><button class="btn out" data-close data-i18n="common.cancel">إلغاء</button></div>

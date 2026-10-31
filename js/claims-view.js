@@ -170,6 +170,54 @@ function renderExceptions(){
   const btn = document.getElementById('finalizeReviewBtn');
   if (btn) btn.disabled = excs.length > 0;
 }
+function renderFinalSummary(){
+  // numbers
+  const nb = document.getElementById('rvFinalNumbers');
+  if (nb) {
+    const billed = (activeClaim && activeClaim.billed) ? activeClaim.billed : 0;
+    let approved = 0, ded = 0;
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => { approved += (p._final||0); }));
+    ded = billed - approved;
+    nb.innerHTML = `<div class="calc-box"><div class="calc-item"><span>المطالب به</span><b>${fmt(billed)}</b></div><div class="calc-item ded"><span>الاستقطاع</span><b>${fmt(ded)}</b></div><div class="calc-item rate"><span>النسبة</span><b>${billed?Math.round(ded/billed*100):0}%</b></div><div class="calc-item ok"><span>المعتمد</span><b>${fmt(approved)}</b></div></div>`;
+  }
+  // reasons breakdown
+  const rb = document.getElementById('rvFinalReasons');
+  if (rb) {
+    const counts = {};
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
+      const r = l._decisionReason || l.note || 'أخرى';
+      counts[r] = (counts[r]||0) + ((Number(l.qty)||0)*(Number(l.billedUnit)||0) - (Number(l.approved)||0));
+    })));
+    const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+    rb.innerHTML = '<div class="rv-section-title">توزيع الأسباب</div>' + Object.entries(counts).map(([k,v]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span>${escapeHtml(k)}</span><span>${fmt(v)} (${Math.round(v/total*100)}%)</span></div>`).join('');
+  }
+  // checklist
+  const cb = document.getElementById('rvFinalChecklist');
+  if (cb) {
+    const excs = typeof collectExceptions === 'function' ? collectExceptions() : [];
+    const billed = activeClaim ? (Number(activeClaim.billed)||0) : 0;
+    let entered = 0;
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
+    const mismatch = Math.abs(billed - entered) > 1;
+    const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
+    const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+    const items = [
+      { ok: !mismatch, text: `الإجمالي مُطابق (${fmt(billed)} = ${fmt(entered)})` },
+      { ok: excs.length === 0, text: `كل الاستثناءات معالجة (${excs.length} متبقٍ)` },
+      { ok: paPending === 0, text: `لا توجد بنود بانتظار موافقة PA (${paPending})` },
+      { ok: missingDocs === 0, text: `المستندات مكتملة (${missingDocs} ناقصة)` },
+    ];
+    cb.innerHTML = '<div class="rv-section-title">قائمة الفحوصات</div>' + items.map(it => `<div style="font-size:12px;padding:4px 0;color:${it.ok?'var(--ok)':'var(--bad)'}">${it.ok?'☑':'☐'} ${escapeHtml(it.text)}</div>`).join('');
+  }
+  // default decision
+  const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
+  const billed2 = activeClaim ? (Number(activeClaim.billed)||0) : 0;
+  let def = 'partial';
+  if (approved === 0) def = 'rejected';
+  else if (approved >= billed2 && billed2 > 0) def = 'approved';
+  const r = document.querySelector(`input[name="rvDecision"][value="${def}"]`);
+  if (r) r.checked = true;
+}
 function recalcReview(){
   let billed = 0, eligible = 0, finalApproved = 0;
   workingInvoices.forEach(inv => (inv.patients||[]).forEach(pat => {

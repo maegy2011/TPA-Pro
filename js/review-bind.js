@@ -118,11 +118,7 @@ function bindReviewModal(){
       if (panel) panel.style.display = '';
       if (tab === 'exceptions') renderExceptions();
       if (tab === 'final') {
-        const box = document.getElementById('rvFinalSummary');
-        if (box) {
-          const excs = collectExceptions();
-          box.innerHTML = `<div style="padding:12px;font-weight:700">استثناءات معلّقة: ${excs.length}</div>`;
-        }
+        if (typeof renderFinalSummary === 'function') renderFinalSummary();
       }
     });
   }
@@ -197,8 +193,53 @@ function bindReviewModal(){
   if (finBtn && !finBtn.dataset.bound) {
     finBtn.dataset.bound = '1';
     finBtn.addEventListener('click', () => {
-      const excs = collectExceptions();
-      if (excs.length > 0) { showWarning('استثناءات معلّقة', `بقي ${excs.length} استثناء. عالجها أو تجاوز الفحوصات.`); return; }
+      // validation
+      const excs = typeof collectExceptions === 'function' ? collectExceptions() : [];
+      const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
+      const billed = activeClaim ? (Number(activeClaim.billed)||0) : 0;
+      let entered = 0;
+      (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
+      const mismatch = Math.abs(billed - entered) > 1;
+      const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+      const finalReason = document.getElementById('rvFinalReason') ? document.getElementById('rvFinalReason').value : '';
+      const decision = (document.querySelector('input[name="rvDecision"]:checked')||{}).value || 'partial';
+      const needsReason = (decision !== 'approved');
+      const missing = [];
+      if (excs.length) missing.push(`${excs.length} بند غير معالج`);
+      if (paPending) missing.push(`${paPending} بند بانتظار PA`);
+      if (mismatch) missing.push('الإجمالي غير مُطابق');
+      if (missingDocs) missing.push(`${missingDocs} مستند ناقص`);
+      if (needsReason && !finalReason) missing.push('سبب الاستقطاع العام');
+
+      if (missing.length) {
+        const msg = 'لا يمكن إتمام التوقيع — ' + missing.length + ' نقص:\n\n• ' + missing.join('\n• ') + '\n\n[العودة للمعالجة]   [تجاوز وتوقيع مع توثيق]';
+        const ok = confirm(msg + '\n\nتجاوز وتوقيع؟');
+        if (!ok) return;
+        const overrideReason = prompt('سبب التجاوز (إلزامي):');
+        if (!overrideReason || !overrideReason.trim()) { showWarning('تنبيه','سبب التجاوز إلزامي'); return; }
+        if (!activeClaim._overrideChecklist) activeClaim._overrideChecklist = [];
+        activeClaim._overrideChecklist.push({ by: 'reviewer', at: new Date().toISOString(), reason: overrideReason.trim(), missing: missing.slice() });
+      }
+
+      // signature dialog
+      const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
+      const ded = billed - approved;
+      const sig = confirm(`توقيع المراجعة\n\nالمطالبة: ${activeClaim.id}\nالمطالب: ${fmt(billed)}\nالمعتمد: ${fmt(approved)}\nالاستقطاع: ${fmt(ded)}\nالقرار: ${decision}\nالسبب: ${finalReason||'—'}\n\nأقر بأنني راجعت هذه المطالبة.`);
+      if (!sig) return;
+
+      // apply decision to claim
+      activeClaim._signedOff = true;
+      activeClaim._reviewedBy = 'reviewer';
+      activeClaim._reviewedAt = new Date().toISOString();
+      activeClaim._locked = true;
+      activeClaim._decision = decision;
+      activeClaim.reason = finalReason || activeClaim.reason || '';
+      activeClaim.notes = (document.getElementById('rvFinalNotes') ? document.getElementById('rvFinalNotes').value.trim() : '') || activeClaim.notes || '';
+
+      // sync rvReason select
+      const rvReason = document.getElementById('rvReason');
+      if (rvReason && finalReason) rvReason.value = finalReason;
+
       saveReview();
     });
   }
