@@ -97,6 +97,8 @@ function renderActiveInvoice(){
   const invDocs = DOC_ITEMS.map(d => { const on = !!inv.documents[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-doc="${d.key}" ${on?'checked':''}>${d.label}</label>`; }).join('');
   const rules = `<div class="rv-rule-bar"><button type="button" class="rv-rule-btn" data-rule="lesser">اعتماد الأقل</button><button type="button" class="rv-rule-btn" data-rule="billed">اعتماد كامل</button><button type="button" class="rv-rule-btn danger" data-rule="reject">رفض الكل</button><button type="button" class="rv-rule-btn warn" data-rule="maxlabs">حد التحاليل (${REVIEW_RULES.maxLabsPerVisit})</button></div>`;
 
+  const _isExt = isExternalInvoice(inv);
+  const _lineLabel = _isExt ? 'إجراءات المريض' : 'بنود المريض';
   const sections = (inv.patients||[]).map((p, pi) => {
     computePatient(p, activeClaim, inv.date, inv);
     const benType = patientBeneficiaryType(p, activeClaim);
@@ -134,7 +136,7 @@ function renderActiveInvoice(){
           <button type="button" class="rv-act-btn primary" data-edit-patient="1" data-pat-idx="${pi}">تعديل المريض</button>
           <button type="button" class="rv-act-btn primary" data-add-line="1" data-pat-idx="${pi}">+ بند</button>
         </div>
-        <div class="rv-section-title">بنود المريض</div>
+        <div class="rv-section-title">${_lineLabel}</div>
         ${rules}
         <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>#</th><th>الكود</th><th>البند</th><th>كمية</th><th>فاتورة</th><th>لائحة</th><th>الأقل</th><th>معتمد</th><th>فرق</th><th>حالة</th><th></th></tr></thead><tbody data-pat-idx="${pi}">${linesHtml}</tbody></table></div>
         ${_renderDeductionReasons(p)}
