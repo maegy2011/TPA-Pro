@@ -1,6 +1,9 @@
 // html-page-search.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_SEARCH = `
 <section class="page" id="page-search">
+      <div class="page-header">
+        <div><h1 data-i18n="search.title">البحث</h1><p class="page-sub" data-i18n="search.subtitle">محرك البحث في اللوائح</p></div>
+      </div>
       <div class="panel" style="margin-bottom:18px">
         <div class="panel-head"><div><h2>محرك البحث في اللوائح</h2><p>ابحث في الخدمات</p></div></div>
         <div class="panel-body">
