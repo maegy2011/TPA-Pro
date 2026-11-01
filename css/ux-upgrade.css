@@ -1,6 +1,56 @@
 /* ============================================================
-   TPA Pro — UX upgrade layer (accessibility & interaction polish)
+   TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Form validation feedback ---------- */
+.field.error input, .field.error select, .field.error textarea,
+.fg.error input, .fg.error select, .fg.error textarea{
+  border-color: var(--bad, #DC2626) !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.12);
+}
+.field .field-hint, .fg .field-hint{
+  font-size: 12px; color: var(--bad, #DC2626); margin-top: 4px; display: none;
+}
+.field.error .field-hint, .fg.error .field-hint{ display: block; }
+.field.success input, .fg.success input{ border-color: var(--ok, #059669); }
+
+/* ---------- Loading states & skeletons ---------- */
+.skeleton{
+  background: linear-gradient(90deg, var(--line,#E2E8F0) 25%, var(--card,#FFFFFF) 50%, var(--line,#E2E8F0) 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+@keyframes skelShimmer{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.app-loader{
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--bg, #F1F5F9); z-index: 9999;
+}
+.app-loader .spinner{
+  width: 40px; height: 40px; border: 3px solid var(--line,#E2E8F0);
+  border-top-color: var(--teal,#0E7C7B); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin{ to{ transform: rotate(360deg); } }
+.empty-state{
+  text-align: center; padding: 40px 20px; color: var(--muted,#64748B);
+}
+.empty-state .empty-icon{ font-size: 48px; margin-bottom: 12px; opacity: .6; }
+.empty-state .empty-title{ font-size: 16px; font-weight: 700; color: var(--text,#0F172A); margin-bottom: 6px; }
+
+/* ---------- Navigation & breadcrumbs ---------- */
+.breadcrumb{ display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted,#64748B); margin-bottom: 12px; }
+.breadcrumb a{ color: var(--teal,#0E7C7B); text-decoration: none; }
+.breadcrumb a:hover{ text-decoration: underline; }
+.nav-item.active, .sidebar-item.active{ font-weight: 700; color: var(--teal,#0E7C7B); }
+
+/* ---------- Responsive & touch targets ---------- */
+@media (max-width: 480px){
+  .modal-panel{ width: 96vw !important; max-width: 96vw; }
+  .topbar{ padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .skeleton, .app-loader .spinner{ animation: none; }
+}
 /* Dark theme overrides (toggled via data-theme="dark" on <html>) */
 [data-theme="dark"]{
   --bg:#0F172A; --card:#1E293B; --text:#F1F5F9; --muted:#94A3B8; --line:#334155;
