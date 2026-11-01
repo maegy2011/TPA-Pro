@@ -1,10 +1,13 @@
 // html-page-reports.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_REPORTS = `
 <section class="page" id="page-reports">
-      <div class="toolbar" style="margin-bottom:18px">
+      <div class="page-header">
+        <div><h1 data-i18n="reports.title">التقارير</h1><p class="page-sub" data-i18n="reports.subtitle">تحليلات مالية</p></div>
+        <div class="toolbar" style="margin-bottom:18px">
         <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input type="text" id="reportsSearch" placeholder="فلترة..." data-i18n-placeholder="reports.searchPlaceholder"></div>
         <div id="reportsSearchInfo" style="font-size:12.5px;color:var(--muted);font-weight:600"></div>
+      </div>
       </div>
       <div class="grid-kpi" id="reportKpi"></div>
       <div class="grid-2">
