@@ -1,6 +1,43 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Buttons ---------- */
+button, .btn, .btn-sm{
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+  border: 1px solid transparent; cursor: pointer; user-select: none;
+  transition: background var(--transition-fast,150ms) ease, color var(--transition-fast,150ms) ease,
+              transform var(--transition-fast,150ms) ease, box-shadow var(--transition-fast,150ms) ease;
+}
+.btn-primary, .btn.solid{ background: var(--teal,#0E7C7B); color: #FFFFFF; }
+.btn-primary:hover, .btn.solid:hover{ background: var(--teal-400,#14A3A1); transform: translateY(-1px); }
+.btn-ghost, .btn.ghost{ background: transparent; border-color: var(--line,#E2E8F0); color: var(--text,#0F172A); }
+.btn-ghost:hover, .btn.ghost:hover{ background: rgba(14,124,123,.08); }
+.btn-danger{ background: var(--bad,#DC2626); color: #FFFFFF; }
+.btn-danger:hover{ background: #B91C1C; }
+.btn:disabled{ opacity: .55; cursor: not-allowed; transform: none; }
+
+/* ---------- Text boxes / inputs ---------- */
+input[type="text"], input[type="number"], input[type="email"], input[type="password"],
+input[type="search"], input[type="date"], input[type="time"], textarea, select{
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line,#E2E8F0);
+  border-radius: 10px; background: var(--card,#FFFFFF); color: var(--text,#0F172A);
+  font-size: 0.95rem; transition: border-color var(--transition-fast,150ms) ease,
+  box-shadow var(--transition-fast,150ms) ease;
+}
+input:focus, textarea:focus, select:focus{
+  border-color: var(--teal,#0E7C7B); box-shadow: 0 0 0 3px rgba(14,124,123,.15); outline: none;
+}
+input::placeholder, textarea::placeholder{ color: var(--muted,#64748B); opacity: .7; }
+
+/* ---------- Drop menus / selects ---------- */
+select{ appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 10px center; padding-left: 30px; }
+.dropdown, .tb-user-menu, .rv-session-switcher{
+  border-radius: 12px; border: 1px solid var(--line,#E2E8F0);
+  background: var(--card,#FFFFFF); box-shadow: var(--shadow-lg, 0 20px 50px rgba(11,37,69,.16));
+}
+.dropdown-item, .tb-menu-item{ padding: 10px 14px; cursor: pointer; }
+.dropdown-item:hover, .tb-menu-item:hover{ background: rgba(14,124,123,.08); }
 /* ---------- Text formats & sizes (all screens) ---------- */
 body{ font-size: clamp(14px, 1.1vw, 16px); line-height: 1.6; }
 small, .text-sm{ font-size: 0.875rem; }
