@@ -6,7 +6,6 @@ const MODAL_REVIEW = `
       <div class="modal-panel wide">
         <div class="modal-head">
           <div style="flex:1;min-width:0"><h3>مراجعة المطالبة</h3><p id="rvSub">—</p></div>
-          <select class="rv-session-switcher" id="rvSessionSwitcher" title="التبديل بين الجلسات"><option value="">لا جلسات أخرى</option></select>
           <button class="close-btn" data-close><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="modal-body">
