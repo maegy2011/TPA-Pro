@@ -1,6 +1,9 @@
 // html-page-deduction-rules.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_DEDUCTION_RULES = `
 <section class="page" id="page-deduction-rules">
+      <div class="page-header">
+        <div><h1 data-i18n="deduction.title">قواعد الاستقطاع</h1><p class="page-sub" data-i18n="deduction.subtitle">إدارة قواعد التدقيق</p></div>
+      </div>
       <div class="dr-tabs">
         <button class="dr-tab active" data-dr-tab="rules">القواعد</button>
         <button class="dr-tab" data-dr-tab="pa-procedures">إجراءات الموافقة</button>
