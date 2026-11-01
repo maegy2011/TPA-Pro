@@ -1,14 +1,17 @@
 // html-page-dashboard.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_DASHBOARD = `
 <section class="page active" id="page-dashboard">
-      <div class="toolbar" style="justify-content:flex-end;margin-bottom:14px">
-        <div class="export-group">
-          <button class="btn-export excel" data-export="dashboard" data-format="excel"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="m9 13 6 6M15 13l-6 6"/></svg></button>
-          <button class="btn-export pdf" data-export="dashboard" data-format="pdf"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="M8 13h4M8 17h8"/></svg></button>
-          <button class="btn-export print" data-export="dashboard" data-format="print"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button>
+      <div class="page-header">
+        <div><h1 data-i18n="dash.title">لوحة التحكم</h1><p class="page-sub" data-i18n="dash.subtitle">ملخص الأداء المالي</p></div>
+        <div class="toolbar">
+          <div class="export-group">
+            <button class="btn-export excel" data-export="dashboard" data-format="excel"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="m9 13 6 6M15 13l-6 6"/></svg></button>
+            <button class="btn-export pdf" data-export="dashboard" data-format="pdf"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="M8 13h4M8 17h8"/></svg></button>
+            <button class="btn-export print" data-export="dashboard" data-format="print"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button>
+          </div>
         </div>
       </div>
-      <div class="grid-kpi" id="kpiGrid"></div>
+      <div class="card-grid" id="kpiGrid"></div>
       <div class="grid-2">
         <div class="panel"><div class="panel-head"><div><h2 data-i18n="dash.latestClaims">أحدث المطالبات</h2><p id="dashSearchInfo" data-i18n="dash.last5">آخر 5 مطالبات</p></div>
           <div class="small-search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
