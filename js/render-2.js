@@ -36,7 +36,7 @@ function renderClaims(){
       <td data-label="المطالب" class="mono">${fmt(c.billed)}</td>
       <td data-label="المعتمد" class="mono big">${fmt(c.approved)}</td>
       <td data-label="الحالة"><span class="badge ${st.cls}">${st.label}</span></td>
-      <td class="act"><div style="display:flex;gap:3px;flex-wrap:wrap"><button class="btn-xs view" data-view="${c.id}">👁</button><button class="btn-xs" data-review="${c.id}">مراجعة</button><button class="btn-xs tl" data-timeline="${c.id}">📅</button><button class="btn-xs danger" data-delete-claim="${c.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs view" data-view="${c.id}">👁</button><button class="btn-xs" data-review="${c.id}">مراجعة</button><button class="btn-xs tl" data-timeline="${c.id}">📅</button><button class="btn-xs danger" data-delete-claim="${c.id}">×</button></div></td>
     </tr>`;
   }).join('');
   $$('#claimsBody .claim-cb').forEach(cb => { if(_prevSel.has(cb.dataset.id)) cb.checked = true; });

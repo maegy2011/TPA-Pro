@@ -61,7 +61,7 @@ function renderServices(){
     <td class="mono">${fmt(s.base||0)}</td>
     <td class="mono">${fmt(s.current||0)}</td>
     <td>${s.covered?'<span class="badge ok sm">مغطاة</span>':'<span class="badge bad sm">غير مغطاة</span>'}</td>
-    <td class="act"><div style="display:flex;gap:3px"><button class="btn-xs" data-edit-service="${s.tariffId}|${s.index}">تعديل</button><button class="btn-xs danger" data-del-service="${s.tariffId}|${s.index}">حذف</button></div></td>
+    <td class="act"><div style="display:flex;gap:5px;align-items:center"><button class="btn-xs" data-edit-service="${s.tariffId}|${s.index}">تعديل</button><button class="btn-xs danger" data-del-service="${s.tariffId}|${s.index}">حذف</button></div></td>
   </tr>`).join('');
   const kpi = $('#servicesKpi');
   if(kpi){ kpi.innerHTML = `<div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الخدمات</div><div class="kpi-val">${list.length} <small>خدمة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">من أصل ${getAllServicesFlat().length}</div></div>`; }

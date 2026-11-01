@@ -67,7 +67,7 @@ function renderIntake(){
       <td data-label="المطالبات" class="mono">${fmt(b.claimsCount)}</td>
       <td data-label="القيمة" class="mono big">${fmt(b.totalBilled)}</td>
       <td data-label="الحالة"><span class="badge ${bs.cls}">${bs.label}</span></td>
-      <td class="act"><div style="display:flex;gap:3px;flex-wrap:wrap"><button class="btn-xs" data-edit-batch="${b.id}">تعديل</button><button class="btn-xs danger" data-delete-batch="${b.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-batch="${b.id}">تعديل</button><button class="btn-xs danger" data-delete-batch="${b.id}">×</button></div></td>
     </tr>`;
   }).join('');
 }

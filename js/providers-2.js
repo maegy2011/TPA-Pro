@@ -56,7 +56,7 @@ function renderContracts(){
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
       <td data-label="الخصم" class="mono">${c.discountRate}%</td>
       <td data-label="الحالة"><span class="badge ${cs.cls}">${cs.label}</span></td>
-      <td class="act"><div style="display:flex;gap:3px;flex-wrap:wrap"><button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
     </tr>`;
   }).join('');
 }

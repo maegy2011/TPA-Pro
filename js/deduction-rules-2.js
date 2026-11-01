@@ -2,7 +2,7 @@
 function renderPaProcedures(){
   const body = $('#paProcBody'); if(!body) return;
   if(!paProcedures.length){ body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--muted)">لا إجراءات</td></tr>'; return; }
-  body.innerHTML = paProcedures.map(p => `<tr><td><span class="mono" style="color:var(--navy-400);font-weight:700">${escapeHtml(p.code)}</span></td><td>${escapeHtml(p.name)}</td><td><span class="badge info">${escapeHtml(p.category)}</span></td><td style="font-size:11px;color:var(--muted)">${escapeHtml(p.notes||'—')}</td><td class="act"><div style="display:flex;gap:3px"><button class="btn-xs" data-edit-paproc="${escapeHtml(p.code)}">تحرير</button><button class="btn-xs danger" data-del-paproc="${escapeHtml(p.code)}">×</button></div></td></tr>`).join('');
+  body.innerHTML = paProcedures.map(p => `<tr><td><span class="mono" style="color:var(--navy-400);font-weight:700">${escapeHtml(p.code)}</span></td><td>${escapeHtml(p.name)}</td><td><span class="badge info">${escapeHtml(p.category)}</span></td><td style="font-size:11px;color:var(--muted)">${escapeHtml(p.notes||'—')}</td><td class="act"><div style="display:flex;gap:5px;align-items:center"><button class="btn-xs" data-edit-paproc="${escapeHtml(p.code)}">تحرير</button><button class="btn-xs danger" data-del-paproc="${escapeHtml(p.code)}">×</button></div></td></tr>`).join('');
 }
 function openDrModal(id){
   editingDrId = id || null;

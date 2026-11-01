@@ -51,7 +51,7 @@ function renderProviders(){
       <td data-label="التواصل" class="hide-sm">${escapeHtml(p.contact||'—')}</td>
       <td data-label="العقد"><span class="badge ${cs.cls}">${cs.label}</span>${c?`<div class="ctr-link" data-open-contract="${c.id}">${c.id}</div>`:''}</td>
       <td data-label="المطالبات"><div class="mono">${st.claims} مطالبة</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtC(st.approved)}</div></td>
-      <td class="act"><div style="display:flex;gap:3px;flex-wrap:wrap"><button class="btn-xs" data-edit-provider="${p.id}">تعديل</button><button class="btn-xs danger" data-delete-provider="${p.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-provider="${p.id}">تعديل</button><button class="btn-xs danger" data-delete-provider="${p.id}">×</button></div></td>
     </tr>`;
   }).join('');
 }

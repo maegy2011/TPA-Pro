@@ -143,3 +143,12 @@ tbody tr:hover{background:#F8FAFC}
 .services-table tbody td{padding:10px 12px;border-bottom:1px solid #F1F5F9}
 .services-table tbody tr:last-child td{border-bottom:none}
 .services-table .cb-cell{width:36px}
+
+/* ---------- Table action buttons (professional, single row) ---------- */
+td.act{white-space:nowrap;padding:6px 8px;vertical-align:middle}
+td.act > div{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;justify-content:flex-start}
+.btn-xs{min-height:30px;display:inline-flex;align-items:center;justify-content:center;gap:4px;line-height:1;border:1px solid transparent;box-shadow:0 1px 2px rgba(15,23,42,.06);transition:transform .12s ease, box-shadow .12s ease, background .18s, color .18s}
+.btn-xs:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(15,23,42,.12)}
+.btn-xs:active{transform:translateY(0);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.btn-xs:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.btn-xs svg{width:13px;height:13px;flex:none}
