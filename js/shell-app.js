@@ -109,7 +109,10 @@ const SHELL_APP = `
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
             <span class="tb-badge" id="tbTrashCount" style="display:none">0</span>
           </button>
-             <button class="tb-action-btn" id="tbBackupBtn" title="نسخة احتياطية">
+             <button class="tb-action-btn" id="tbThemeBtn" title="تبديل المظهر" aria-label="تبديل المظهر">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button class="tb-action-btn" id="tbBackupBtn" title="نسخة احتياطية">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
           </button>
           <div class="tb-divider"></div>

@@ -1,6 +1,15 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility & interaction polish)
    ============================================================ */
+/* Dark theme overrides (toggled via data-theme="dark" on <html>) */
+[data-theme="dark"]{
+  --bg:#0F172A; --card:#1E293B; --text:#F1F5F9; --muted:#94A3B8; --line:#334155;
+  --navy:#F1F5F9; --navy-600:#E2E8F0; --navy-400:#CBD5E1;
+  --shadow:0 4px 24px rgba(0,0,0,.45); --shadow-lg:0 20px 50px rgba(0,0,0,.55);
+  color-scheme: dark;
+}
+[data-theme="dark"] body{ background: var(--bg); color: var(--text); }
+[data-theme="dark"] .modal-bg{ background: rgba(0,0,0,.6); }
 :root{
   --focus-ring: 0 0 0 3px rgba(14,124,123,.28);
   --transition-fast: 150ms ease;

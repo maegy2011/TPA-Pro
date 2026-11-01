@@ -40,6 +40,22 @@ document.addEventListener('click', e => {
   e.preventDefault();
   if(typeof doExportBackup === 'function') doExportBackup(false);
 });
+// Theme toggle (light/dark)
+(function(){
+  try {
+    const saved = localStorage.getItem('tpa_theme');
+    if(saved === 'dark') document.documentElement.setAttribute('data-theme','dark');
+  } catch(e){}
+})();
+document.addEventListener('click', e => {
+  const btn = e.target.closest && e.target.closest('#tbThemeBtn');
+  if(!btn) return;
+  e.preventDefault();
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  if(dark){ html.removeAttribute('data-theme'); try { localStorage.setItem('tpa_theme','light'); } catch(e){} }
+  else { html.setAttribute('data-theme','dark'); try { localStorage.setItem('tpa_theme','dark'); } catch(e){} }
+});
 document.addEventListener('click', e => {
   if(e.target.closest && e.target.closest('#smartBackBtn')){ if(typeof goBack === 'function') goBack(); }
 });
