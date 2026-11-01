@@ -23,6 +23,8 @@ function bindReviewModal(){
 
   // لوحة الفاتورة
   $('#rvInvoicePanel').addEventListener('click', e => {
+    const _pc0 = e.target.closest('[data-pat-idx]');
+    if(_pc0) rvActivePatientIdx = Number(_pc0.dataset.patIdx);
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
     if(e.target.closest('[data-add-patient]')){ openPatientEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-add-line]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv||!inv.patients||!inv.patients.length){ showWarning('تنبيه','أضف مريضاً أولاً'); return; } openLineEditor(rvActivePatientIdx); return; }
@@ -75,17 +77,22 @@ function bindReviewModal(){
 
   // تعديل القيم يدوياً
   $('#rvInvoicePanel').addEventListener('input', e => {
+    const _pcIn = e.target.closest('[data-pat-idx]');
+    const _patIdxIn = _pcIn ? Number(_pcIn.dataset.patIdx) : rvActivePatientIdx;
     if(e.target.classList.contains('rv-manual-input') && e.target.dataset.manualCap !== undefined){
-      const p = workingInvoices[rvActiveInvoiceIdx].patients[rvActivePatientIdx]; if(!p) return;
-      p._capMode='manual'; p._manualCapAmount = Math.max(0, Number(e.target.value)||0); recalcReview(); return;
+      const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
+      const p = inv.patients[_patIdxIn]; if(!p) return;
+      rvActivePatientIdx = _patIdxIn; p._capMode='manual'; p._manualCapAmount = Math.max(0, Number(e.target.value)||0); recalcReview(); return;
     }
     if(e.target.classList.contains('rv-manual-input') && e.target.dataset.manualCopay !== undefined){
-      const p = workingInvoices[rvActiveInvoiceIdx].patients[rvActivePatientIdx]; if(!p) return;
-      p._copayMode='manual'; p._manualCopayAmount = Math.max(0, Number(e.target.value)||0); recalcReview(); return;
+      const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
+      const p = inv.patients[_patIdxIn]; if(!p) return;
+      rvActivePatientIdx = _patIdxIn; p._copayMode='manual'; p._manualCopayAmount = Math.max(0, Number(e.target.value)||0); recalcReview(); return;
     }
     if(!e.target.classList.contains('rv-line-approved')) return;
     const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
-    const pat = inv.patients[rvActivePatientIdx]; if(!pat) return;
+    const pat = inv.patients[_patIdxIn]; if(!pat) return;
+    rvActivePatientIdx = _patIdxIn;
     const i = Number(e.target.dataset.lineIdx); const line = pat.lines[i]; if(!line) return;
     const billed = line.qty*line.billedUnit;
     let v = Number(e.target.value); if(isNaN(v)||v<0) v = 0; if(v>billed){ v = billed; e.target.value = v; }

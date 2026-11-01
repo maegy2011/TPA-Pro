@@ -63,33 +63,54 @@ function renderActiveInvoice(){
   if(!inv){ box.innerHTML = ''; return; }
   if(!inv.patients) inv.patients = [];
   if(rvActivePatientIdx >= inv.patients.length) rvActivePatientIdx = 0;
-  const pat = inv.patients[rvActivePatientIdx];
   const t = INVOICE_TYPES[inv.type] || {label:inv.type};
   const tot = invoiceTotals(inv);
   const docs = DOC_ITEMS.map(d => { const on = !!inv.documents[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-doc="${d.key}" ${on?'checked':''}>${d.label}</label>`; }).join('');
-  const patTabs = inv.patients.map((p,i) => `<button type="button" class="rv-patient-tab ${i===rvActivePatientIdx?'active':''}" data-pat-idx="${i}"><span>${escapeHtml(p.name)}</span><span class="cnt">${(p.lines||[]).length}</span></button>`).join('') + '<button type="button" class="rv-add-tab" data-add-patient="1">+ مريض</button>';
   const rules = `<div class="rv-rule-bar"><button type="button" class="rv-rule-btn" data-rule="lesser">اعتماد الأقل</button><button type="button" class="rv-rule-btn" data-rule="billed">اعتماد كامل</button><button type="button" class="rv-rule-btn danger" data-rule="reject">رفض الكل</button><button type="button" class="rv-rule-btn warn" data-rule="maxlabs">حد التحاليل (${REVIEW_RULES.maxLabsPerVisit})</button></div>`;
-  let patInfo = '', linesHtml = '';
-  if(pat){
-    computePatient(pat, activeClaim, inv.date, inv);
-    const benType = patientBeneficiaryType(pat, activeClaim);
-    const rej = (pat.lines||[]).filter(l=>l.paRejected).length;
-    const capMode = pat._capMode || 'auto';
-    const capLabel = capMode==='manual'?'يدوي':capMode==='reverted'?'معاد':(pat._autoCapRule?'تلقائي':'—');
-    const capRow = pat._autoCapRule || capMode !== 'auto' ? `<div class="rv-pat-auto-row ${capMode==='manual'?'manual':(capMode==='reverted'?'reverted':'')}"><span class="lbl">🛡️ سقف (${pat._autoCapRule?pat._autoCapRule.rate+'%':''}) <span class="rv-auto-badge ${capMode==='manual'?'manual':capMode==='reverted'?'reverted':'auto'}">${capLabel}</span></span>${capMode==='manual'?`<input type="number" class="rv-manual-input" data-manual-cap="1" value="${pat._manualCapAmount||0}" min="0" max="${pat._subtotal}">`:`<span class="amt">${pat._capAmt?fmtC(pat._capAmt):'—'}</span><button type="button" class="rv-ov-btn" data-manual-cap-toggle="1" title="يدوي">✎</button>`}${pat._autoCapRule?`<span class="rule-name">${escapeHtml(pat._autoCapRule.name)}</span>`:''}${capMode==='auto'&&pat._autoCapAmt>0?`<button type="button" class="rv-ov-btn undo" data-revert-cap="1">↺</button>`:''}${capMode!=='auto'?`<button type="button" class="rv-ov-btn reset" data-reset-cap="1">⟲</button>`:''}</div>` : '';
-    const copayMode = pat._copayMode || 'auto';
-    const copayLabel = copayMode==='manual'?'يدوي':copayMode==='reverted'?'معاد':(pat._autoCopayRule?'تلقائي':'—');
-    const copayRow = pat._autoCopayRule || copayMode !== 'auto' ? `<div class="rv-pat-auto-row ${copayMode==='manual'?'manual':(copayMode==='reverted'?'reverted':'')}"><span class="lbl">💰 تحمل (${pat._autoCopayRule?pat._autoCopayRule.rate+'%':''}) <span class="rv-auto-badge ${copayMode==='manual'?'manual':copayMode==='reverted'?'reverted':'auto'}">${copayLabel}</span></span>${copayMode==='manual'?`<input type="number" class="rv-manual-input" data-manual-copay="1" value="${pat._manualCopayAmount||0}" min="0" max="${pat._subtotal-pat._capAmt}">`:`<span class="amt">${pat._copayAmt?fmtC(pat._copayAmt):'—'}</span><button type="button" class="rv-ov-btn" data-manual-copay-toggle="1" title="يدوي">✎</button>`}${pat._autoCopayRule?`<span class="rule-name">${escapeHtml(pat._autoCopayRule.name)}</span>`:''}${copayMode==='auto'&&pat._autoCopayAmt>0?`<button type="button" class="rv-ov-btn undo" data-revert-copay="1">↺</button>`:''}${copayMode!=='auto'?`<button type="button" class="rv-ov-btn reset" data-reset-copay="1">⟲</button>`:''}</div>` : '';
-    const autoBlock = (capRow||copayRow) ? `<div class="rv-pat-auto ${capMode==='manual'?'has-manual':pat._autoCapAmt>0?'has-auto':''}">${capRow}${copayRow}</div>` : '';
-    patInfo = `<div class="rv-patient-info"><div class="rv-pinfo"><span>المريض</span><b>${escapeHtml(pat.name)}</b></div><div class="rv-pinfo"><span>الهوية</span><b>${escapeHtml(pat.nationalId||'—')}</b></div><div class="rv-pinfo"><span>النوع</span><b>${benType==='retiree'?'متقاعد':'عامل'}</b></div></div>
-      <div class="rv-patient-calc"><div class="rv-pcalc-item"><span>إجمالي المريض</span><b>${fmtC(pat._subtotal)}</b></div><div class="rv-pcalc-item ded"><span>سقف</span><b>${pat._capAmt?fmtC(pat._capAmt):'—'}</b></div><div class="rv-pcalc-item ded"><span>تحمل</span><b>${pat._copayAmt?fmtC(pat._copayAmt):'—'}</b></div><div class="rv-pcalc-item ok"><span>المعتمد</span><b>${fmtC(pat._final)}</b></div></div>
-      ${autoBlock}
-      ${rej>0?`<div class="rv-pa-reject-note">⛔ ${rej} بند مرفوض — متقاعد بدون موافقة</div>`:''}`;
-    linesHtml = pat.lines.length ? pat.lines.map((ln,i)=>reviewLineRow(ln,i)).join('') : '<tr><td colspan="11" style="text-align:center;padding:18px;color:var(--muted)">لا بنود</td></tr>';
-  } else {
-    patInfo = '<div class="rv-empty-patient">لا مرضى</div>';
-    linesHtml = '<tr><td colspan="11" style="text-align:center;padding:18px;color:var(--muted)">—</td></tr>';
-  }
+
+  const sections = (inv.patients||[]).map((p, pi) => {
+    computePatient(p, activeClaim, inv.date, inv);
+    const benType = patientBeneficiaryType(p, activeClaim);
+    const rej = (p.lines||[]).filter(l=>l.paRejected).length;
+    const capMode = p._capMode || 'auto';
+    const capLabel = capMode==='manual'?'يدوي':capMode==='reverted'?'معاد':(p._autoCapRule?'تلقائي':'—');
+    const capRow = p._autoCapRule || capMode !== 'auto' ? `<div class="rv-pat-auto-row ${capMode==='manual'?'manual':(capMode==='reverted'?'reverted':'')}"><span class="lbl">🛡️ سقف (${p._autoCapRule?p._autoCapRule.rate+'%':''}) <span class="rv-auto-badge ${capMode==='manual'?'manual':capMode==='reverted'?'reverted':'auto'}">${capLabel}</span></span>${capMode==='manual'?`<input type="number" class="rv-manual-input" data-manual-cap="1" data-pat-idx="${pi}" value="${p._manualCapAmount||0}" min="0" max="${p._subtotal}">`:`<span class="amt">${p._capAmt?fmtC(p._capAmt):'—'}</span><button type="button" class="rv-ov-btn" data-manual-cap-toggle="1" data-pat-idx="${pi}" title="يدوي">✎</button>`}${p._autoCapRule?`<span class="rule-name">${escapeHtml(p._autoCapRule.name)}</span>`:''}${capMode==='auto'&&p._autoCapAmt>0?`<button type="button" class="rv-ov-btn undo" data-revert-cap="1" data-pat-idx="${pi}">↺</button>`:''}${capMode!=='auto'?`<button type="button" class="rv-ov-btn reset" data-reset-cap="1" data-pat-idx="${pi}">⟲</button>`:''}</div>` : '';
+    const copayMode = p._copayMode || 'auto';
+    const copayLabel = copayMode==='manual'?'يدوي':copayMode==='reverted'?'معاد':(p._autoCopayRule?'تلقائي':'—');
+    const copayRow = p._autoCopayRule || copayMode !== 'auto' ? `<div class="rv-pat-auto-row ${copayMode==='manual'?'manual':(copayMode==='reverted'?'reverted':'')}"><span class="lbl">💰 تحمل (${p._autoCopayRule?p._autoCopayRule.rate+'%':''}) <span class="rv-auto-badge ${copayMode==='manual'?'manual':copayMode==='reverted'?'reverted':'auto'}">${copayLabel}</span></span>${copayMode==='manual'?`<input type="number" class="rv-manual-input" data-manual-copay="1" data-pat-idx="${pi}" value="${p._manualCopayAmount||0}" min="0" max="${p._subtotal-p._capAmt}">`:`<span class="amt">${p._copayAmt?fmtC(p._copayAmt):'—'}</span><button type="button" class="rv-ov-btn" data-manual-copay-toggle="1" data-pat-idx="${pi}" title="يدوي">✎</button>`}${p._autoCopayRule?`<span class="rule-name">${escapeHtml(p._autoCopayRule.name)}</span>`:''}${copayMode==='auto'&&p._autoCopayAmt>0?`<button type="button" class="rv-ov-btn undo" data-revert-copay="1" data-pat-idx="${pi}">↺</button>`:''}${copayMode!=='auto'?`<button type="button" class="rv-ov-btn reset" data-reset-copay="1" data-pat-idx="${pi}">⟲</button>`:''}</div>` : '';
+    const autoBlock = (capRow||copayRow) ? `<div class="rv-pat-auto ${capMode==='manual'?'has-manual':p._autoCapAmt>0?'has-auto':''}">${capRow}${copayRow}</div>` : '';
+    const patBilled = (p.lines||[]).reduce((s,l)=>s+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
+    const patDed = patBilled - (p._final||0);
+    const linesHtml = (p.lines||[]).length ? (p.lines||[]).map((ln,i)=>reviewLineRow(ln,i)).join('') : '<tr><td colspan="11" style="text-align:center;padding:18px;color:var(--muted)">لا بنود</td></tr>';
+    return `<details class="rv-patient-details" data-pat-idx="${pi}" ${pi===rvActivePatientIdx?'open':''}>
+      <summary class="rv-patient-summary" style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;background:#F8FAFC;border:1px solid var(--line);border-radius:9px;margin-bottom:6px">
+        <span style="font-weight:800;color:var(--navy)">${escapeHtml(p.name)}</span>
+        <span style="display:flex;gap:12px;font-size:12px">
+          <span>إجمالي: <b>${fmtC(patBilled)}</b></span>
+          <span>مستقطع: <b style="color:var(--bad)">${fmtC(patDed)}</b></span>
+          <span>صافي: <b style="color:var(--ok)">${fmtC(p._final)}</b></span>
+          <span style="color:var(--muted)">▾</span>
+        </span>
+      </summary>
+      <div class="rv-patient-body" style="padding:8px 4px">
+        <div class="rv-patient-info"><div class="rv-pinfo"><span>المريض</span><b>${escapeHtml(p.name)}</b></div><div class="rv-pinfo"><span>الهوية</span><b>${escapeHtml(p.nationalId||'—')}</b></div><div class="rv-pinfo"><span>النوع</span><b>${benType==='retiree'?'متقاعد':'عامل'}</b></div></div>
+        <div class="rv-patient-calc"><div class="rv-pcalc-item"><span>إجمالي المريض</span><b>${fmtC(p._subtotal)}</b></div><div class="rv-pcalc-item ded"><span>سقف</span><b>${p._capAmt?fmtC(p._capAmt):'—'}</b></div><div class="rv-pcalc-item ded"><span>تحمل</span><b>${p._copayAmt?fmtC(p._copayAmt):'—'}</b></div><div class="rv-pcalc-item ok"><span>المعتمد</span><b>${fmtC(p._final)}</b></div></div>
+        ${autoBlock}
+        ${rej>0?`<div class="rv-pa-reject-note">⛔ ${rej} بند مرفوض — متقاعد بدون موافقة</div>`:''}
+        <div style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap">
+          <button type="button" class="rv-act-btn primary" data-edit-patient="1" data-pat-idx="${pi}">تعديل المريض</button>
+          <button type="button" class="rv-act-btn primary" data-add-line="1" data-pat-idx="${pi}">+ بند</button>
+        </div>
+        <div class="rv-section-title">بنود المريض</div>
+        ${rules}
+        <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>#</th><th>الكود</th><th>البند</th><th>كمية</th><th>فاتورة</th><th>لائحة</th><th>الأقل</th><th>معتمد</th><th>فرق</th><th>حالة</th><th></th></tr></thead><tbody data-pat-idx="${pi}">${linesHtml}</tbody></table></div>
+      </div>
+    </details>`;
+  }).join('');
+
+  const totalBilled = (inv.patients||[]).reduce((s,p)=>s+((p.lines||[]).reduce((a,l)=>a+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0)),0);
+  const totalNet = (inv.patients||[]).reduce((s,p)=>s+(p._final||0),0);
+
   box.innerHTML = `
     <div class="rv-inv-meta">
       <div class="rv-meta-item"><span>النوع</span><b>${t.label}</b></div>
@@ -98,24 +119,25 @@ function renderActiveInvoice(){
       <div class="rv-meta-item"><span>${inv.type==='inpatient'?'الإقامة':'عدد المرضى'}</span><b>${inv.type==='inpatient'?(inv.admissionDate||'—')+' ← '+(inv.dischargeDate||'—'):inv.patients.length}</b></div>
     </div>
     <div class="rv-inv-actions">
-      <button type="button" class="rv-act-btn primary" data-add-patient="1">مريض</button>
-      <button type="button" class="rv-act-btn primary" data-add-line="1">بند</button>
-      ${pat?`<button type="button" class="rv-act-btn ghost" data-edit-patient="1">تعديل المريض</button>`:''}
+      <button type="button" class="rv-act-btn primary" data-add-patient="1">+ مريض</button>
       <button type="button" class="rv-act-btn ghost" data-edit-invoice="1">تعديل الفاتورة</button>
       <button type="button" class="rv-act-btn danger" data-delete-invoice="1">حذف الفاتورة</button>
     </div>
     <div class="rv-inv-total"><span>مطالب: <b>${fmtC(tot.billed)}</b></span><span>معتمد: <b style="color:var(--ok)">${fmtC(tot.approved)}</b></span><span>استقطاع: <b style="color:var(--bad)">${fmtC(tot.deduction)}</b></span></div>
     <div class="rv-section-title">المستندات</div>
     <div class="rv-docs">${docs}</div>
-    <div class="rv-section-title">المرضى</div>
-    <div class="rv-patient-tabs">${patTabs}</div>
-    ${patInfo}
-    <div class="rv-section-title">بنود المريض</div>
-    ${rules}
-    <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>#</th><th>الكود</th><th>البند</th><th>كمية</th><th>فاتورة</th><th>لائحة</th><th>الأقل</th><th>معتمد</th><th>فرق</th><th>حالة</th><th></th></tr></thead><tbody>${linesHtml}</tbody></table></div>
+    <div class="rv-section-title">المرضى (${(inv.patients||[]).length})</div>
+    <div class="rv-patients-accordion">${sections || '<div class="rv-empty">لا مرضى</div>'}</div>
+    <div class="rv-patients-footer" style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 12px;background:#F8FAFC;border:1px solid var(--line);border-radius:10px;margin-top:10px;font-size:13px;font-weight:700">
+      <span>عدد المرضى: <b>${(inv.patients||[]).length}</b></span>
+      <span>إجمالي: <b>${fmtC(totalBilled)}</b></span>
+      <span>مستقطع: <b style="color:var(--bad)">${fmtC(totalBilled-totalNet)}</b></span>
+      <span>صافي: <b style="color:var(--ok)">${fmtC(totalNet)}</b></span>
+    </div>
     <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button></div>`;
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
 }
+
 function collectExceptions(){
   const pending = [], processed = [], pa = [];
   (workingInvoices||[]).forEach((inv, ii) => (inv.patients||[]).forEach((pat, pi) => (pat.lines||[]).forEach((ln, li) => {
