@@ -1,8 +1,14 @@
 // review-bind.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function bindReviewModal(){
   $$('[data-close]').forEach(el => el.addEventListener('click', () => closeReview()));
-  $('#paStatus').addEventListener('change', updatePAWarning);
-  $('#saveReview').addEventListener('click', saveReview);
+  const pa = document.getElementById('paStatus') || document.getElementById('rvPagePaStatus');
+  if(pa) pa.addEventListener('change', updatePAWarning);
+  const sr = document.getElementById('saveReview') || document.getElementById('rvPageSave');
+  if(sr) sr.addEventListener('click', saveReview);
+  const sb = document.getElementById('rvPageBack');
+  if(sb && !sb.dataset.bound) { sb.dataset.bound='1'; sb.addEventListener('click', () => closeReview()); }
+  const st = document.getElementById('rvPageViewTimelineBtn');
+  if(st && !st.dataset.bound) { st.dataset.bound='1'; st.addEventListener('click', () => { const id = (document.getElementById('rvPageId')||{}).value || (document.getElementById('rvId')||{}).value; if(!id) return; try{ closeReview(); }catch(e){} openTimeline(id); }); }
 
   // نوع المطالبة
   $$('.rv-type-btn').forEach(btn => btn.addEventListener('click', () => {
@@ -130,15 +136,16 @@ function bindReviewModal(){
   bindLineSmartForm();
 
   // تبويبات المراجعة
-  const rvTabs = document.querySelector('#reviewModal .rv-tabs');
+  const rvTabs = document.querySelector('#reviewModal .rv-tabs') || document.querySelector('#page-review .rv-tabs');
   if (rvTabs && !rvTabs.dataset.bound) {
     rvTabs.dataset.bound = '1';
     rvTabs.addEventListener('click', e => {
       const btn = e.target.closest('[data-rv-tab]'); if(!btn) return;
       const tab = btn.dataset.rvTab;
-      $$('.rv-tab').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); });
-      $$('.rv-tab-panel').forEach(p => p.style.display = 'none');
-      const panel = document.getElementById('rvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      rvTabs.querySelectorAll('.rv-tab').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); });
+      document.querySelectorAll('#reviewModal .rv-tab-panel, #page-review .rv-tab-panel').forEach(p => p.style.display = 'none');
+      let panel = document.getElementById('rvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      if(!panel) panel = document.getElementById('rvPageTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
       if (panel) panel.style.display = '';
       if (tab === 'exceptions') renderExceptions();
       if (tab === 'final') {
@@ -243,7 +250,7 @@ function bindReviewModal(){
     });
   }
 
-  const finBtn = document.getElementById('finalizeReviewBtn');
+  const finBtn = document.getElementById('finalizeReviewBtn') || document.getElementById('rvPageFinalizeBtn');
   if (finBtn && !finBtn.dataset.bound) {
     finBtn.dataset.bound = '1';
     finBtn.addEventListener('click', () => {
@@ -254,9 +261,12 @@ function bindReviewModal(){
       let entered = 0;
       (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
       const mismatch = Math.abs(billed - entered) > 1;
-      const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
-      const finalReason = document.getElementById('rvFinalReason') ? document.getElementById('rvFinalReason').value : '';
-      const decision = (document.querySelector('input[name="rvDecision"]:checked')||{}).value || 'partial';
+      const missingDocsInv = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+      const missingDocsPat = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+DOC_ITEMS.filter(d=>!(p.documents&&p.documents[d.key])).length,0),0);
+      const missingDocs = missingDocsInv + missingDocsPat;
+      const finalReasonEl = document.getElementById('rvFinalReason') || document.getElementById('rvPageFinalReason');
+      const finalReason = finalReasonEl ? finalReasonEl.value : '';
+      const decision = (document.querySelector('input[name="rvDecision"]:checked')||document.querySelector('input[name="rvPageDecision"]:checked')||{}).value || 'partial';
       const needsReason = (decision !== 'approved');
       const missing = [];
       if (excs.length) missing.push(`${excs.length} بند غير معالج`);
@@ -288,10 +298,10 @@ function bindReviewModal(){
       activeClaim._locked = true;
       activeClaim._decision = decision;
       activeClaim.reason = finalReason || activeClaim.reason || '';
-      activeClaim.notes = (document.getElementById('rvFinalNotes') ? document.getElementById('rvFinalNotes').value.trim() : '') || activeClaim.notes || '';
+      activeClaim.notes = ((document.getElementById('rvFinalNotes')||document.getElementById('rvPageFinalNotes')) ? ((document.getElementById('rvFinalNotes')||document.getElementById('rvPageFinalNotes')).value.trim()) : '') || activeClaim.notes || '';
 
       // sync rvReason select
-      const rvReason = document.getElementById('rvReason');
+      const rvReason = document.getElementById('rvReason') || document.getElementById('rvPageReason');
       if (rvReason && finalReason) rvReason.value = finalReason;
 
       saveReview();

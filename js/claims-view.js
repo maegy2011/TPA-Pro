@@ -1,11 +1,24 @@
 // claims-view.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
+function _fillCalc(){
+  try {
+    const billed = $('#calcBilled')||$('#rvPageCalcBilled');
+    const ded = $('#calcDed')||$('#rvPageCalcDed');
+    const rate = $('#calcRate')||$('#rvPageCalcRate');
+    // recalcReview already updates
+  } catch(e){}
+}
 function renderReviewInvoices(){
-  if(!workingInvoices.length){
-    $('#rvInvoiceTabs').innerHTML = '<button type="button" class="rv-add-tab" data-add-invoice="1">+ إضافة فاتورة</button>';
-    $('#rvInvoicePanel').innerHTML = '<div class="rv-empty">لا فواتير</div>';
+  const tabs = document.getElementById('rvInvoiceTabs') || document.getElementById('rvPageInvoiceTabs');
+  const panel = document.getElementById('rvInvoicePanel') || document.getElementById('rvPageInvoicePanel');
+  if(!tabs || !panel){
     recalcReview(); return;
   }
-  $('#rvInvoiceTabs').innerHTML = workingInvoices.map((inv,i) => {
+  if(!workingInvoices.length){
+    tabs.innerHTML = '<button type="button" class="rv-add-tab" data-add-invoice="1">+ إضافة فاتورة</button>';
+    panel.innerHTML = '<div class="rv-empty">لا فواتير</div>';
+    recalcReview(); return;
+  }
+  tabs.innerHTML = workingInvoices.map((inv,i) => {
     const t = INVOICE_TYPES[inv.type] || {label:inv.type};
     const tot = invoiceTotals(inv);
     return `<button type="button" class="rv-inv-tab ${i===rvActiveInvoiceIdx?'active':''}" data-inv-idx="${i}"><span>${t.label}</span><span class="cnt">${(inv.patients||[]).length} مريض</span><span class="amt">${fmt(tot.billed)}</span></button>`;
@@ -71,7 +84,9 @@ function _renderDeductionReasons(p){
   return `<div class="rv-section-title" style="margin-top:10px">أسباب الخصم لكل مبلغ</div><div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>السبب</th><th>المصدر</th><th>المستوى</th><th>المبلغ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function renderActiveInvoice(){
-  const inv = workingInvoices[rvActiveInvoiceIdx]; const box = $('#rvInvoicePanel');
+  const inv = workingInvoices[rvActiveInvoiceIdx];
+  const box = document.getElementById('rvInvoicePanel') || document.getElementById('rvPageInvoicePanel');
+  if(!box) return;
   if(!inv){ box.innerHTML = ''; return; }
   if(!inv.patients) inv.patients = [];
   if(rvActivePatientIdx >= inv.patients.length) rvActivePatientIdx = 0;
@@ -169,11 +184,11 @@ function collectExceptions(){
 function _excFilter(){ return (window._excFilterVal || 'all'); }
 function setExcFilter(v){ window._excFilterVal = v; renderExceptions(); }
 function renderExceptions(){
-  const box = document.getElementById('rvExceptions');
+  const box = document.getElementById('rvExceptions') || document.getElementById('rvPageExceptions');
   if (!box) return;
   const data = collectExceptions();
   const pending = data.pending || [], processed = data.processed || [], pa = data.pa || [];
-  const cnt = document.getElementById('rvExcCount');
+  const cnt = document.getElementById('rvExcCount') || document.getElementById('rvPageExcCount');
   const totalPending = pending.length + pa.length;
   if (cnt) cnt.textContent = totalPending;
   const filter = _excFilter();
@@ -276,7 +291,7 @@ function renderExceptions(){
 }
 function renderFinalSummary(){
   // numbers
-  const nb = document.getElementById('rvFinalNumbers');
+  const nb = document.getElementById('rvFinalNumbers') || document.getElementById('rvPageFinalNumbers');
   if (nb) {
     const billed = (activeClaim && activeClaim.billed) ? activeClaim.billed : 0;
     let approved = 0, ded = 0;
@@ -285,7 +300,7 @@ function renderFinalSummary(){
     nb.innerHTML = `<div class="calc-box"><div class="calc-item"><span>المطالب به</span><b>${fmt(billed)}</b></div><div class="calc-item ded"><span>الاستقطاع</span><b>${fmt(ded)}</b></div><div class="calc-item rate"><span>النسبة</span><b>${billed?Math.round(ded/billed*100):0}%</b></div><div class="calc-item ok"><span>المعتمد</span><b>${fmt(approved)}</b></div></div>`;
   }
   // reasons breakdown - per patient with all deduction reasons
-  const rb = document.getElementById('rvFinalReasons');
+  const rb = document.getElementById('rvFinalReasons') || document.getElementById('rvPageFinalReasons');
   if (rb) {
     let html = '<div class="rv-section-title">أسباب الخصم لكل مريض (كل مبلغ له سبب)</div>';
     (workingInvoices||[]).forEach((inv, ii) => {
@@ -313,7 +328,7 @@ function renderFinalSummary(){
     rb.innerHTML = html;
   }
   // checklist
-  const cb = document.getElementById('rvFinalChecklist');
+  const cb = document.getElementById('rvFinalChecklist') || document.getElementById('rvPageFinalChecklist');
   if (cb) {
     const _ce = typeof collectExceptions === 'function' ? collectExceptions() : {pending:[],processed:[],pa:[]};
     const excs = (_ce.pending||[]).concat(_ce.pa||[]);
@@ -333,7 +348,7 @@ function renderFinalSummary(){
     ];
     cb.innerHTML = '<div class="rv-section-title">قائمة التحقق الإلزامية</div>' + items.map(it => `<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;cursor:pointer"><input type="checkbox" class="final-check" data-final-check="${it.key}" ${it.ok?'checked':''} ${it.ok?'':'disabled'}> <span style="color:${it.ok?'var(--text,#111)':'var(--bad,#dc2626)'}">${escapeHtml(it.text)}</span></label>`).join('');
     // gate finalize button
-    const finBtn = document.getElementById('finalizeReviewBtn');
+    const finBtn = document.getElementById('finalizeReviewBtn') || document.getElementById('rvPageFinalizeBtn');
     if (finBtn) {
       const allChecked = items.every(it => it.ok);
       finBtn.disabled = !allChecked;
@@ -345,7 +360,7 @@ function renderFinalSummary(){
   let def = 'partial';
   if (approved === 0) def = 'rejected';
   else if (approved >= billed2 && billed2 > 0) def = 'approved';
-  const r = document.querySelector(`input[name="rvDecision"][value="${def}"]`);
+  const r = document.querySelector(`input[name="rvDecision"][value="${def}"]`) || document.querySelector(`input[name="rvPageDecision"][value="${def}"]`);
   if (r) r.checked = true;
 }
 function recalcReview(){
@@ -359,9 +374,12 @@ function recalcReview(){
   }));
   const ded = Math.max(0, billed-finalApproved);
   const rate = billed ? (ded/billed*100) : 0;
-  $('#calcBilled').textContent = fmtC(billed);
-  $('#calcDed').textContent = fmtC(ded);
-  $('#calcRate').textContent = rate.toFixed(1)+'%';
+  const b1 = document.getElementById('calcBilled') || document.getElementById('rvPageCalcBilled');
+  const d1 = document.getElementById('calcDed') || document.getElementById('rvPageCalcDed');
+  const r1 = document.getElementById('calcRate') || document.getElementById('rvPageCalcRate');
+  if(b1) b1.textContent = fmtC(billed);
+  if(d1) d1.textContent = fmtC(ded);
+  if(r1) r1.textContent = rate.toFixed(1)+'%';
 }
 function applyReviewRule(rule){
   markSessionDirty();

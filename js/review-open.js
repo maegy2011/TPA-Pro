@@ -1,4 +1,28 @@
 // review-open.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
+function _fillReviewPage(c){
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v == null ? '' : v; };
+  const sub = document.getElementById('rvPageSub');
+  if(sub) sub.textContent = `${c.id} • ${c.patient}`;
+  const ctxBar = document.getElementById('rvPageContextBar');
+  if (ctxBar) {
+    const ctx = getContractContext(c);
+    ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · عقد ${ctx.contract?ctx.contract.id:'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
+  }
+  set('rvPageId', c.id); set('rvPageDate', c.date); set('rvPageReceivedNumber', c.receivedNumber||'—');
+  set('rvPageReceivedDate', c.receivedDate||'—'); set('rvPagePatient', c.patient); set('rvPageProvider', c.provider);
+  set('rvPageReason', c.reason||''); set('rvPageNotes', c.notes||'');
+  const pab = document.getElementById('rvPagePriorApprovalBox');
+  if(c.priorApproval && c.priorApproval.required){
+    if(pab) pab.style.display = 'block';
+    set('rvPagePaStatus', c.priorApproval.status || 'not-requested');
+    set('rvPagePaRefNumber', c.priorApproval.refNumber || '');
+    set('rvPagePaDate', c.priorApproval.date || '');
+    if(typeof updatePAWarning === 'function') updatePAWarning();
+  } else {
+    if(pab) pab.style.display = 'none';
+  }
+  document.querySelectorAll('#page-review .rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
+}
 function openReview(id){
   const c = getClaimById(id); if(!c) return;
   const existing = findSessionByClaim(id);
@@ -23,33 +47,43 @@ function openReview(id){
   }));
   if(typeof recalcClaim === 'function') recalcClaim(c);
   workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, c, inv.date, inv); }));
-  $('#rvSub').textContent = `${c.id} • ${c.patient}`;
-  const ctxBar = document.getElementById('rvContextBar');
-  if (ctxBar) {
-    const ctx = getContractContext(c);
-    ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · عقد ${ctx.contract?ctx.contract.id:'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
-  }
-  $('#rvId').value = c.id; $('#rvDate').value = c.date; $('#rvReceivedNumber').value = c.receivedNumber||'—';
-  $('#rvReceivedDate').value = c.receivedDate||'—'; $('#rvPatient').value = c.patient; $('#rvProvider').value = c.provider;
-  $('#rvReason').value = c.reason||''; $('#rvNotes').value = c.notes||'';
-  if(c.priorApproval && c.priorApproval.required){
-    (el => { if (el) el.style.display = 'block'; })($('#priorApprovalBox'));
-    $('#paStatus').value = c.priorApproval.status || 'not-requested';
-    $('#paRefNumber').value = c.priorApproval.refNumber || '';
-    $('#paDate').value = c.priorApproval.date || '';
-    updatePAWarning();
-  } else (el => { if (el) el.style.display = 'none'; })($('#priorApprovalBox'));
-  $$('.rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
-  renderReviewInvoices();
+  _fillReviewPage(c);
+  // try modal for backward compat
+  try {
+    const sub = document.getElementById('rvSub');
+    if(sub) sub.textContent = `${c.id} • ${c.patient}`;
+    const ctxBar = document.getElementById('rvContextBar');
+    if (ctxBar) {
+      const ctx = getContractContext(c);
+      ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · عقد ${ctx.contract?ctx.contract.id:'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
+    }
+    const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v == null ? '' : v; };
+    set('rvId', c.id); set('rvDate', c.date); set('rvReceivedNumber', c.receivedNumber||'—');
+    set('rvReceivedDate', c.receivedDate||'—'); set('rvPatient', c.patient); set('rvProvider', c.provider);
+    set('rvReason', c.reason||''); set('rvNotes', c.notes||'');
+    const pab = document.getElementById('priorApprovalBox');
+    if(c.priorApproval && c.priorApproval.required){
+      if(pab) pab.style.display = 'block';
+      set('paStatus', c.priorApproval.status || 'not-requested');
+      set('paRefNumber', c.priorApproval.refNumber || '');
+      set('paDate', c.priorApproval.date || '');
+      if(typeof updatePAWarning === 'function') updatePAWarning();
+    } else {
+      if(pab) pab.style.display = 'none';
+    }
+    document.querySelectorAll('#reviewModal .rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
+  } catch(e){}
+  if(typeof renderReviewInvoices === 'function') renderReviewInvoices();
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
   const s = upsertCurrentSession();
   if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); if(typeof startSessionTimeTracker === 'function') startSessionTimeTracker(s); }
   clearSessionDirty();
-  $('#reviewModal').classList.add('open'); document.body.style.overflow = 'hidden';
+  try { navigateTo('review', {noPush:false}); } catch(e){}
   updateSessionsBadge();
 }
 function closeReview(opts){
-  if(!$('#reviewModal').classList.contains('open')) return;
+  const isModalOpen = $('#reviewModal') && $('#reviewModal').classList.contains('open');
+  if(!isModalOpen && currentPage !== 'review') return;
   const discard = !!(opts && opts.discard === true);
   if(!discard && _hasUnsavedChanges()){
     openDialog({
@@ -70,10 +104,15 @@ function _doCloseReview(discard){
   if(typeof stopSessionTimeTracker === 'function') stopSessionTimeTracker();
   activeSessionId = null;
   clearSessionDirty();
-  $('#reviewModal').classList.remove('open');
-  _unlockBodyScroll();
+  if($('#reviewModal')) $('#reviewModal').classList.remove('open');
+  try { _unlockBodyScroll(); } catch(e){}
   activeClaim = null; workingInvoices = [];
   rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
   updateSessionsBadge();
   if(currentPage === 'sessions') renderSessions();
+  try {
+    if(currentPage === 'review'){
+      if(typeof goBack === 'function') goBack(); else navigateTo('claims',{noPush:true});
+    }
+  } catch(e){}
 }

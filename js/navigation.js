@@ -8,6 +8,7 @@ const PAGE_META = {
   timeline:['الخط الزمني','تتبع جميع أحداث مراجعة المطالبة'],
   view:['تفاصيل المطالبة','عرض تفاصيل المطالبة وفواتيرها'],
   search:['بحث اللوائح','بحث متقدم في لوائح الأسعار والخدمات'],
+  review:['مراجعة المطالبة','مراجعة مالية مفصلة للمطالبة'],
   intake:['استلام الدفعات','استلام وإدارة الدفعات الشهرية من الجهات'],
   providers:['مقدمو الخدمات','إدارة جهات تقديم الخدمات الطبية وعقودها'],
   contracts:['العقود','متابعة وإدارة عقود الجهات الطبية'],
@@ -36,7 +37,7 @@ function navigateTo(page, opts){
 }
 function applyPage(page){
   currentPage = page;
-  const activeNav = ['timeline','view'].includes(page) ? (navHistory.length ? navHistory[navHistory.length-1].page : 'claims') : page;
+  const activeNav = ['timeline','view','review'].includes(page) ? (navHistory.length ? navHistory[navHistory.length-1].page : 'claims') : page;
   $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === activeNav));
   $$('.page').forEach(x => x.classList.remove('active'));
   const el = document.getElementById('page-'+page); if(el) el.classList.add('active');
