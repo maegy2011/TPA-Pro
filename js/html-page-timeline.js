@@ -1,7 +1,7 @@
 // html-page-timeline.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_TIMELINE = `
 <section class="page" id="page-timeline">
-      <div class="tl-page-header">
+      <div class="page-header tl-page-header">
         <button class="btn-back" id="timelineBackBtn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> عودة</button>
         <div><div id="tlHeaderTitle" style="font-size:17px;font-weight:800;color:var(--navy)">—</div><div id="tlHeaderSub" style="font-size:12.5px;color:var(--muted);margin-top:3px">—</div></div>
         <div class="export-group" style="margin-right:auto">
