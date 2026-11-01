@@ -1,8 +1,9 @@
 // html-page-trash.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_TRASH = `
 <section class="page" id="page-trash">
-
-      <div class="toolbar">
+      <div class="page-header">
+        <div><h1 data-i18n="trash.title">المحذوفات</h1><p class="page-sub" data-i18n="trash.subtitle">استعادة أو حذف نهائي</p></div>
+        <div class="toolbar">
         <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input type="text" id="trashSearch" placeholder="بحث..." data-i18n-placeholder="common.search"></div>
         <div class="chips" id="trashFilterChips">
@@ -17,6 +18,7 @@ const PAGE_TRASH = `
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
           إفراغ
         </button>
+      </div>
       </div>
       <div class="bulk-bar" id="trashBulkBar" style="margin-bottom:12px">
         <span>تم تحديد <b id="trashBulkCount">0</b> عنصر</span>
