@@ -1,6 +1,22 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- All screens: consistent layout ---------- */
+.page{ display: flex; flex-direction: column; gap: 16px; }
+.page-header{ display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+.page-header h1{ font-size: 1.4rem; font-weight: 700; color: var(--navy,#0B2545); }
+.page-header .actions{ display: flex; gap: 8px; flex-wrap: wrap; }
+.card-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.section{ background: var(--card,#FFFFFF); border-radius: 14px; padding: 16px; border: 1px solid var(--line,#E2E8F0); }
+.section-title{ font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; color: var(--navy,#0B2545); display: flex; align-items: center; gap: 8px; }
+.toolbar{ display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.chip{ padding: 6px 12px; border-radius: 20px; border: 1px solid var(--line,#E2E8F0); background: var(--card,#FFFFFF); cursor: pointer; font-size: 13px; }
+.chip.active{ background: var(--teal,#0E7C7B); color: #FFFFFF; border-color: var(--teal,#0E7C7B); }
+@media (max-width: 768px){
+  .page-header{ flex-direction: column; align-items: flex-start; }
+  .card-grid{ grid-template-columns: 1fr; }
+  .toolbar{ flex-direction: column; align-items: stretch; }
+}
 /* ---------- Tariff tabs ---------- */
 .tf-tabs{ display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
 .tf-tab{ padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line,#E2E8F0); background: var(--card,#FFFFFF); cursor: pointer; font-size: 13px; }
