@@ -28,7 +28,7 @@ function bindReviewModal(){
   });
 
   // لوحة الفاتورة
-  $('#rvInvoicePanel').addEventListener('click', e => {
+  function _invoicePanelClick(e){
     const _pc0 = e.target.closest('[data-pat-idx]');
     if(_pc0) rvActivePatientIdx = Number(_pc0.dataset.patIdx);
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
@@ -70,10 +70,12 @@ function bindReviewModal(){
     }
 
     const rb = e.target.closest('[data-rule]'); if(rb){ applyReviewRule(rb.dataset.rule); return; }
-  });
-
-  // المستندات
-  $('#rvInvoicePanel').addEventListener('change', e => {
+  }
+  const _ip = document.getElementById('rvInvoicePanel');
+  if(_ip && !_ip.dataset.bound){ _ip.dataset.bound='1'; _ip.addEventListener('click', _invoicePanelClick); }
+  const _ipp = document.getElementById('rvPageInvoicePanel');
+  if(_ipp && !_ipp.dataset.bound){ _ipp.dataset.bound='1'; _ipp.addEventListener('click', _invoicePanelClick); }
+  function _invoicePanelChange(e){
     const doc = e.target.closest('[data-doc]'); if(doc){
       const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
       if(!inv.documents) inv.documents = {};
@@ -94,10 +96,14 @@ function bindReviewModal(){
       markSessionDirty();
       return;
     }
-  });
+  }
+  const _ipc = document.getElementById('rvInvoicePanel');
+  if(_ipc && !_ipc.dataset.changeBound){ _ipc.dataset.changeBound='1'; _ipc.addEventListener('change', _invoicePanelChange); }
+  const _ipcp = document.getElementById('rvPageInvoicePanel');
+  if(_ipcp && !_ipcp.dataset.changeBound){ _ipcp.dataset.changeBound='1'; _ipcp.addEventListener('change', _invoicePanelChange); }
 
   // تعديل القيم يدوياً
-  $('#rvInvoicePanel').addEventListener('input', e => {
+  function _invoicePanelInput(e){
     const _pcIn = e.target.closest('[data-pat-idx]');
     const _patIdxIn = _pcIn ? Number(_pcIn.dataset.patIdx) : rvActivePatientIdx;
     if(e.target.classList.contains('rv-manual-input') && e.target.dataset.manualCap !== undefined){
@@ -122,7 +128,11 @@ function bindReviewModal(){
     if(diffCell){ const d = billed-v; diffCell.textContent = fmt(d); diffCell.style.color = d>0?'var(--bad)':'var(--muted)'; }
     row.classList.toggle('rejected', v===0);
     recalcReview();
-  });
+  }
+  const _ipi = document.getElementById('rvInvoicePanel');
+  if(_ipi && !_ipi.dataset.inputBound){ _ipi.dataset.inputBound='1'; _ipi.addEventListener('input', _invoicePanelInput); }
+  const _ipip = document.getElementById('rvPageInvoicePanel');
+  if(_ipip && !_ipip.dataset.inputBound){ _ipip.dataset.inputBound='1'; _ipip.addEventListener('input', _invoicePanelInput); }
 
   // ربط النوافذ الفرعية
   $$('[data-close-invoice]').forEach(el => el.addEventListener('click', closeInvoiceEditor));

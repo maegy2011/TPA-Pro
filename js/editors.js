@@ -1,7 +1,7 @@
 // editors.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function toggleInpatientFields(){
   const on = $('#invType').value === 'inpatient';
-  ['#invInp1','#invInp2','#invInp3'].forEach(s => { $(s).style.display = on ? 'block' : 'none'; });
+  ['#invInp1','#invInp2','#invInp3'].forEach(s => { const el = $(s); if(el) el.style.display = on ? 'block' : 'none'; });
 }
 function openInvoiceEditor(idx){
   rvEditInvoiceIdx = (idx === undefined || idx === null) ? -1 : idx;

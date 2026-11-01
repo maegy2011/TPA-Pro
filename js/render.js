@@ -77,6 +77,7 @@ function bindClaimsControls(){
   if(recentBody) recentBody.addEventListener('click', e => { const vw = e.target.closest('[data-view]'); if(vw){ openView('claim', vw.dataset.view); } });
   $('#claimsBody').addEventListener('click', e => {
     const rv = e.target.closest('[data-review]'); if(rv){ openReview(rv.dataset.review); return; }
+    const am = e.target.closest('[data-add-memo]'); if(am){ const cid = am.dataset.addMemo; openReview(cid); setTimeout(() => { try { openInvoiceEditor(); } catch(e){} }, 600); return; }
     const tl = e.target.closest('[data-timeline]'); if(tl){ openTimeline(tl.dataset.timeline); return; }
     const vw = e.target.closest('[data-view]'); if(vw){ openView('claim', vw.dataset.view); return; }
     const del = e.target.closest('[data-delete-claim]'); if(del){ deleteClaimWithDialog(del.dataset.deleteClaim); return; }
