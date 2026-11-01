@@ -11,6 +11,8 @@ const INVOICE_TYPES = {
   outpatient:{label:'عيادة خارجية / كشف'}, lab:{label:'تحاليل مخبرية'},
   rad:{label:'أشعة'}, dental:{label:'أسنان'}, optics:{label:'عيون'}, inpatient:{label:'إقامة داخلية'}
 };
+function isExternalInvoice(inv){ return !inv || inv.type !== 'inpatient'; }
+function invoiceCategoryLabel(inv){ return isExternalInvoice(inv) ? 'خارجية' : 'داخلية'; }
 const DOC_ITEMS = [
   {key:'patientId', label:'صورة هوية المريض'},
   {key:'referral', label:'خطاب التحويل'},
