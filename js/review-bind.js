@@ -1,11 +1,4 @@
 // review-bind.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
-try {
-  // محاولة تحميل وحدات المراجعة V2
-  if (typeof import === 'function') {
-    import('./../src/review/review-bind.js').catch(()=>{});
-  }
-} catch(e) {}
-
 function bindReviewModal(){
   $$('[data-close]').forEach(el => el.addEventListener('click', () => closeReview()));
   const pa = document.getElementById('paStatus') || document.getElementById('rvPagePaStatus');
