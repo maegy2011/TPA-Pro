@@ -1,6 +1,26 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Review modal usability ---------- */
+.rv-lines-wrap{ max-height: 420px; overflow-y: auto; border: 1px solid var(--line,#E2E8F0); border-radius: 10px; }
+.rv-lines-table{ width: 100%; border-collapse: collapse; font-size: 12px; }
+.rv-lines-table th{ position: sticky; top: 0; background: var(--card,#FFFFFF); z-index: 2; }
+.rv-lines-table tbody tr:nth-child(even){ background: rgba(14,124,123,.03); }
+.rv-section-title{ cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
+.rv-section-title::before{ content: '▾'; font-size: 10px; transition: transform var(--transition-fast,150ms) ease; }
+.rv-section-title.collapsed::before{ transform: rotate(-90deg); }
+.rv-section-title + *{ transition: max-height var(--transition-base,200ms) ease, opacity var(--transition-base,200ms) ease; }
+.rv-section-title.collapsed + *{ display: none; }
+.rv-patient-tabs{ display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.rv-patient-tab{ padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line,#E2E8F0); background: var(--card,#FFFFFF); font-size: 12px; }
+.rv-patient-tab.active{ background: var(--teal,#0E7C7B); color: #FFFFFF; border-color: var(--teal,#0E7C7B); }
+.rv-inv-meta{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.rv-meta-item{ background: var(--bg,#F1F5F9); padding: 4px 8px; border-radius: 8px; font-size: 12px; }
+.rv-meta-item b{ margin-inline-start: 4px; }
+@media (max-width: 768px){
+  .rv-lines-wrap{ max-height: 300px; }
+  .rv-lines-table th, .rv-lines-table td{ padding: 6px 8px; font-size: 11px; }
+}
 /* ---------- Buttons ---------- */
 button, .btn, .btn-sm{
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;

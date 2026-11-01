@@ -75,6 +75,12 @@ document.addEventListener('click', e => {
   };
   (main === window ? window : main).addEventListener('scroll', handler, {passive:true});
 })();
+// Collapsible review sections
+document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('.rv-section-title');
+  if(!t) return;
+  t.classList.toggle('collapsed');
+});
 // Theme toggle (light/dark)
 (function(){
   try {
