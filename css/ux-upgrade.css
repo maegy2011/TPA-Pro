@@ -1,6 +1,12 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Tariff tabs ---------- */
+.tf-tabs{ display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.tf-tab{ padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line,#E2E8F0); background: var(--card,#FFFFFF); cursor: pointer; font-size: 13px; }
+.tf-tab.active{ background: var(--teal,#0E7C7B); color: #FFFFFF; border-color: var(--teal,#0E7C7B); }
+.tf-panel{ display: none; }
+.tf-panel.active{ display: block; }
 /* ---------- Review modal redesign helpers ---------- */
 #reviewModal.compact .modal-panel{ width: 96vw !important; }
 #reviewModal.compact .rv-lines-table{ font-size: 11px; }

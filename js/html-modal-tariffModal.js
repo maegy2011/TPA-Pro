@@ -14,7 +14,7 @@ const MODAL_TARIFF = `
           </div>
           <div class="tf-panel active" data-tf-panel="basic">
             <div class="form-grid">
-              <div class="fg full"><label>الاسم *</label><input id="tfName"></div>
+              <div class="fg full"><label>اسم اللائحة <span style="color:var(--bad,#DC2626)">*</span></label><input id="tfName" placeholder="مثال: لائحة 2026"><div class="hint">الاسم كما يظهر في التقارير</div></div>
               <div class="fg"><label>النوع</label><select id="tfType"><option value="general">عامة</option><option value="private">خاصة</option><option value="supplementary">مكملة</option></select></div>
               <div class="fg"><label>الحالة</label><select id="tfStatus"><option value="active">نشطة</option><option value="pending">قيد الاعتماد</option><option value="cancelled">ملغاة</option></select></div>
               <div class="fg"><label>السريان *</label><input id="tfEffective" type="date"></div>
