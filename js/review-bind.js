@@ -68,11 +68,26 @@ function bindReviewModal(){
 
   // المستندات
   $('#rvInvoicePanel').addEventListener('change', e => {
-    const doc = e.target.closest('[data-doc]'); if(!doc) return;
-    const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
-    inv.documents[doc.dataset.doc] = doc.checked;
-    doc.closest('.rv-doc').classList.toggle('ok', doc.checked);
-    doc.closest('.rv-doc').classList.toggle('miss', !doc.checked);
+    const doc = e.target.closest('[data-doc]'); if(doc){
+      const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
+      if(!inv.documents) inv.documents = {};
+      inv.documents[doc.dataset.doc] = doc.checked;
+      doc.closest('.rv-doc').classList.toggle('ok', doc.checked);
+      doc.closest('.rv-doc').classList.toggle('miss', !doc.checked);
+      markSessionDirty();
+      return;
+    }
+    const pdoc = e.target.closest('[data-pat-doc]'); if(pdoc){
+      const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
+      const pi = Number(pdoc.dataset.patIdx);
+      const pat = inv.patients && inv.patients[pi]; if(!pat) return;
+      if(!pat.documents) pat.documents = {};
+      pat.documents[pdoc.dataset.patDoc] = pdoc.checked;
+      pdoc.closest('.rv-doc').classList.toggle('ok', pdoc.checked);
+      pdoc.closest('.rv-doc').classList.toggle('miss', !pdoc.checked);
+      markSessionDirty();
+      return;
+    }
   });
 
   // تعديل القيم يدوياً

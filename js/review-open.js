@@ -17,7 +17,12 @@ function openReview(id){
     if(p.coverageCapOverride === undefined) p.coverageCapOverride = null;
     if(p.retireeCopayOverride === undefined) p.retireeCopayOverride = null;
     if(p.beneficiaryType === undefined) p.beneficiaryType = c.type || 'employee';
+    if(!Array.isArray(p.deductionReasons)) p.deductionReasons = [];
+    if(!p.documents && inv.documents) p.documents = JSON.parse(JSON.stringify(inv.documents));
+    else if(!p.documents) p.documents = { patientId: false, referral: false, medicalReport: false, priorApprovalDoc: false };
   }));
+  if(typeof recalcClaim === 'function') recalcClaim(c);
+  workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, c, inv.date, inv); }));
   $('#rvSub').textContent = `${c.id} • ${c.patient}`;
   const ctxBar = document.getElementById('rvContextBar');
   if (ctxBar) {

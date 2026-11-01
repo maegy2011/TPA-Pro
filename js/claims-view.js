@@ -58,6 +58,18 @@ function reviewLineRow(ln, i){
     <td style="white-space:nowrap"><div style="display:flex;gap:2px">${btns}</div></td>
   </tr>`;
 }
+function _renderDeductionReasons(p){
+  if(!p.deductionReasons || !p.deductionReasons.length) return '';
+  const rows = p.deductionReasons.map(dr => {
+    const amt = Number(dr.amount)||0;
+    if(amt <= 0) return '';
+    const src = dr.source === 'manual' ? 'يدوي' : dr.source === 'rule' ? 'قاعدة' : 'تلقائي';
+    const lvl = dr.level === 'patient' ? 'المريض' : dr.level === 'line' ? 'البند' : dr.level;
+    return `<tr><td>${escapeHtml(dr.reason||'—')}</td><td style="text-align:center">${escapeHtml(src)}</td><td style="text-align:center">${escapeHtml(lvl)}</td><td class="mono" style="text-align:left;color:var(--bad);font-weight:700">${fmtC(amt)}</td></tr>`;
+  }).filter(Boolean).join('');
+  if(!rows) return '';
+  return `<div class="rv-section-title" style="margin-top:10px">أسباب الخصم لكل مبلغ</div><div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>السبب</th><th>المصدر</th><th>المستوى</th><th>المبلغ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
 function renderActiveInvoice(){
   const inv = workingInvoices[rvActiveInvoiceIdx]; const box = $('#rvInvoicePanel');
   if(!inv){ box.innerHTML = ''; return; }
@@ -65,7 +77,7 @@ function renderActiveInvoice(){
   if(rvActivePatientIdx >= inv.patients.length) rvActivePatientIdx = 0;
   const t = INVOICE_TYPES[inv.type] || {label:inv.type};
   const tot = invoiceTotals(inv);
-  const docs = DOC_ITEMS.map(d => { const on = !!inv.documents[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-doc="${d.key}" ${on?'checked':''}>${d.label}</label>`; }).join('');
+  const invDocs = DOC_ITEMS.map(d => { const on = !!inv.documents[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-doc="${d.key}" ${on?'checked':''}>${d.label}</label>`; }).join('');
   const rules = `<div class="rv-rule-bar"><button type="button" class="rv-rule-btn" data-rule="lesser">اعتماد الأقل</button><button type="button" class="rv-rule-btn" data-rule="billed">اعتماد كامل</button><button type="button" class="rv-rule-btn danger" data-rule="reject">رفض الكل</button><button type="button" class="rv-rule-btn warn" data-rule="maxlabs">حد التحاليل (${REVIEW_RULES.maxLabsPerVisit})</button></div>`;
 
   const sections = (inv.patients||[]).map((p, pi) => {
@@ -82,6 +94,8 @@ function renderActiveInvoice(){
     const patBilled = (p.lines||[]).reduce((s,l)=>s+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
     const patDed = patBilled - (p._final||0);
     const linesHtml = (p.lines||[]).length ? (p.lines||[]).map((ln,i)=>reviewLineRow(ln,i)).join('') : '<tr><td colspan="11" style="text-align:center;padding:18px;color:var(--muted)">لا بنود</td></tr>';
+    const patDocs = (p.documents || (inv.documents||{}));
+    const pDocsHtml = DOC_ITEMS.map(d => { const on = !!patDocs[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-pat-doc="${d.key}" data-pat-idx="${pi}" ${on?'checked':''}>${d.label}</label>`; }).join('');
     return `<details class="rv-patient-details" data-pat-idx="${pi}" ${pi===rvActivePatientIdx?'open':''}>
       <summary class="rv-patient-summary">
         <span class="rv-patient-name">${escapeHtml(p.name)}</span>
@@ -97,6 +111,8 @@ function renderActiveInvoice(){
         <div class="rv-patient-calc"><div class="rv-pcalc-item"><span>إجمالي المريض</span><b>${fmtC(p._subtotal)}</b></div><div class="rv-pcalc-item ded"><span>سقف</span><b>${p._capAmt?fmtC(p._capAmt):'—'}</b></div><div class="rv-pcalc-item ded"><span>تحمل</span><b>${p._copayAmt?fmtC(p._copayAmt):'—'}</b></div><div class="rv-pcalc-item ok"><span>المعتمد</span><b>${fmtC(p._final)}</b></div></div>
         ${autoBlock}
         ${rej>0?`<div class="rv-pa-reject-note">⛔ ${rej} بند مرفوض — متقاعد بدون موافقة</div>`:''}
+        <div class="rv-section-title">مستندات المريض</div>
+        <div class="rv-docs">${pDocsHtml}</div>
         <div style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap">
           <button type="button" class="rv-act-btn primary" data-edit-patient="1" data-pat-idx="${pi}">تعديل المريض</button>
           <button type="button" class="rv-act-btn primary" data-add-line="1" data-pat-idx="${pi}">+ بند</button>
@@ -104,6 +120,7 @@ function renderActiveInvoice(){
         <div class="rv-section-title">بنود المريض</div>
         ${rules}
         <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>#</th><th>الكود</th><th>البند</th><th>كمية</th><th>فاتورة</th><th>لائحة</th><th>الأقل</th><th>معتمد</th><th>فرق</th><th>حالة</th><th></th></tr></thead><tbody data-pat-idx="${pi}">${linesHtml}</tbody></table></div>
+        ${_renderDeductionReasons(p)}
       </div>
     </details>`;
   }).join('');
@@ -124,8 +141,8 @@ function renderActiveInvoice(){
       <button type="button" class="rv-act-btn danger" data-delete-invoice="1">حذف الفاتورة</button>
     </div>
     <div class="rv-inv-total"><span>مطالب: <b>${fmtC(tot.billed)}</b></span><span>معتمد: <b style="color:var(--ok)">${fmtC(tot.approved)}</b></span><span>استقطاع: <b style="color:var(--bad)">${fmtC(tot.deduction)}</b></span></div>
-    <div class="rv-section-title">المستندات</div>
-    <div class="rv-docs">${docs}</div>
+    <div class="rv-section-title">مستندات الفاتورة</div>
+    <div class="rv-docs">${invDocs}</div>
     <div class="rv-section-title">المرضى (${(inv.patients||[]).length})</div>
     <div class="rv-patients-accordion">${sections || '<div class="rv-empty">لا مرضى</div>'}</div>
     <div class="rv-patients-footer">
@@ -263,23 +280,37 @@ function renderFinalSummary(){
   if (nb) {
     const billed = (activeClaim && activeClaim.billed) ? activeClaim.billed : 0;
     let approved = 0, ded = 0;
-    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => { approved += (p._final||0); }));
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv); approved += (p._final||0); }));
     ded = billed - approved;
     nb.innerHTML = `<div class="calc-box"><div class="calc-item"><span>المطالب به</span><b>${fmt(billed)}</b></div><div class="calc-item ded"><span>الاستقطاع</span><b>${fmt(ded)}</b></div><div class="calc-item rate"><span>النسبة</span><b>${billed?Math.round(ded/billed*100):0}%</b></div><div class="calc-item ok"><span>المعتمد</span><b>${fmt(approved)}</b></div></div>`;
   }
-  // reasons breakdown
+  // reasons breakdown - per patient with all deduction reasons
   const rb = document.getElementById('rvFinalReasons');
   if (rb) {
-    const counts = {};
-    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
-      const r = l._decisionReason || l.note || 'أخرى';
-      counts[r] = (counts[r]||0) + ((Number(l.qty)||0)*(Number(l.billedUnit)||0) - (Number(l.approved)||0));
-    })));
-    const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
-    rb.innerHTML = '<div class="rv-section-title">توزيع أسباب الاستقطاع</div>' + Object.entries(counts).map(([k,v]) => {
-      const pct = Math.round(v/total*100);
-      return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${escapeHtml(k)}</span><span>${fmt(v)} (${pct}%)</span></div><div style="height:6px;background:var(--border,#e5e7eb);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--bad,#dc2626);border-radius:3px"></div></div></div>`;
-    }).join('') + (Object.keys(counts).length?'': '<div style="font-size:12px;color:var(--muted)">لا توجد استقطاعات</div>');
+    let html = '<div class="rv-section-title">أسباب الخصم لكل مريض (كل مبلغ له سبب)</div>';
+    (workingInvoices||[]).forEach((inv, ii) => {
+      (inv.patients||[]).forEach((p, pi) => {
+        if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv);
+        const drs = p.deductionReasons || [];
+        if(!drs.length) return;
+        const pBilled = (p.lines||[]).reduce((s,l)=>s+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
+        const pDed = drs.reduce((s,d)=>s+(Number(d.amount)||0),0);
+        html += `<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:#fff">`;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><b>${escapeHtml(p.name)}</b> <span style="color:var(--muted);font-size:11px">فاتورة ${escapeHtml(inv.number||inv.id)}</span></div><div style="font-size:12px">مطالب: <b>${fmtC(pBilled)}</b> · مستقطع: <b style="color:var(--bad)">${fmtC(pDed)}</b> · معتمد: <b style="color:var(--ok)">${fmtC(p._final||0)}</b></div></div>`;
+        html += `<table style="width:100%;font-size:11.5px;border-collapse:collapse"><thead><tr style="background:#F8FAFC"><th style="text-align:right;padding:6px;border:1px solid var(--line)">السبب</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المصدر</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المستوى</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">مرجع</th><th style="text-align:left;padding:6px;border:1px solid var(--line)">المبلغ</th></tr></thead><tbody>`;
+        drs.forEach(dr => {
+          const amt = Number(dr.amount)||0;
+          if(amt <= 0) return;
+          const src = dr.source === 'manual' ? 'يدوي' : dr.source === 'rule' ? 'قاعدة' : 'تلقائي';
+          const lvl = dr.level === 'patient' ? 'المريض' : dr.level === 'line' ? 'البند' : dr.level;
+          const ref = dr.ref && (dr.ref.lineCode || dr.ref.ruleId) ? (dr.ref.lineCode || dr.ref.ruleId) : '—';
+          html += `<tr><td style="padding:6px;border:1px solid var(--line)">${escapeHtml(dr.reason||'—')} ${dr.note?'<div style="color:var(--muted);font-size:10.5px">'+escapeHtml(dr.note)+'</div>':''}</td><td style="text-align:center;padding:6px;border:1px solid var(--line)">${escapeHtml(src)}</td><td style="text-align:center;padding:6px;border:1px solid var(--line)">${escapeHtml(lvl)}</td><td style="text-align:center;padding:6px;border:1px solid var(--line);font-family:monospace">${escapeHtml(ref)}</td><td style="text-align:left;padding:6px;border:1px solid var(--line);color:var(--bad);font-weight:700" class="mono">${fmtC(amt)}</td></tr>`;
+        });
+        html += `</tbody></table></div>`;
+      });
+    });
+    if(html.indexOf('<table') === -1) html += '<div style="font-size:12px;color:var(--muted)">لا توجد استقطاعات مسجلة</div>';
+    rb.innerHTML = html;
   }
   // checklist
   const cb = document.getElementById('rvFinalChecklist');
@@ -288,10 +319,12 @@ function renderFinalSummary(){
     const excs = (_ce.pending||[]).concat(_ce.pa||[]);
     const billed = activeClaim ? (Number(activeClaim.billed)||0) : 0;
     let entered = 0;
-    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv); (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); }); }));
     const mismatch = Math.abs(billed - entered) > 1;
     const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
-    const missingDocs = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+    const missingDocsInv = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+    const missingDocsPat = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+DOC_ITEMS.filter(d=>!(p.documents&&p.documents[d.key])).length,0),0);
+    const missingDocs = missingDocsInv + missingDocsPat;
     const items = [
       { key:'match', ok: !mismatch, text: `الإجمالي مُطابق (${fmt(billed)} = ${fmt(entered)})` },
       { key:'exc', ok: excs.length === 0, text: `كل الاستثناءات معالجة (${excs.length} متبقٍ)` },
@@ -307,7 +340,7 @@ function renderFinalSummary(){
     }
   }
   // default decision
-  const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
+  const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>{ if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv); return a+(p._final||0); },0),0);
   const billed2 = activeClaim ? (Number(activeClaim.billed)||0) : 0;
   let def = 'partial';
   if (approved === 0) def = 'rejected';

@@ -11,6 +11,23 @@ function computePatient(pat, claim, refDate, invoice){
   const allRules = deductionRules.filter(r => r.enabled !== false && r.active !== false);
   const ctx = { claim, patient: pat, invoice: invoice || null };
   const _ctx = getContractContext(claim);
+  if (!Array.isArray(pat.deductionReasons)) pat.deductionReasons = [];
+  // دعم مستندات المريض مع توافق خلفي
+  if (!pat.documents && invoice && invoice.documents) {
+    pat.documents = JSON.parse(JSON.stringify(invoice.documents));
+  } else if (!pat.documents) {
+    pat.documents = { patientId: false, referral: false, medicalReport: false, priorApprovalDoc: false };
+  }
+  const _addDed = (entry) => {
+    if (!entry || !entry.amount || entry.amount <= 0) return;
+    pat.deductionReasons.push(Object.assign({
+      id: 'dr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6),
+      source: 'auto',
+      level: 'line',
+      decidedBy: 'system',
+      decidedAt: new Date().toISOString()
+    }, entry));
+  };
   (pat.lines||[]).forEach(l => {
     const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
     // re-read tariff price from current tariff (source of truth)
@@ -37,6 +54,10 @@ function computePatient(pat, claim, refDate, invoice){
       l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason(_key, { claim, patient: pat, invoice: invoice || null, line: l }) : null;
       l._legalReason = l._legalDeduction;
       l.legalDeduction = l._legalDeduction;
+      const _billedLine = (Number(l.qty)||0)*(Number(l.billedUnit)||0);
+      if (_billedLine > 0) {
+        _addDed({ amount: _billedLine, reason: l._legalDeduction ? l._legalDeduction.title : (_key==='not-covered'?'غير مغطاة':'غير مدرجة'), reasonCode: _key, source: 'auto', level: 'line', ref: { lineCode: l.code, lineName: l.name }, note: l.note || '' });
+      }
       return;
     }
     const rate = getContractRateForService(_ctx, l.code);
@@ -59,18 +80,22 @@ function computePatient(pat, claim, refDate, invoice){
         const cctx = { ...lctx, line: { ...l, lineBase: current } };
         const res = evaluateCompositeRule(rule, cctx, refDate);
         if(res && res.newApproved !== undefined && res.newApproved < current){
+          const _dedAmt = current - res.newApproved;
           current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
           (res.appliedChildRules||[]).forEach(cr => appliedIds.add(cr.id));
           compositeLog.push({ id: rule.id, name: rule.name, children: (res.appliedChildRules||[]).map(c=>c.id) });
           lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = 0;
+          _addDed({ amount: _dedAmt, reason: rule.name || 'قاعدة مركبة', reasonCode: 'composite-rule', source: 'rule', level: 'line', ref: { lineCode: l.code, ruleId: rule.id }, note: (res.appliedChildRules||[]).map(c=>c.name).join('، ') });
         }
       } else {
         const res = evaluateRuleAction(rule, lctx, current);
         if(res.newApproved !== undefined && res.newApproved < current){
+          const _dedAmt = current - res.newApproved;
           current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
           lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = rule.rate;
+          _addDed({ amount: _dedAmt, reason: rule.name || 'قاعدة خصم', reasonCode: rule.action || 'rule', source: 'rule', level: 'line', ref: { lineCode: l.code, ruleId: rule.id }, note: rule.rate ? `نسبة ${rule.rate}%` : '' });
         }
       }
     }
@@ -100,10 +125,20 @@ function computePatient(pat, claim, refDate, invoice){
        l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('max-labs-exceeded', { claim, patient: pat, invoice: invoice || null, line: l, maxLabs: (typeof REVIEW_RULES !== 'undefined' ? REVIEW_RULES.maxLabsPerVisit : 0) }) : null;
        l._legalReason = l._legalDeduction;
        l.legalDeduction = l._legalDeduction;
+       const _billedLine = (Number(l.qty)||0)*(Number(l.billedUnit)||0);
+       if (_billedLine > 0) _addDed({ amount: _billedLine, reason: l._legalDeduction ? l._legalDeduction.title : 'تجاوز حد التحاليل', reasonCode: 'max-labs-exceeded', source: 'rule', level: 'line', ref: { lineCode: l.code, ruleId: '_maxlabs' }, note: `الحد ${REVIEW_RULES&&REVIEW_RULES.maxLabsPerVisit?REVIEW_RULES.maxLabsPerVisit:''}` });
       return;
     }
+    const _billedBefore = (Number(l.qty)||0)*(Number(l.billedUnit)||0);
+    const _baseForDed = (l.lineBaseAfterContract !== undefined ? l.lineBaseAfterContract : (l.lineBase !== undefined ? l.lineBase : _billedBefore));
     if(l._overrideMode === 'manual' && l._manualValue !== null && l._manualValue !== undefined){
-      l.approved = Math.max(0, Math.min(l.qty*l.billedUnit, Number(l._manualValue)||0));
+      const _prevAuto = l._autoApproved !== undefined ? l._autoApproved : _baseForDed;
+      l.approved = Math.max(0, Math.min(_billedBefore, Number(l._manualValue)||0));
+      if (l.approved < _prevAuto) {
+        _addDed({ amount: _prevAuto - l.approved, reason: 'تخفيض يدوي من المراجع', reasonCode: 'manual-reduction', source: 'manual', level: 'line', ref: { lineCode: l.code }, note: l.note || '' });
+      } else if (l.approved < _baseForDed && _prevAuto >= _baseForDed) {
+        _addDed({ amount: _baseForDed - l.approved, reason: 'تخفيض يدوي من المراجع', reasonCode: 'manual-reduction', source: 'manual', level: 'line', ref: { lineCode: l.code }, note: l.note || '' });
+      }
     } else if(l._overrideMode === 'reverted'){ l.approved = l.lineBase; }
     else { l.approved = l._autoApproved; }
     if (!l._contractRejected && !l._maxlabsForced && !l.paRejected && !l._legalDeduction) {
@@ -121,7 +156,7 @@ function computePatient(pat, claim, refDate, invoice){
   const benType = patientBeneficiaryType(pat, claim);
   const paValid = hasValidPriorApproval(claim);
   if(benType === 'retiree' && !paValid){
-    pat.lines.forEach(l => { if(lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('pa-required', { claim, patient: pat, invoice: invoice || null, line: l }) : null; l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; } });
+    pat.lines.forEach(l => { if(lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('pa-required', { claim, patient: pat, invoice: invoice || null, line: l }) : null; l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; const _billedLine = (Number(l.qty)||0)*(Number(l.billedUnit)||0); if (_billedLine > 0) _addDed({ amount: _billedLine, reason: l._legalDeduction ? l._legalDeduction.title : 'غياب الموافقة المسبقة', reasonCode: 'pa-required', source: 'auto', level: 'line', ref: { lineCode: l.code }, note: '' }); } });
   }
   const subtotal = pat.lines.reduce((s,l)=>s+(Number(l.approved)||0), 0);
   const pctx = { ...ctx, patient: pat };
@@ -157,9 +192,11 @@ function computePatient(pat, claim, refDate, invoice){
   pat._beneficiaryPays = pat._capAmt + pat._copayAmt;
   if (pat._capAmt > 0) {
     pat._capLegal = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('coverage-cap', { claim, patient: pat, capRate: capRule ? capRule.rate : 0, capAmount: pat._capAmt }) : null;
+    _addDed({ amount: pat._capAmt, reason: pat._capLegal ? pat._capLegal.title : 'تجاوز سقف التغطية المالي', reasonCode: 'coverage-cap', source: pat._capMode === 'manual' ? 'manual' : (capRule ? 'rule' : 'auto'), level: 'patient', ref: { ruleId: capRule ? capRule.id : null }, note: capRule ? capRule.name : '' });
   }
   if (pat._copayAmt > 0) {
     pat._copayLegal = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('retiree-copay', { claim, patient: pat, copayRate: copayRule ? copayRule.rate : 0, copayAmount: pat._copayAmt }) : null;
+    _addDed({ amount: pat._copayAmt, reason: pat._copayLegal ? pat._copayLegal.title : 'تحمل المتقاعد/المعاشات', reasonCode: 'retiree-copay', source: pat._copayMode === 'manual' ? 'manual' : (copayRule ? 'rule' : 'auto'), level: 'patient', ref: { ruleId: copayRule ? copayRule.id : null }, note: copayRule ? copayRule.name : '' });
   }
   pat._refDate = refDate;
   if(pat._capMode === undefined) pat._capMode = 'auto';
