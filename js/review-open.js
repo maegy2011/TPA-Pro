@@ -79,6 +79,7 @@ function openReview(id){
   if(s){ s.status = 'active'; activeSessionId = s.id; persistSessions(); if(typeof startSessionTimeTracker === 'function') startSessionTimeTracker(s); }
   clearSessionDirty();
   try { navigateTo('review', {noPush:false}); } catch(e){}
+  try { renderReviewInvoices(); } catch(e){}
   updateSessionsBadge();
 }
 function closeReview(opts){

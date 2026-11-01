@@ -8,8 +8,8 @@ function _fillCalc(){
   } catch(e){}
 }
 function renderReviewInvoices(){
-  const tabs = document.getElementById('rvInvoiceTabs') || document.getElementById('rvPageInvoiceTabs');
-  const panel = document.getElementById('rvInvoicePanel') || document.getElementById('rvPageInvoicePanel');
+  const tabs = (currentPage === 'review' ? document.getElementById('rvPageInvoiceTabs') : null) || document.getElementById('rvInvoiceTabs') || document.getElementById('rvPageInvoiceTabs');
+  const panel = (currentPage === 'review' ? document.getElementById('rvPageInvoicePanel') : null) || document.getElementById('rvInvoicePanel') || document.getElementById('rvPageInvoicePanel');
   if(!tabs || !panel){
     recalcReview(); return;
   }
@@ -87,7 +87,7 @@ function _renderDeductionReasons(p){
 }
 function renderActiveInvoice(){
   const inv = workingInvoices[rvActiveInvoiceIdx];
-  const box = document.getElementById('rvInvoicePanel') || document.getElementById('rvPageInvoicePanel');
+  const box = (currentPage === 'review' ? document.getElementById('rvPageInvoicePanel') : null) || document.getElementById('rvInvoicePanel') || document.getElementById('rvPageInvoicePanel');
   if(!box) return;
   if(!inv){ box.innerHTML = ''; return; }
   if(!inv.patients) inv.patients = [];
@@ -145,8 +145,10 @@ function renderActiveInvoice(){
   const totalBilled = (inv.patients||[]).reduce((s,p)=>s+((p.lines||[]).reduce((a,l)=>a+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0)),0);
   const totalNet = (inv.patients||[]).reduce((s,p)=>s+(p._final||0),0);
 
+  const _catLabel = isExternalInvoice(inv) ? 'خارجية' : 'داخلية';
   box.innerHTML = `
     <div class="rv-inv-meta">
+      <div class="rv-meta-item"><span>نوع الفاتورة</span><b>${_catLabel}</b></div>
       <div class="rv-meta-item"><span>نوع مذكرة الخصم</span><b>${t.label}</b></div>
       <div class="rv-meta-item"><span>نوع المطالبة</span><b>${inv.claimType === 'retiree' ? 'معاشات' : 'عاملين'}</b></div>
       <div class="rv-meta-item"><span>رقم مذكرة الخصم</span><b>${escapeHtml(inv.debitNoteNumber||inv.number||inv.id)}</b></div>
@@ -170,6 +172,30 @@ function renderActiveInvoice(){
       <span>مستقطع: <b style="color:var(--bad)">${fmtC(totalBilled-totalNet)}</b></span>
       <span>صافي: <b style="color:var(--ok)">${fmtC(totalNet)}</b></span>
     </div>
+    ${(() => {
+      const _ext = isExternalInvoice(inv);
+      const _totalDed = totalBilled - totalNet;
+      if (_ext) {
+        const _reasons = (inv.patients||[]).flatMap(p => (p.deductionReasons||[])).map(d => d.reason).filter(Boolean);
+        const _reason = _reasons.length ? _reasons[0] : '—';
+        return `<div class="rv-section-title">مذكرة الخصم (خارجية — بند واحد)</div>
+        <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>البند</th><th>المبلغ</th><th>السبب</th></tr></thead><tbody>
+          <tr><td>إجمالي الخصم</td><td class="mono" style="color:var(--bad);font-weight:700">${fmtC(_totalDed)}</td><td>${escapeHtml(_reason)}</td></tr>
+        </tbody></table></div>`;
+      }
+      // internal: per-line discounts
+      const _rows = (inv.patients||[]).flatMap(p => (p.lines||[]).map(l => {
+        const _ded = (Number(l.qty)||0)*(Number(l.billedUnit)||0) - (Number(l.approved)||0);
+        if (_ded <= 0) return '';
+        const _r = (l._legalDeduction && l._legalDeduction.title) || l.note || '—';
+        return `<tr><td>${escapeHtml(l.code)} — ${escapeHtml(l.name)}</td><td class="mono" style="color:var(--bad);font-weight:700">${fmtC(_ded)}</td><td>${escapeHtml(_r)}</td></tr>`;
+      })).filter(Boolean).join('');
+      return `<div class="rv-section-title">مذكرة الخصم (داخلية — عدة بنود)</div>
+      <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>البند</th><th>الخصم</th><th>السبب</th></tr></thead><tbody>
+        ${_rows || '<tr><td colspan="3" style="text-align:center;color:var(--muted)">لا خصومات</td></tr>'}
+        <tr style="font-weight:800"><td>الإجمالي</td><td class="mono" style="color:var(--bad)">${fmtC(_totalDed)}</td><td></td></tr>
+      </tbody></table></div>`;
+    })()}
     <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button></div>`;
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
 }
