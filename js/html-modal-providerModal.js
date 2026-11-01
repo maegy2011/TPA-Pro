@@ -29,7 +29,7 @@ const MODAL_PROVIDER = `
             <div class="fg full"><label><input type="checkbox" id="pvAutoContract"> إنشاء عقد تلقائياً لهذه الجهة</label><div class="hint">سيتم إنشاء عقد مع لائحة افتراضية</div></div>
             <div class="fg full"><label>ملاحظات</label><textarea id="pvNotes" rows="3"></textarea></div>
           </div>
-        </div></div>
+        </div>
         <div class="modal-foot"><button class="btn solid" id="saveProvider" data-i18n="common.save">حفظ</button><button class="btn danger" id="deleteProvider" style="display:none" data-i18n="common.delete">حذف</button><button class="btn out" data-close-provider data-i18n="common.cancel">إلغاء</button></div>
       </div>
     </div>
