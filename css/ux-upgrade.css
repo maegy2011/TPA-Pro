@@ -1,6 +1,23 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Header / Topbar ---------- */
+.topbar{
+  position: sticky; top: 0; z-index: 40;
+  backdrop-filter: saturate(1.2) blur(6px);
+  background: rgba(255,255,255,.85);
+  border-bottom: 1px solid var(--line,#E2E8F0);
+  transition: box-shadow var(--transition-base,200ms) ease, background var(--transition-base,200ms) ease;
+}
+.topbar.scrolled{ box-shadow: 0 4px 16px rgba(11,37,69,.08); background: rgba(255,255,255,.95); }
+[data-theme="dark"] .topbar{ background: rgba(15,23,42,.85); }
+[data-theme="dark"] .topbar.scrolled{ background: rgba(15,23,42,.95); }
+.topbar .tb-action-btn{ min-width: 40px; min-height: 40px; }
+.topbar .tb-title-wrap h1{ font-size: 18px; font-weight: 700; }
+@media (max-width: 768px){
+  .topbar{ padding: 6px 8px; }
+  .topbar .tb-user-info{ display: none; }
+}
 /* ---------- Modals sizing & scroll ---------- */
 .modal-panel{
   max-height: 90vh; display: flex; flex-direction: column;

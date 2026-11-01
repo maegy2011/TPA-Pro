@@ -64,6 +64,17 @@ document.addEventListener('click', e => {
   });
   observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
+// Topbar scrolled state
+(function(){
+  const main = document.querySelector('.main') || window;
+  const handler = () => {
+    const topbar = document.querySelector('.topbar');
+    if(!topbar) return;
+    const y = (main === window) ? window.scrollY : main.scrollTop;
+    topbar.classList.toggle('scrolled', y > 8);
+  };
+  (main === window ? window : main).addEventListener('scroll', handler, {passive:true});
+})();
 // Theme toggle (light/dark)
 (function(){
   try {
