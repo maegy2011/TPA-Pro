@@ -1,6 +1,18 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Review modal redesign helpers ---------- */
+#reviewModal.compact .modal-panel{ width: 96vw !important; }
+#reviewModal.compact .rv-lines-table{ font-size: 11px; }
+#reviewModal.compact .rv-lines-table th, #reviewModal.compact .rv-lines-table td{ padding: 4px 6px; }
+#reviewModal.compact .rv-patient-info, #reviewModal.compact .rv-patient-calc{ font-size: 12px; }
+#reviewModal .rv-step-bar{ display: flex; gap: 4px; margin-bottom: 12px; }
+#reviewModal .rv-step{ flex: 1; padding: 6px 8px; border-radius: 8px; background: var(--bg,#F1F5F9); font-size: 11px; text-align: center; color: var(--muted,#64748B); }
+#reviewModal .rv-step.active{ background: var(--teal,#0E7C7B); color: #FFFFFF; font-weight: 700; }
+#reviewModal .rv-step.done{ background: rgba(5,150,105,.15); color: var(--ok,#059669); }
+#reviewModal .rv-split{ display: grid; grid-template-columns: 260px 1fr; gap: 12px; }
+@media (max-width: 900px){ #reviewModal .rv-split{ grid-template-columns: 1fr; } }
+#reviewModal .rv-lines-wrap{ max-height: 360px; }
 /* ---------- All screens layout polish ---------- */
 .page, .screen{ padding: 16px; }
 .panel, .card{ border-radius: 14px; box-shadow: var(--shadow, 0 4px 24px rgba(11,37,69,.07)); background: var(--card,#FFFFFF); padding: 16px; margin-bottom: 16px; }
