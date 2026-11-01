@@ -37,7 +37,7 @@ TPA/
 │   ├── providers*.js       # providers/contracts/tariffs
 │   ├── trash.js, deduction-rules.js, rule-wizard*.js
 │   ├── sessions*.js, backup*.js
-│   ├── auth-settings.js, notifications.js
+│   ├── auth-settings.js, notifications-v2.js
 │   ├── app.js              # initApp, renderAll
 │   └── init.js             # Loading + bootstrap
 └── assets/fonts/           # Tajawal woff2 (10 files)

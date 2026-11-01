@@ -9,6 +9,7 @@ const PAGE_INTAKE = `
         <button class="btn-add" id="addBatchBtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> استلام مطالبة</button>
       </div>
       </div>
+      <div class="grid-kpi" id="intakeKpi"></div>
       <div class="month-chips" id="monthChips"></div>
       <div class="chips" id="intakeStatusChips" style="margin-bottom:14px">
         <button class="chip active" data-istatus="all" data-i18n="common.all">الكل</button>

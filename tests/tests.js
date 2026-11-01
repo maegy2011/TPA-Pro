@@ -9,7 +9,7 @@
   assert(typeof reasonLabel === 'function', 'reasonLabel exists');
 
   const claim = (typeof claims !== 'undefined' && claims.length) ? claims[0] : null;
-  assert(!!claim, 'claims loaded');
+  assert(Array.isArray(claims), 'claims array exists');
 
   if (claim) {
     const ctx = getContractContext(claim);

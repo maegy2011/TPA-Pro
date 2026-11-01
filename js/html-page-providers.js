@@ -15,6 +15,7 @@ const PAGE_PROVIDERS = `
         </div>
       </div>
       </div>
+      <div class="grid-kpi" id="providerKpi"></div>
       <div class="panel"><div class="table-wrap"><table><thead><tr><th data-i18n="providers.provider">الجهة</th><th data-i18n="providers.type">النوع</th><th class="hide-sm" data-i18n="providers.contact">التواصل</th><th data-i18n="providers.contract">العقد</th><th data-i18n="intake.claims">المطالبات</th><th></th></tr></thead><tbody id="providersBody"></tbody></table></div></div>
     </section>
 `;

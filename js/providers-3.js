@@ -68,40 +68,6 @@ function openTariffModal(id){
   $('#tariffModal').classList.add('open'); document.body.style.overflow = 'hidden';
 }
 function closeTariffModal(){ if(!$('#tariffModal').classList.contains('open')) return; $('#tariffModal').classList.remove('open'); _unlockBodyScroll(); editingTariffId = null; workingServices = []; workingIncreaseHistory = []; }
-function renderServicesTable(){
-  const body = $('#tfServicesBody'); $('#tfServicesCount').textContent = workingServices.length;
-  if(!workingServices.length){ body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:22px;color:var(--muted)">لا خدمات</td></tr>'; updateBulkState(); updateAdjustPreview(); return; }
-  body.innerHTML = workingServices.map((s,i) => `<tr>
-    <td class="cb-cell"><input type="checkbox" class="svc-cb" data-index="${i}"></td>
-    <td><span class="mono" style="color:var(--navy-400);font-weight:700">${s.code}</span></td>
-    <td><div style="font-weight:700;font-size:12.5px">${s.name} ${s.requiresPriorApproval?'⚠':''}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${s.category}</div></td>
-    <td class="mono">${fmt(s.basePrice)}</td>
-    <td class="mono" style="color:var(--teal);font-weight:800">${fmt(s.currentPrice)}</td>
-    <td>${s.covered?'<span class="badge ok sm">مغطاة</span>':'<span class="badge bad sm">غير مغطاة</span>'}</td>
-    <td class="act"><div style="display:flex;gap:3px"><button type="button" class="btn-xs" data-edit-svc="${i}">تعديل</button><button type="button" class="btn-xs danger" data-del-svc="${i}">حذف</button></div></td>
-  </tr>`).join('');
-  updateBulkState(); updateAdjustPreview();
-}
-function updateBulkState(){
-  const cbs = $$('#tfServicesBody .svc-cb'); const checked = cbs.filter(cb=>cb.checked).length;
-  $('#tfSelCount').textContent = checked; $('#tfBulkCount').textContent = checked;
-  $('#tfApplySelected').disabled = checked === 0;
-  $('#tfBulkBar').classList.toggle('show', checked > 0);
-  if(cbs.length > 0 && checked === cbs.length) $('#tfSelectAll').checked = true;
-  else if(checked === 0) $('#tfSelectAll').checked = false;
-}
-function getAdjustMultiplier(){ const t = $('#tfAdjustType').value, r = Number($('#tfAdjustRate').value)||0; if(t === 'discount') return 1-r/100; if(t === 'increase') return 1+r/100; return 1; }
-function updateAdjustPreview(){
-  const t = $('#tfAdjustType').value, r = Number($('#tfAdjustRate').value)||0;
-  const label = t==='discount'?`خصم ${r}%`:t==='increase'?`زيادة ${r}%`:'بدون';
-  if(!workingServices.length){ $('#tfAdjustPreview').innerHTML = 'لا خدمات'; return; }
-  $('#tfAdjustPreview').innerHTML = `<b>${escapeHtml(label)}</b> على <b>${workingServices.length}</b> خدمة`;
-}
-function applyAdjustAll(){ const t = $('#tfAdjustType').value, r = Number($('#tfAdjustRate').value)||0; if(!workingServices.length){ showWarning('تنبيه','لا خدمات'); return; } if(t!=='none' && (r<=0||r>100)){ showWarning('تنبيه','أدخل نسبة'); return; } const mul = getAdjustMultiplier(); workingServices.forEach(s => { s.currentPrice = Math.round(s.basePrice*mul); }); renderServicesTable(); showSuccess('تم','تم التطبيق'); }
-function applyAdjustSelected(){ const t = $('#tfAdjustType').value, r = Number($('#tfAdjustRate').value)||0; const sel = $$('#tfServicesBody .svc-cb:checked'); if(!sel.length){ showWarning('تنبيه','حدد خدمة'); return; } if(t!=='none' && (r<=0||r>100)){ showWarning('تنبيه','أدخل نسبة'); return; } const mul = getAdjustMultiplier(); sel.forEach(cb => { const i = Number(cb.dataset.index); if(workingServices[i]) workingServices[i].currentPrice = Math.round(workingServices[i].basePrice*mul); }); renderServicesTable(); showSuccess('تم',`على ${sel.length} خدمة`); }
-function resetAllToBase(){ if(!workingServices.length){ showWarning('تنبيه','لا خدمات'); return; } workingServices.forEach(s => { s.currentPrice = s.basePrice; }); renderServicesTable(); showSuccess('تم','تم'); }
-function bulkDeleteServices(){ const sel = $$('#tfServicesBody .svc-cb:checked'); if(!sel.length) return; showDelete('حذف', `سيتم حذف ${sel.length}.`, () => { const idxs = sel.map(cb=>Number(cb.dataset.index)).sort((a,b)=>b-a); idxs.forEach(i=>workingServices.splice(i,1)); renderServicesTable(); showSuccess('تم',`${idxs.length}`); }); }
-function deleteService(i){ if(!workingServices[i]) return; const s = workingServices[i]; showDelete('حذف', `سيتم حذف "${s.code}".`, () => { workingServices.splice(i,1); renderServicesTable(); showSuccess('تم','تم'); }); }
 function openServiceModal(i, tariffId){
   editingServiceIndex = i;
   editingServiceTariffId = tariffId || editingServiceTariffId;
@@ -143,7 +109,7 @@ function applyAnnualIncrease(){
     const date = daysFromNow(0), by = $('#tfApprovedBy').value.trim()||'الإدارة';
     workingIncreaseHistory.push({ date, rate, approvedBy:by, fromLevel:cur, toLevel:cur+rate });
     $('#tfPriceLevel').value = cur+rate; $('#tfLastIncrease').value = date;
-    renderIncreaseHistory(); renderServicesTable(); showSuccess('تم',`${rate}%`);
+    renderIncreaseHistory(); showSuccess('تم',`${rate}%`);
   });
 }
 function renderLinkLists(t){

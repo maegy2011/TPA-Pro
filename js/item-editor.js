@@ -67,6 +67,7 @@ function applyServiceToLine(svc) {
 }
 function bindLineAutocomplete(){
   const codeInp = $('#lnCode'), nameInp = $('#lnName'), suggest = $('#lnSuggest');
+  if(!codeInp || !nameInp || !suggest) return;
   const run = val => {
     if(!val || val.length < 1){ suggest.innerHTML = ''; return; }
     const results = searchTariffServices(val, lnApplicableTariffs);
