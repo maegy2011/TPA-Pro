@@ -1,6 +1,40 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Modals sizing & scroll ---------- */
+.modal-panel{
+  max-height: 90vh; display: flex; flex-direction: column;
+}
+.modal-body{ overflow-y: auto; flex: 1 1 auto; -webkit-overflow-scrolling: touch; }
+.modal-head{ position: sticky; top: 0; z-index: 2; background: var(--card,#FFFFFF); }
+.modal-bg{ backdrop-filter: blur(2px); }
+@media (max-width: 768px){
+  .modal-panel{ max-height: 95vh; width: 96vw !important; }
+  .modal-body{ padding: 12px; }
+}
+
+/* ---------- Tables readability ---------- */
+table{ border-collapse: collapse; width: 100%; }
+thead th{ position: sticky; top: 0; background: var(--card,#FFFFFF); z-index: 1; font-weight: 700; }
+tbody tr:nth-child(even){ background: rgba(14,124,123,.03); }
+tbody td, thead th{ padding: 10px 12px; font-size: 13px; }
+.table-wrap, .table-scroll{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 768px){
+  table{ font-size: 12px; }
+  thead th, tbody td{ padding: 8px 10px; }
+}
+
+/* ---------- Mobile navigation ---------- */
+.sidebar{ transition: transform var(--transition-base,200ms) ease; }
+@media (max-width: 900px){
+  .sidebar{ transform: translateX(100%); position: fixed; top: 0; right: 0; height: 100vh; z-index: 50; }
+  .sidebar.open{ transform: translateX(0); }
+  .sidebar-overlay{ position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 49; opacity: 0; pointer-events: none; transition: opacity var(--transition-base,200ms) ease; }
+  .sidebar-overlay.open{ opacity: 1; pointer-events: auto; }
+}
+@supports (padding: env(safe-area-inset-bottom)){
+  .topbar, .content{ padding-bottom: env(safe-area-inset-bottom); }
+}
 /* ---------- Forms UX ---------- */
 .fg, .field{ margin-bottom: 12px; }
 .fg label, .field label{ display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text,#0F172A); }
