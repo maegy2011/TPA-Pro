@@ -7,15 +7,17 @@ function openInvoiceEditor(idx){
   rvEditInvoiceIdx = (idx === undefined || idx === null) ? -1 : idx;
   const inv = rvEditInvoiceIdx >= 0 ? workingInvoices[rvEditInvoiceIdx] : null;
   $('#invType').innerHTML = Object.entries(INVOICE_TYPES).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
-  $('#invModalTitle').textContent = inv ? 'تعديل الفاتورة' : 'إضافة فاتورة';
-  $('#invModalSub').textContent = inv ? (inv.number||inv.id) : '—';
+  $('#invModalTitle').textContent = inv ? 'تعديل مذكرة الخصم' : 'إضافة مذكرة خصم';
+  $('#invModalSub').textContent = inv ? (inv.debitNoteNumber||inv.number||inv.id) : '—';
   if(inv){
-    $('#invType').value = inv.type; $('#invNumber').value = inv.number||inv.id; $('#invDate').value = inv.date||'';
+    $('#invType').value = inv.type; $('#invNumber').value = inv.debitNoteNumber||inv.number||inv.id; $('#invDate').value = inv.debitNoteDate||inv.date||'';
+    if(document.getElementById('invLinkedInvoice')) document.getElementById('invLinkedInvoice').value = inv.linkedInvoiceNumber||inv.invoiceNumber||'';
     const p0 = (inv.patients||[])[0];
     $('#invPatientName').value = p0 ? p0.name : ''; $('#invPatientId').value = p0 ? p0.nationalId : '';
     $('#invAdmission').value = inv.admissionDate||''; $('#invDischarge').value = inv.dischargeDate||''; $('#invRoomClass').value = inv.roomClass||'';
   } else {
-    $('#invType').value = 'outpatient'; $('#invNumber').value = newInvoiceId(); $('#invDate').value = daysFromNow(0);
+    $('#invType').value = 'outpatient'; $('#invNumber').value = 'DN-' + Date.now().toString().slice(-6); $('#invDate').value = daysFromNow(0);
+    if(document.getElementById('invLinkedInvoice')) document.getElementById('invLinkedInvoice').value = '';
     $('#invPatientName').value = ''; $('#invPatientId').value = '';
     $('#invAdmission').value = ''; $('#invDischarge').value = ''; $('#invRoomClass').value = '';
   }
@@ -25,7 +27,9 @@ function saveInvoiceEditor(confirmed){
   markSessionDirty();
   const type = $('#invType').value, date = $('#invDate').value;
   const pName = $('#invPatientName').value.trim(), pNat = $('#invPatientId').value.trim(), num = $('#invNumber').value.trim();
-  if(!date){ showWarning('تنبيه','أدخل تاريخ الفاتورة'); return; }
+  const linked = document.getElementById('invLinkedInvoice') ? document.getElementById('invLinkedInvoice').value.trim() : '';
+  if(!date){ showWarning('تنبيه','أدخل تاريخ مذكرة الخصم'); return; }
+  if(!linked){ showWarning('تنبيه','أدخل رقم الفاتورة المرتبطة بمذكرة الخصم'); return; }
   if(!pName){ showWarning('تنبيه','أدخل اسم المريض'); return; }
   // تحقق من تواريخ الإقامة
   if(type === 'inpatient'){
@@ -33,19 +37,20 @@ function saveInvoiceEditor(confirmed){
     if(adm && dis && new Date(dis) <= new Date(adm)){ showWarning('تنبيه','تاريخ الخروج بعد الدخول'); return; }
   }
   if(activeClaim && activeClaim.receivedDate && new Date(date) > new Date(activeClaim.receivedDate) && confirmed !== true){
-    showWarning('تنبيه','تاريخ الفاتورة بعد الاستلام. متابعة؟', () => saveInvoiceEditor(true));
+    showWarning('تنبيه','تاريخ مذكرة الخصم بعد الاستلام. متابعة؟', () => saveInvoiceEditor(true));
     return;
   }
   const inpData = { admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'' };
   if(rvEditInvoiceIdx >= 0){
     const inv = workingInvoices[rvEditInvoiceIdx];
-    inv.type = type; inv.number = num || inv.id; inv.date = date; Object.assign(inv, inpData);
+    inv.type = type; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; Object.assign(inv, inpData);
     if(!inv.patients || !inv.patients.length) inv.patients = [mkPatient(newPatientId(inv), pName, pNat, [])];
     else { inv.patients[0].name = pName; inv.patients[0].nationalId = pNat; }
     rvActiveInvoiceIdx = rvEditInvoiceIdx;
   } else {
     const id = newInvoiceId();
     const inv = mkInvoice(id, type, date, [mkPatient(id+'-P1', pName, pNat, [])]);
+    inv.debitNoteNumber = num || id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked;
     Object.assign(inv, inpData); workingInvoices.push(inv); rvActiveInvoiceIdx = workingInvoices.length-1;
   }
   rvActivePatientIdx = 0; closeInvoiceEditor(); renderReviewInvoices();

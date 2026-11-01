@@ -14,15 +14,16 @@ function renderReviewInvoices(){
     recalcReview(); return;
   }
   if(!workingInvoices.length){
-    tabs.innerHTML = '<button type="button" class="rv-add-tab" data-add-invoice="1">+ إضافة فاتورة</button>';
-    panel.innerHTML = '<div class="rv-empty">لا فواتير</div>';
+    tabs.innerHTML = '<button type="button" class="rv-add-tab" data-add-invoice="1">+ إضافة مذكرة خصم</button>';
+    panel.innerHTML = '<div class="rv-empty">لا مذكرات خصم</div>';
     recalcReview(); return;
   }
   tabs.innerHTML = workingInvoices.map((inv,i) => {
     const t = INVOICE_TYPES[inv.type] || {label:inv.type};
     const tot = invoiceTotals(inv);
-    return `<button type="button" class="rv-inv-tab ${i===rvActiveInvoiceIdx?'active':''}" data-inv-idx="${i}"><span>${t.label}</span><span class="cnt">${(inv.patients||[]).length} مريض</span><span class="amt">${fmt(tot.billed)}</span></button>`;
-  }).join('') + '<button type="button" class="rv-add-tab" data-add-invoice="1">+ فاتورة</button>';
+    const name = inv.debitNoteNumber || inv.number || inv.id;
+    return `<button type="button" class="rv-inv-tab ${i===rvActiveInvoiceIdx?'active':''}" data-inv-idx="${i}"><span>مذكرة خصم ${escapeHtml(name)}</span><span class="cnt">${(inv.patients||[]).length} مريض</span><span class="amt">${fmt(tot.billed)}</span></button>`;
+  }).join('') + '<button type="button" class="rv-add-tab" data-add-invoice="1">+ مذكرة خصم</button>';
   renderActiveInvoice(); recalcReview();
 }
 function reviewLineRow(ln, i){
@@ -145,18 +146,19 @@ function renderActiveInvoice(){
 
   box.innerHTML = `
     <div class="rv-inv-meta">
-      <div class="rv-meta-item"><span>النوع</span><b>${t.label}</b></div>
-      <div class="rv-meta-item"><span>رقم</span><b>${escapeHtml(inv.number||inv.id)}</b></div>
-      <div class="rv-meta-item"><span>التاريخ</span><b>${inv.date||'—'}</b></div>
+      <div class="rv-meta-item"><span>نوع مذكرة الخصم</span><b>${t.label}</b></div>
+      <div class="rv-meta-item"><span>رقم مذكرة الخصم</span><b>${escapeHtml(inv.debitNoteNumber||inv.number||inv.id)}</b></div>
+      <div class="rv-meta-item"><span>رقم الفاتورة المرتبطة</span><b>${escapeHtml(inv.linkedInvoiceNumber||inv.invoiceNumber||'—')}</b></div>
+      <div class="rv-meta-item"><span>تاريخ</span><b>${inv.debitNoteDate||inv.date||'—'}</b></div>
       <div class="rv-meta-item"><span>${inv.type==='inpatient'?'الإقامة':'عدد المرضى'}</span><b>${inv.type==='inpatient'?(inv.admissionDate||'—')+' ← '+(inv.dischargeDate||'—'):inv.patients.length}</b></div>
     </div>
     <div class="rv-inv-actions">
       <button type="button" class="rv-act-btn primary" data-add-patient="1">+ مريض</button>
-      <button type="button" class="rv-act-btn ghost" data-edit-invoice="1">تعديل الفاتورة</button>
-      <button type="button" class="rv-act-btn danger" data-delete-invoice="1">حذف الفاتورة</button>
+      <button type="button" class="rv-act-btn ghost" data-edit-invoice="1">تعديل مذكرة الخصم</button>
+      <button type="button" class="rv-act-btn danger" data-delete-invoice="1">حذف مذكرة الخصم</button>
     </div>
     <div class="rv-inv-total"><span>مطالب: <b>${fmtC(tot.billed)}</b></span><span>معتمد: <b style="color:var(--ok)">${fmtC(tot.approved)}</b></span><span>استقطاع: <b style="color:var(--bad)">${fmtC(tot.deduction)}</b></span></div>
-    <div class="rv-section-title">مستندات الفاتورة</div>
+    <div class="rv-section-title">مستندات مذكرة الخصم</div>
     <div class="rv-docs">${invDocs}</div>
     <div class="rv-section-title">المرضى (${(inv.patients||[]).length})</div>
     <div class="rv-patients-accordion">${sections || '<div class="rv-empty">لا مرضى</div>'}</div>
@@ -282,7 +284,7 @@ function renderExceptions(){
   }
 
   if (!pending.length && !processed.length && !pa.length) {
-    html = '<div class="rv-empty" style="text-align:center;padding:24px;color:var(--muted)">لا بنود بعد — أضف فاتورة أولًا</div>';
+    html = '<div class="rv-empty" style="text-align:center;padding:24px;color:var(--muted)">لا بنود بعد — أضف مذكرة خصم أولًا</div>';
   }
 
   box.innerHTML = html;
@@ -311,7 +313,7 @@ function renderFinalSummary(){
         const pBilled = (p.lines||[]).reduce((s,l)=>s+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
         const pDed = drs.reduce((s,d)=>s+(Number(d.amount)||0),0);
         html += `<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:#fff">`;
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><b>${escapeHtml(p.name)}</b> <span style="color:var(--muted);font-size:11px">فاتورة ${escapeHtml(inv.number||inv.id)}</span></div><div style="font-size:12px">مطالب: <b>${fmtC(pBilled)}</b> · مستقطع: <b style="color:var(--bad)">${fmtC(pDed)}</b> · معتمد: <b style="color:var(--ok)">${fmtC(p._final||0)}</b></div></div>`;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><b>${escapeHtml(p.name)}</b> <span style="color:var(--muted);font-size:11px">مذكرة خصم ${escapeHtml(inv.debitNoteNumber||inv.number||inv.id)} | فاتورة مرتبطة ${escapeHtml(inv.linkedInvoiceNumber||inv.invoiceNumber||'—')}</span></div><div style="font-size:12px">مطالب: <b>${fmtC(pBilled)}</b> · مستقطع: <b style="color:var(--bad)">${fmtC(pDed)}</b> · معتمد: <b style="color:var(--ok)">${fmtC(p._final||0)}</b></div></div>`;
         html += `<table style="width:100%;font-size:11.5px;border-collapse:collapse"><thead><tr style="background:#F8FAFC"><th style="text-align:right;padding:6px;border:1px solid var(--line)">السبب</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المصدر</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المستوى</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">مرجع</th><th style="text-align:left;padding:6px;border:1px solid var(--line)">المبلغ</th></tr></thead><tbody>`;
         drs.forEach(dr => {
           const amt = Number(dr.amount)||0;
