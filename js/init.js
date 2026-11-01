@@ -40,6 +40,30 @@ document.addEventListener('click', e => {
   e.preventDefault();
   if(typeof doExportBackup === 'function') doExportBackup(false);
 });
+// Focus management for modals (accessibility)
+(function(){
+  let lastFocus = null;
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      m.addedNodes && m.addedNodes.forEach(node => {
+        if(node && node.classList && node.classList.contains && node.classList.contains('modal') && node.classList.contains('open')){
+          lastFocus = document.activeElement;
+          const first = node.querySelector('input, select, textarea, button');
+          if(first) setTimeout(() => first.focus(), 50);
+        }
+      });
+      if(m.type === 'attributes' && m.attributeName === 'class' && m.target && m.target.classList){
+        if(m.target.classList.contains('open') && (m.target.classList.contains('modal') || m.target.classList.contains('dialog-overlay'))){
+          if(!m.target._focused){ m.target._focused = true; lastFocus = document.activeElement; const first = m.target.querySelector('input, select, textarea, button'); if(first) setTimeout(() => first.focus(), 50); }
+        } else if(m.target._focused && !m.target.classList.contains('open')){
+          m.target._focused = false;
+          if(lastFocus && typeof lastFocus.focus === 'function') setTimeout(() => lastFocus.focus(), 50);
+        }
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
 // Theme toggle (light/dark)
 (function(){
   try {
