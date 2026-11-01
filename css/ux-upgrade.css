@@ -1,6 +1,29 @@
 /* ============================================================
    TPA Pro — UX upgrade layer (accessibility, interaction, UX polish)
    ============================================================ */
+/* ---------- Forms UX ---------- */
+.fg, .field{ margin-bottom: 12px; }
+.fg label, .field label{ display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text,#0F172A); }
+.fg input, .fg select, .fg textarea,
+.field input, .field select, .field textarea{
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line,#E2E8F0);
+  border-radius: 10px; background: var(--card,#FFFFFF); color: var(--text,#0F172A);
+  transition: border-color var(--transition-fast,150ms) ease, box-shadow var(--transition-fast,150ms) ease;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus,
+.field input:focus, .field select:focus, .field textarea:focus{
+  border-color: var(--teal,#0E7C7B); box-shadow: 0 0 0 3px rgba(14,124,123,.15); outline: none;
+}
+.fg.error input, .fg.error select, .fg.error textarea,
+.field.error input, .field.error select, .field.error textarea{
+  border-color: var(--bad,#DC2626); box-shadow: 0 0 0 3px rgba(220,38,38,.12);
+  animation: shake .3s ease;
+}
+@keyframes shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+.fg .hint, .field .hint{ font-size: 12px; color: var(--muted,#64748B); margin-top: 4px; }
+.fg.error .hint, .field.error .hint{ color: var(--bad,#DC2626); }
+.fg.success input, .field.success input{ border-color: var(--ok,#059669); }
+@media (prefers-reduced-motion: reduce){ .fg.error input, .field.error input{ animation: none; } }
 /* ---------- Animation polish ---------- */
 .modal{ transition: opacity var(--transition-base,200ms ease); }
 .modal.open{ animation: modalFadeIn var(--transition-base,200ms) ease; }
