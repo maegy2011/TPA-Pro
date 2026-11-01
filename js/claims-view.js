@@ -83,13 +83,13 @@ function renderActiveInvoice(){
     const patDed = patBilled - (p._final||0);
     const linesHtml = (p.lines||[]).length ? (p.lines||[]).map((ln,i)=>reviewLineRow(ln,i)).join('') : '<tr><td colspan="11" style="text-align:center;padding:18px;color:var(--muted)">لا بنود</td></tr>';
     return `<details class="rv-patient-details" data-pat-idx="${pi}" ${pi===rvActivePatientIdx?'open':''}>
-      <summary class="rv-patient-summary" style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;background:#F8FAFC;border:1px solid var(--line);border-radius:9px;margin-bottom:6px">
-        <span style="font-weight:800;color:var(--navy)">${escapeHtml(p.name)}</span>
-        <span style="display:flex;gap:12px;font-size:12px">
+      <summary class="rv-patient-summary">
+        <span class="rv-patient-name">${escapeHtml(p.name)}</span>
+        <span class="rv-patient-totals">
           <span>إجمالي: <b>${fmtC(patBilled)}</b></span>
           <span>مستقطع: <b style="color:var(--bad)">${fmtC(patDed)}</b></span>
           <span>صافي: <b style="color:var(--ok)">${fmtC(p._final)}</b></span>
-          <span style="color:var(--muted)">▾</span>
+          <span class="rv-toggle-icon">▾</span>
         </span>
       </summary>
       <div class="rv-patient-body" style="padding:8px 4px">
@@ -128,7 +128,7 @@ function renderActiveInvoice(){
     <div class="rv-docs">${docs}</div>
     <div class="rv-section-title">المرضى (${(inv.patients||[]).length})</div>
     <div class="rv-patients-accordion">${sections || '<div class="rv-empty">لا مرضى</div>'}</div>
-    <div class="rv-patients-footer" style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 12px;background:#F8FAFC;border:1px solid var(--line);border-radius:10px;margin-top:10px;font-size:13px;font-weight:700">
+    <div class="rv-patients-footer">
       <span>عدد المرضى: <b>${(inv.patients||[]).length}</b></span>
       <span>إجمالي: <b>${fmtC(totalBilled)}</b></span>
       <span>مستقطع: <b style="color:var(--bad)">${fmtC(totalBilled-totalNet)}</b></span>
