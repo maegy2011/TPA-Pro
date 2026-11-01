@@ -8,6 +8,7 @@ const MODAL_INVOICE = `
         <div class="modal-body">
           <div class="form-grid">
             <div class="fg"><label>نوع مذكرة الخصم *</label><select id="invType"></select></div>
+            <div class="fg"><label>نوع المطالبة *</label><select id="invClaimType"><option value="employee">عاملين</option><option value="retiree">معاشات</option></select></div>
             <div class="fg"><label>رقم مذكرة الخصم</label><input id="invNumber"></div>
             <div class="fg"><label>رقم الفاتورة المرتبطة *</label><input id="invLinkedInvoice"></div>
             <div class="fg"><label>تاريخ مذكرة الخصم *</label><input id="invDate" type="date"></div>

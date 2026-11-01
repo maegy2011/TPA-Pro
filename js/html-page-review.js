@@ -18,7 +18,7 @@ const PAGE_REVIEW = `
         <summary>بيانات المطالبة</summary>
         <div class="rv-claim-header-body">
           <div class="rv-claim-type-bar">
-            <span>نوع المطالبة:</span>
+            <span>نوع المطالبة الافتراضي:</span>
             <button type="button" class="rv-type-btn" data-claim-type="employee">عاملين</button>
             <button type="button" class="rv-type-btn" data-claim-type="retiree">معاشات</button>
           </div>

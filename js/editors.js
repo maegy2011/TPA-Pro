@@ -9,6 +9,8 @@ function openInvoiceEditor(idx){
   $('#invType').innerHTML = Object.entries(INVOICE_TYPES).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
   $('#invModalTitle').textContent = inv ? 'تعديل مذكرة الخصم' : 'إضافة مذكرة خصم';
   $('#invModalSub').textContent = inv ? (inv.debitNoteNumber||inv.number||inv.id) : '—';
+  const ctype = activeClaim ? (activeClaim.type || 'employee') : 'employee';
+  if(document.getElementById('invClaimType')) document.getElementById('invClaimType').value = inv && inv.claimType ? inv.claimType : ctype;
   if(inv){
     $('#invType').value = inv.type; $('#invNumber').value = inv.debitNoteNumber||inv.number||inv.id; $('#invDate').value = inv.debitNoteDate||inv.date||'';
     if(document.getElementById('invLinkedInvoice')) document.getElementById('invLinkedInvoice').value = inv.linkedInvoiceNumber||inv.invoiceNumber||'';
@@ -28,6 +30,7 @@ function saveInvoiceEditor(confirmed){
   const type = $('#invType').value, date = $('#invDate').value;
   const pName = $('#invPatientName').value.trim(), pNat = $('#invPatientId').value.trim(), num = $('#invNumber').value.trim();
   const linked = document.getElementById('invLinkedInvoice') ? document.getElementById('invLinkedInvoice').value.trim() : '';
+  const claimType = document.getElementById('invClaimType') ? document.getElementById('invClaimType').value : (activeClaim?activeClaim.type:'employee');
   if(!date){ showWarning('تنبيه','أدخل تاريخ مذكرة الخصم'); return; }
   if(!linked){ showWarning('تنبيه','أدخل رقم الفاتورة المرتبطة بمذكرة الخصم'); return; }
   if(!pName){ showWarning('تنبيه','أدخل اسم المريض'); return; }
@@ -43,14 +46,16 @@ function saveInvoiceEditor(confirmed){
   const inpData = { admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'' };
   if(rvEditInvoiceIdx >= 0){
     const inv = workingInvoices[rvEditInvoiceIdx];
-    inv.type = type; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; Object.assign(inv, inpData);
-    if(!inv.patients || !inv.patients.length) inv.patients = [mkPatient(newPatientId(inv), pName, pNat, [])];
-    else { inv.patients[0].name = pName; inv.patients[0].nationalId = pNat; }
+    inv.type = type; inv.claimType = claimType; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; Object.assign(inv, inpData);
+    if(inv.patients && inv.patients.length) inv.patients.forEach(p => { if(p.beneficiaryType === undefined) p.beneficiaryType = claimType; p.beneficiaryType = claimType; });
+    else inv.patients = [mkPatient(newPatientId(inv), pName, pNat, [])];
+    if(inv.patients[0]) { inv.patients[0].name = pName; inv.patients[0].nationalId = pNat; inv.patients[0].beneficiaryType = claimType; }
     rvActiveInvoiceIdx = rvEditInvoiceIdx;
   } else {
     const id = newInvoiceId();
     const inv = mkInvoice(id, type, date, [mkPatient(id+'-P1', pName, pNat, [])]);
-    inv.debitNoteNumber = num || id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked;
+    inv.claimType = claimType; inv.debitNoteNumber = num || id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked;
+    if(inv.patients[0]) inv.patients[0].beneficiaryType = claimType;
     Object.assign(inv, inpData); workingInvoices.push(inv); rvActiveInvoiceIdx = workingInvoices.length-1;
   }
   rvActivePatientIdx = 0; closeInvoiceEditor(); renderReviewInvoices();

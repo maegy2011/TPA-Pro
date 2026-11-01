@@ -22,7 +22,8 @@ function renderReviewInvoices(){
     const t = INVOICE_TYPES[inv.type] || {label:inv.type};
     const tot = invoiceTotals(inv);
     const name = inv.debitNoteNumber || inv.number || inv.id;
-    return `<button type="button" class="rv-inv-tab ${i===rvActiveInvoiceIdx?'active':''}" data-inv-idx="${i}"><span>مذكرة خصم ${escapeHtml(name)}</span><span class="cnt">${(inv.patients||[]).length} مريض</span><span class="amt">${fmt(tot.billed)}</span></button>`;
+    const ct = inv.claimType === 'retiree' ? 'معاشات' : 'عاملين';
+    return `<button type="button" class="rv-inv-tab ${i===rvActiveInvoiceIdx?'active':''}" data-inv-idx="${i}"><span>مذكرة خصم ${escapeHtml(name)} • ${ct}</span><span class="cnt">${(inv.patients||[]).length} مريض</span><span class="amt">${fmt(tot.billed)}</span></button>`;
   }).join('') + '<button type="button" class="rv-add-tab" data-add-invoice="1">+ مذكرة خصم</button>';
   renderActiveInvoice(); recalcReview();
 }
@@ -147,6 +148,7 @@ function renderActiveInvoice(){
   box.innerHTML = `
     <div class="rv-inv-meta">
       <div class="rv-meta-item"><span>نوع مذكرة الخصم</span><b>${t.label}</b></div>
+      <div class="rv-meta-item"><span>نوع المطالبة</span><b>${inv.claimType === 'retiree' ? 'معاشات' : 'عاملين'}</b></div>
       <div class="rv-meta-item"><span>رقم مذكرة الخصم</span><b>${escapeHtml(inv.debitNoteNumber||inv.number||inv.id)}</b></div>
       <div class="rv-meta-item"><span>رقم الفاتورة المرتبطة</span><b>${escapeHtml(inv.linkedInvoiceNumber||inv.invoiceNumber||'—')}</b></div>
       <div class="rv-meta-item"><span>تاريخ</span><b>${inv.debitNoteDate||inv.date||'—'}</b></div>
