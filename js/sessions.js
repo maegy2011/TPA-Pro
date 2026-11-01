@@ -97,7 +97,7 @@ function resumeSession(sessionId){
   } else (el => { if (el) el.style.display = 'none'; })($('#priorApprovalBox'));
   renderReviewInvoices();
   clearSessionDirty();
-  $('#reviewModal').classList.add('open'); document.body.style.overflow = 'hidden';
+  try { navigateTo('review', {noPush:false}); } catch(e){ if($('#reviewModal')) { $('#reviewModal').classList.add('open'); document.body.style.overflow = 'hidden'; } }
   updateSessionsBadge(); renderSessions();
 }
 function formatTimeAgo(iso){
