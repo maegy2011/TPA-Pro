@@ -2,8 +2,8 @@
 let activeClaim = null;
 let workingInvoices = [];
 let _sessionDirty = false;
-function markSessionDirty(){ _sessionDirty = true; }
-function clearSessionDirty(){ _sessionDirty = false; }
+function markSessionDirty(){ _sessionDirty = true; try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = ''; } catch(e){} }
+function clearSessionDirty(){ _sessionDirty = false; try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = 'none'; } catch(e){} }
 let rvActiveInvoiceIdx = 0;
 let rvActivePatientIdx = 0;
 let rvEditInvoiceIdx = -1;

@@ -8,8 +8,10 @@ const PAGE_REVIEW = `
         <p id="rvPageSub">—</p>
       </div>
       <div class="rv-page-actions">
+        <span id="rvPageDirtyBadge" style="display:none;color:var(--warn);font-weight:700;font-size:12px">● تعديلات غير محفوظة</span>
         <button class="btn out" id="rvPageBack"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> رجوع</button>
         <button class="btn solid" id="rvPageSave">حفظ المراجعة</button>
+        <button class="btn solid" id="rvPageFinalizeHeaderBtn" style="background:var(--ok)">إنهاء والتوقيع</button>
       </div>
     </div>
     <div class="review-page-body">

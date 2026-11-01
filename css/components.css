@@ -31,3 +31,4 @@
 .legend-row .sw{width:10px;height:10px;border-radius:3px;flex:none}
 .legend-row .lbl{color:var(--muted)}
 .legend-row .val{margin-right:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.rv-context-bar { position: sticky; top: 0; z-index: 5; background: var(--bg, #fff); }

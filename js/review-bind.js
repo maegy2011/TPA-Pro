@@ -262,6 +262,8 @@ function bindReviewModal(){
     });
   }
 
+  const fh = document.getElementById('rvPageFinalizeHeaderBtn');
+  if (fh && !fh.dataset.bound) { fh.dataset.bound='1'; fh.addEventListener('click', () => { const b = document.getElementById('rvPageFinalizeBtn') || document.getElementById('finalizeReviewBtn'); if(b) b.click(); }); }
   const finBtn = document.getElementById('finalizeReviewBtn') || document.getElementById('rvPageFinalizeBtn');
   if (finBtn && !finBtn.dataset.bound) {
     finBtn.dataset.bound = '1';
