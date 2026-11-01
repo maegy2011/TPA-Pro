@@ -78,7 +78,7 @@ function _renderDeductionReasons(p){
     if(amt <= 0) return '';
     const src = dr.source === 'manual' ? 'يدوي' : dr.source === 'rule' ? 'قاعدة' : 'تلقائي';
     const lvl = dr.level === 'patient' ? 'المريض' : dr.level === 'line' ? 'البند' : dr.level;
-    return `<tr><td>${escapeHtml(dr.reason||'—')}</td><td style="text-align:center">${escapeHtml(src)}</td><td style="text-align:center">${escapeHtml(lvl)}</td><td class="mono" style="text-align:left;color:var(--bad);font-weight:700">${fmtC(amt)}</td></tr>`;
+    return `<tr><td>${escapeHtml(dr.reason||'—')}${dr.note?'<div style="color:var(--muted);font-size:10.5px">'+escapeHtml(dr.note)+'</div>':''}</td><td style="text-align:center">${escapeHtml(src)}</td><td style="text-align:center">${escapeHtml(lvl)}</td><td class="mono" style="text-align:left;color:var(--bad);font-weight:700">${fmtC(amt)}</td></tr>`;
   }).filter(Boolean).join('');
   if(!rows) return '';
   return `<div class="rv-section-title" style="margin-top:10px">أسباب الخصم لكل مبلغ</div><div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>السبب</th><th>المصدر</th><th>المستوى</th><th>المبلغ</th></tr></thead><tbody>${rows}</tbody></table></div>`;

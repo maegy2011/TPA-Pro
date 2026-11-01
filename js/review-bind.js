@@ -136,23 +136,25 @@ function bindReviewModal(){
   bindLineSmartForm();
 
   // تبويبات المراجعة
-  const rvTabs = document.querySelector('#reviewModal .rv-tabs') || document.querySelector('#page-review .rv-tabs');
-  if (rvTabs && !rvTabs.dataset.bound) {
+  const rvTabsAll = document.querySelectorAll('#reviewModal .rv-tabs, #page-review .rv-tabs, #page-review .rv-invoice-review-block .rv-tabs');
+  rvTabsAll.forEach(rvTabs => {
+    if (rvTabs.dataset.bound) return;
     rvTabs.dataset.bound = '1';
     rvTabs.addEventListener('click', e => {
       const btn = e.target.closest('[data-rv-tab]'); if(!btn) return;
       const tab = btn.dataset.rvTab;
-      rvTabs.querySelectorAll('.rv-tab').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); });
-      document.querySelectorAll('#reviewModal .rv-tab-panel, #page-review .rv-tab-panel').forEach(p => p.style.display = 'none');
-      let panel = document.getElementById('rvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
-      if(!panel) panel = document.getElementById('rvPageTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      const scope = rvTabs.closest('.rv-invoice-review-block') || rvTabs.closest('#page-review') || document;
+      scope.querySelectorAll('.rv-tab').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); });
+      scope.querySelectorAll('.rv-tab-panel').forEach(p => p.style.display = 'none');
+      let panel = scope.querySelector('#rvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      if(!panel) panel = scope.querySelector('#rvPageTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
       if (panel) panel.style.display = '';
       if (tab === 'exceptions') renderExceptions();
       if (tab === 'final') {
         if (typeof renderFinalSummary === 'function') renderFinalSummary();
       }
     });
-  }
+  });
 
   // binding exceptions
   const excBox = document.getElementById('rvExceptions');
