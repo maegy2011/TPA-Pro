@@ -1,6 +1,9 @@
 // html-page-help.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const PAGE_HELP = `
 <section class="page" id="page-help">
+      <div class="page-header">
+        <div><h1 data-i18n="help.title">المساعدة</h1><p class="page-sub" data-i18n="help.subtitle">دليل استخدام النظام</p></div>
+      </div>
       <div class="panel" style="margin-bottom:18px">
         <div class="panel-head"><div><h2>مرحباً بك في TPA Pro v1.0</h2><p>نظام المراجعة المالية للمطالبات الطبية</p></div></div>
         <div class="panel-body">
