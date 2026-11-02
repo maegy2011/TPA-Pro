@@ -9,7 +9,7 @@ const MODAL_PROVIDER = `
           <div class="rv-section-title">بيانات الجهة</div>
           <div class="form-grid">
             <div class="fg full"><label>اسم الجهة <span style="color:var(--bad,#DC2626)">*</span></label><input id="pvName" required><div class="hint">اسم الجهة كما يظهر في المطالبات</div></div>
-            <div class="fg"><label>النوع</label><select id="pvType"><option>مستشفى</option><option>مجمع طبي</option><option>عيادة</option><option>مركز تخصصي</option><option>صيدلية</option><option>معمل</option></select></div>
+            <div class="fg"><label>النوع</label><select id="pvType"><option>مستشفى</option><option>معمل تحاليل</option><option>مركز أشعة</option><option>صيدلية</option></select></div>
             <div class="fg"><label>الهاتف</label><input id="pvPhone" type="tel" placeholder="+964 ..."></div>
           </div>
           <div class="rv-section-title">الموقع</div>
