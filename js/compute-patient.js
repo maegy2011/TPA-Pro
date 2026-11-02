@@ -24,151 +24,125 @@ function flagLineAskReviewer(l, code){
 function unflagLineAskReviewer(l, code){
   if(!l || !Array.isArray(l._checksFailed)) return;
   l._checksFailed = l._checksFailed.filter(x => x !== code);
-  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap') || ['stay-mismatch','stay-overlap','consumables-share'].some(c => l._checksFailed.includes(c)) || l._checksFailed.some(x => { const s = String(x); return s.startsWith('checklist-') || s.startsWith('link-') || s.startsWith('opclass-'); });
+  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap') || ['stay-mismatch','stay-overlap','consumables-share','dup-xinvoice','nursing-exceed','or-exceed','physio-exceed'].some(c => l._checksFailed.includes(c)) || l._checksFailed.some(x => { const s = String(x); return s.startsWith('checklist-') || s.startsWith('link-') || s.startsWith('opclass-') || s.startsWith('share-') || s.startsWith('perstay-') || s.startsWith('count-'); });
   if(!_still && l._conflictForced === true){
     l._conflictForced = false;
     if(l._decision === 'needs-attention') l._decision = l._preConflictDecision || 'auto-approved';
   }
 }
-const STAY_LINE_KW = ['إقامة','اقامه','إقامه','stay','room','يوم','أيام','ايام','ليلة','سرير'];
-const INPATIENT_CRITICAL_CHECKS = {
-  icu:        { kw:['عناية','icu'] },
-  surgery:    { kw:['جراح','عملية','جراحة'] },
-  anesthesia: { kw:['تخدير','بنج'] },
-  blood:      { kw:['نقل دم','نقل الدم'] },
-};
-function _lineText(l){ return `${l.category||''} ${l.name||''} ${l.code||''}`; }
+/* نموذج التصنيف الديناميكي: كل السلوكيات تُشتق من getLineTaxonomy() — الإضافة من الإعدادات. */
+function _lineTypesOf(l){ return (typeof matchLineTypes === 'function') ? matchLineTypes(l) : []; }
+function _hasFlag(types, f){ return types.some(t => !!t[f]); }
 function invoiceStayDays(inv){
   if(!inv || !inv.admissionDate || !inv.dischargeDate) return null;
   const a = new Date(inv.admissionDate), d = new Date(inv.dischargeDate);
   if(isNaN(a) || isNaN(d) || d < a) return null;
   return Math.max(1, Math.round((d - a) / 86400000));
 }
-/* تحقق الفاتورة الداخلية: أيام الإقامة + تفعيل قائمة التدقيق الحرجة. */
+/* تحقق الفاتورة الداخلية: أيام + تدقيق + ترابط + حصص — كلها من التصنيف. */
 function validateInpatientInvoice(inv){
   if(!inv) return;
   if(typeof isExternalInvoice === 'function' && isExternalInvoice(inv)) return; // خارجية: لا تحقق إقامة
+  const tax = (typeof getLineTaxonomy === 'function') ? getLineTaxonomy() : [];
   const stayDays = invoiceStayDays(inv);
   const chk = inv.internalReview || {};
+  const all = [];
   (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
-    const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
-    const txt = _lineText(l).toLowerCase();
-    const isStay = STAY_LINE_KW.some(k => txt.includes(k));
-    if(stayDays !== null && isStay && billed > 0){
-      const billedDays = (inv.patients||[]).reduce((s,pp) => s + (pp.lines||[]).reduce((a,ll) => {
-        const t = _lineText(ll).toLowerCase();
-        return a + (STAY_LINE_KW.some(k => t.includes(k)) ? (Number(ll.qty)||0) : 0);
-      }, 0), 0);
-      if(Math.abs(billedDays - stayDays) > 0.01){
-        l._stayExpected = stayDays; l._stayBilled = billedDays;
+    const b = (Number(l.qty)||0)*(Number(l.billedUnit)||0);
+    if(b <= 0) return;
+    all.push({ l, b, q: Number(l.qty)||0, types: _lineTypesOf(l) });
+  }));
+  const sumQ = pred => all.reduce((s,x) => s + (x.types.some(pred) ? x.q : 0), 0);
+  const stayQty = sumQ(t => t.stayQty);
+  const icuQty = sumQ(t => t.icuQty);
+  const invBilled = all.reduce((s,x) => s + x.b, 0);
+  const surgN = all.filter(x => x.types.some(t => t.surgeryProc) && !x.types.some(t => t.fee)).length;
+  const hasProc = surgN > 0;
+  const hasSurgeonFee = all.some(x => { const t = x.types; return t.some(y => y.fee) && /جراح/.test(`${x.l.category||''} ${x.l.name||''}`.toLowerCase()); });
+  const overlap = stayDays !== null && stayQty > 0 && icuQty > 0 && (stayQty + icuQty > stayDays + 0.01);
+  // تجميعات الحصص لكل نوع له maxShare
+  const shareTotals = {};
+  tax.filter(t => t.maxShare != null).forEach(t => {
+    shareTotals[t.key] = all.reduce((s,x) => s + (x.types.includes(t) ? x.b : 0), 0);
+  });
+  all.forEach(({ l, b, q, types }) => {
+    const T = f => types.some(t => !!t[f]);
+    // فرق أيام الإقامة
+    if(stayDays !== null && T('stayQty')){
+      const totStay = stayQty;
+      if(Math.abs(totStay - stayDays) > 0.01){
+        l._stayExpected = stayDays; l._stayBilled = Math.round(totStay * 100) / 100;
         flagLineAskReviewer(l, 'stay-mismatch');
       } else { delete l._stayExpected; delete l._stayBilled; unflagLineAskReviewer(l, 'stay-mismatch'); }
-    }
-    Object.keys(INPATIENT_CRITICAL_CHECKS).forEach(key => {
-      const code = 'checklist-' + key;
-      const hit = billed > 0 && INPATIENT_CRITICAL_CHECKS[key].kw.some(k => txt.includes(k));
-      if(hit && chk[key] !== true) flagLineAskReviewer(l, code);
-      else unflagLineAskReviewer(l, code);
-    });
-    // ترابط الأتعاب: أتعاب الجراح/التخدير تستلزم إجراءً جراحيًا في نفس الفاتورة.
-    if(billed > 0 && (_isSurgeonFee(l) || _isAnesFee(l))){
-      const hasProc = (inv.patients||[]).some(pp => (pp.lines||[]).some(ll => _isSurgProc(ll) && ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0));
-      if(!hasProc) flagLineAskReviewer(l, 'link-fee-nosurgery');
-      else unflagLineAskReviewer(l, 'link-fee-nosurgery');
-    } else { unflagLineAskReviewer(l, 'link-fee-nosurgery'); }
-    // المساعد يستلزم: أتعاب جراح + تصنيف كبرى/متوسطة (إن وُجد التصنيف).
-    if(billed > 0 && _isAssistFee(l)){
-      const hasSurgeon = (inv.patients||[]).some(pp => (pp.lines||[]).some(ll => _isSurgeonFee(ll) && ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0));
-      const cls = inv.operationClass || '';
-      const clsOk = !cls || cls === 'major' || cls === 'medium';
-      if(!hasSurgeon || !clsOk) flagLineAskReviewer(l, 'link-assistant');
-      else unflagLineAskReviewer(l, 'link-assistant');
-    } else { unflagLineAskReviewer(l, 'link-assistant'); }
-    // سقف أيام تصنيف العملية.
-    if(stayDays !== null && isStay && billed > 0 && inv.operationClass && OP_CLASS_CAPS[inv.operationClass]){
+    } else { delete l._stayExpected; delete l._stayBilled; unflagLineAskReviewer(l, 'stay-mismatch'); }
+    // ازدواج عناية/غرفة
+    if(overlap && (T('icuQty') || T('stayQty'))){
+      l._stayExpected = stayDays; l._stayBilled = Math.round((stayQty + icuQty) * 100) / 100;
+      flagLineAskReviewer(l, 'stay-overlap');
+    } else { unflagLineAskReviewer(l, 'stay-overlap'); }
+    // سقف تصنيف العملية
+    if(stayDays !== null && T('stayQty') && inv.operationClass && OP_CLASS_CAPS[inv.operationClass]){
       if(stayDays > OP_CLASS_CAPS[inv.operationClass].maxStay){
         l._opClassMax = OP_CLASS_CAPS[inv.operationClass].maxStay;
         flagLineAskReviewer(l, 'opclass-stay-exceed');
       } else { delete l._opClassMax; unflagLineAskReviewer(l, 'opclass-stay-exceed'); }
     } else { delete l._opClassMax; unflagLineAskReviewer(l, 'opclass-stay-exceed'); }
-  }));
-  // المزروعات تستلزم إجراءً جراحيًا + كشف ازدواج أيام العناية/الغرفة + حصة المستهلكات.
-  const hasProcAll = (inv.patients||[]).some(pp => (pp.lines||[]).some(ll => _isSurgProc(ll) && ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0));
-  let stayQty = 0, icuQty = 0, consBilled = 0, invBilled = 0;
-  (inv.patients||[]).forEach(pp => (pp.lines||[]).forEach(ll => {
-    const b = (Number(ll.qty)||0)*(Number(ll.billedUnit)||0);
-    invBilled += b;
-    const t = _lineText(ll).toLowerCase();
-    if(STAY_LINE_KW.some(k => t.includes(k))) stayQty += (Number(ll.qty)||0);
-    if(_isIcu(ll)) icuQty += (Number(ll.qty)||0);
-    if(_isConsumable(ll)) consBilled += b;
-  }));
-  const overlap = stayDays !== null && stayQty > 0 && icuQty > 0 && (stayQty + icuQty > stayDays + 0.01);
-  let nursQty = 0, orQty = 0, physioQty = 0, surgN = 0;
-  (inv.patients||[]).forEach(pp => (pp.lines||[]).forEach(ll => {
-    const b = (Number(ll.qty)||0)*(Number(ll.billedUnit)||0); if(b <= 0) return;
-    const q = Number(ll.qty)||0;
-    if(_isNursing(ll)) nursQty += q;
-    if(_isOr(ll)) orQty += q;
-    if(_isPhysio(ll)) physioQty += q;
-    if(_isSurgProc(ll)) surgN += 1;
-  }));
-  const nursOver = stayDays !== null && nursQty > stayDays + 0.01;
-  const orOver = surgN > 0 && orQty > surgN;
-  const physioOver = stayDays !== null && physioQty > stayDays + 0.01;
-  const _stayLines = [];
-  (inv.patients||[]).forEach(pp => (pp.lines||[]).forEach(ll => {
-    const b = (Number(ll.qty)||0)*(Number(ll.billedUnit)||0); if(b <= 0) return;
-    const t = _lineText(ll).toLowerCase();
-    if(STAY_LINE_KW.some(k => t.includes(k))) _stayLines.push(ll);
-  }));
-  const _docTarget = _stayLines.length ? _stayLines : (inv.patients||[]).flatMap(pp => (pp.lines||[])).filter(ll => ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0).slice(0,1);
-  const hasBilled = _docTarget.length > 0;
-  Object.keys(DOC_CHECKS).forEach(key => {
-    const code = DOC_CHECKS[key];
-    if(hasBilled && chk[key] !== true) _docTarget.forEach(ll => flagLineAskReviewer(ll, code));
-    else _docTarget.forEach(ll => unflagLineAskReviewer(ll, code));
+    // تدقيق إلزامي
+    types.filter(t => t.requiresChecklist).forEach(t => {
+      const code = t.checklistCode || ('checklist-' + (t.checklistKey || t.key));
+      if(chk[t.checklistKey || t.key] !== true) flagLineAskReviewer(l, code);
+      else unflagLineAskReviewer(l, code);
+    });
+    tax.filter(t => t.requiresChecklist && !types.includes(t)).forEach(t => {
+      unflagLineAskReviewer(l, t.checklistCode || ('checklist-' + (t.checklistKey || t.key)));
+    });
+    // يستلزم جراحة
+    types.filter(t => t.requiresSurgery).forEach(t => {
+      const code = t.surgeryCode || ('link-' + t.key);
+      if(!hasProc) flagLineAskReviewer(l, code); else unflagLineAskReviewer(l, code);
+    });
+    // مساعد: يستلزم أتعاب جراح + تصنيف
+    if(types.some(t => t.requiresSurgeonFee)){
+      const code = (types.find(t => t.requiresSurgeonFee).assistCode) || 'link-assistant';
+      const cls = inv.operationClass || '';
+      if(!hasSurgeonFee || (cls && cls !== 'major' && cls !== 'medium')) flagLineAskReviewer(l, code);
+      else unflagLineAskReviewer(l, code);
+    } else { unflagLineAskReviewer(l, 'link-assistant'); }
+    // حصة قصوى
+    types.filter(t => t.maxShare != null).forEach(t => {
+      const code = t.shareCode || ('share-' + t.key);
+      const tot = shareTotals[t.key] || 0;
+      if(invBilled > 0 && tot > invBilled * t.maxShare + 0.01){
+        l._consShare = Math.round(tot / invBilled * 1000) / 10;
+        flagLineAskReviewer(l, code);
+      } else { delete l._consShare; unflagLineAskReviewer(l, code); }
+    });
+    // سقف يومي مقابل الإقامة
+    types.filter(t => t.perStayMax != null).forEach(t => {
+      const code = t.perStayCode || ('perstay-' + t.key);
+      if(stayDays !== null && q > stayDays * t.perStayMax + 0.01) flagLineAskReviewer(l, code);
+      else unflagLineAskReviewer(l, code);
+    });
+    // مقابل عدد الإجراءات
+    types.filter(t => t.countVsSurg).forEach(t => {
+      const code = t.countCode || ('count-' + t.key);
+      const myQ = all.reduce((s,x) => s + (x.types.includes(t) ? x.q : 0), 0);
+      if(surgN > 0 && myQ > surgN) flagLineAskReviewer(l, code);
+      else unflagLineAskReviewer(l, code);
+    });
   });
-  const consOver = invBilled > 0 && consBilled > invBilled * CONSUMABLES_MAX_SHARE + 0.01;
-  (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
-    const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
-    if(billed > 0 && _isImplant(l)){
-      if(!hasProcAll) flagLineAskReviewer(l, 'link-implant-nosurgery');
-      else unflagLineAskReviewer(l, 'link-implant-nosurgery');
-    } else { unflagLineAskReviewer(l, 'link-implant-nosurgery'); }
-    if(overlap && billed > 0 && (_isIcu(l) || STAY_LINE_KW.some(k => _lineText(l).toLowerCase().includes(k)))){
-      l._stayExpected = stayDays; l._stayBilled = Math.round((stayQty + icuQty) * 100) / 100;
-      flagLineAskReviewer(l, 'stay-overlap');
-    } else { unflagLineAskReviewer(l, 'stay-overlap'); }
-    if(nursOver && billed > 0 && _isNursing(l)) flagLineAskReviewer(l, 'nursing-exceed');
-    else unflagLineAskReviewer(l, 'nursing-exceed');
-    if(orOver && billed > 0 && _isOr(l)) flagLineAskReviewer(l, 'or-exceed');
-    else unflagLineAskReviewer(l, 'or-exceed');
-    if(physioOver && billed > 0 && _isPhysio(l)) flagLineAskReviewer(l, 'physio-exceed');
-    else unflagLineAskReviewer(l, 'physio-exceed');
-    if(consOver && billed > 0 && _isConsumable(l)){
-      l._consShare = Math.round(consBilled / invBilled * 1000) / 10;
-      flagLineAskReviewer(l, 'consumables-share');
-    } else { delete l._consShare; unflagLineAskReviewer(l, 'consumables-share'); }
-  }));
+  // تدقيق على مستوى المذكرة (doc): يُعلَّق على بنود الإقامة أو أول بند مفوتر.
+  const docTypes = tax.filter(t => t.kind === 'doc' && t.requiresChecklist);
+  if(docTypes.length && all.length){
+    const stayLines = all.filter(x => x.types.some(t => t.stayQty));
+    const targets = (stayLines.length ? stayLines : all.slice(0,1)).map(x => x.l);
+    docTypes.forEach(t => {
+      const code = t.checklistCode || ('checklist-' + (t.checklistKey || t.key));
+      targets.forEach(ll => { if(chk[t.checklistKey || t.key] !== true) flagLineAskReviewer(ll, code); else unflagLineAskReviewer(ll, code); });
+    });
+  }
   applyClosedPackage(inv);
 }
-const FEE_KW = ['أتعاب','اتعاب','fee'];
-const IMPLANT_KW = ['دعامة','دعامات','مسمار','مسامير','مفصل','مفاصل','شبكة','صمام','شريحة','شرائح','مثبت','طرف صناعي','implant','stent'];
-const CONSUM_KW = ['شاش','خيط','خيوط','محلول','محاليل','قسطرة','أنبوب','أنبوبة','قفاز','سرنجة','ضماد','مستهلك','مستهلكات','مستلزم','غيار','بلاستر','كانيولا','consumable'];
-const ICU_KW = ['عناية','icu'];
-const NURS_KW = ['تمريض','nursing'];
-const OR_KW = ['غرفة عمليات','غرفه عمليات','تجهيز غرفة','استخدام غرفة'];
-const PHYSIO_KW = ['طبيعي','تأهيل','physio'];
-const DOC_CHECKS = { admission:'checklist-admission', discharge:'checklist-discharge' };
-function _isNursing(l){ const t = _lineText(l).toLowerCase(); return NURS_KW.some(k => t.includes(k)); }
-function _isOr(l){ const t = _lineText(l).toLowerCase(); return OR_KW.some(k => t.includes(k)); }
-function _isPhysio(l){ const t = _lineText(l).toLowerCase(); return PHYSIO_KW.some(k => t.includes(k)); }
-const CONSUMABLES_MAX_SHARE = 0.25;
-function _isImplant(l){ const t = _lineText(l).toLowerCase(); return IMPLANT_KW.some(k => t.includes(k)); }
-function _isConsumable(l){ const t = _lineText(l).toLowerCase(); return !_isImplant(l) && CONSUM_KW.some(k => t.includes(k)); }
-function _isIcu(l){ const t = _lineText(l).toLowerCase(); return ICU_KW.some(k => t.includes(k)); }
-const SURG_PROC_KW = ['جراح','عملية','جراحة'];
 const OP_CLASS_CAPS = { major:{ label:'كبرى', maxStay:14 }, medium:{ label:'متوسطة', maxStay:7 }, minor:{ label:'صغرى', maxStay:3 }, endo:{ label:'مناظير', maxStay:2 }, diag:{ label:'تشخيصية', maxStay:1 } };
 function _isFee(l){ return FEE_KW.some(k => _lineText(l).toLowerCase().includes(k)); }
 function _isSurgProc(l){ const t = _lineText(l).toLowerCase(); return SURG_PROC_KW.some(k => t.includes(k)) && !_isFee(l); }

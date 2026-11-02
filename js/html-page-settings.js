@@ -65,6 +65,11 @@ const PAGE_SETTINGS = `
           <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.8">التركيبة = زرّا تعديل + زر (مثال: Ctrl+Shift+S). التركيبات المحجوزة للمتصفح (مثل Ctrl+Shift+N) مرفوضة تلقائيًا. <kbd>Esc</kbd> لإغلاق النوافذ و<kbd>?</kbd> للمساعدة ثابتة ولا تتعارض.</div>
         </div>
       </div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><div><h2>أنواع بنود المراجعة</h2><p>تصنيف ديناميكي — يسري على كل المستشفيات</p></div></div></div>
+        <div class="panel-body"><div class="info-list" id="lineTypesBox"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.8">الكلمات الدالة تحدد انتماء البند للنوع. الحصة % سقف من إجمالي الفاتورة. أي إضافة تُسجَّل في النموذج نفسه وتُستخدم في كل المراجعات.</div>
+        </div>
+      </div>
       <div class="panel" style="margin-top:18px"><div class="panel-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div><div class="k" style="font-weight:700">تسجيل الخروج</div><div style="font-size:11px;color:var(--muted);margin-top:4px">إنهاء الجلسة الحالية</div></div>
         <button class="btn out" id="logoutBtn2">تسجيل الخروج</button>
