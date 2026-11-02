@@ -60,27 +60,7 @@ function registerTaxonomyReasons(){
   if(!VALIDATION_REASONS['dup-xinvoice']) VALIDATION_REASONS['dup-xinvoice'] = { label: 'تكرار البند في أكثر من مذكرة' + ' — القرار للمراجع', severity: 'attention', category: 'duplication' };
 }
 try { registerTaxonomyReasons(); } catch(e){}
-/* ---------- تكامل عبر الفواتير: نفس البند لنفس المريض في أكثر من مذكرة ---------- */
-function validateCrossInvoiceDup(){
-  if(typeof workingInvoices === 'undefined') return;
-  const seen = new Map();
-  (workingInvoices||[]).forEach((inv, ii) => (inv.patients||[]).forEach(p => {
-    const pk = ((p.nationalId||'').trim() || (p.name||'').trim()).toLowerCase();
-    (p.lines||[]).forEach(l => {
-      const b = (Number(l.qty)||0)*(Number(l.billedUnit)||0); if(b <= 0 || !l.code) return;
-      const k = pk + '‖' + String(l.code).toLowerCase();
-      if(!seen.has(k)) seen.set(k, []);
-      seen.get(k).push({ inv, ii, line: l });
-    });
-  }));
-  seen.forEach(group => {
-    const invs = new Set(group.map(g => g.ii));
-    group.forEach(g => {
-      if(invs.size > 1 && typeof flagLineAskReviewer === 'function') flagLineAskReviewer(g.line, 'dup-xinvoice');
-      else if(typeof unflagLineAskReviewer === 'function') unflagLineAskReviewer(g.line, 'dup-xinvoice');
-    });
-  });
-}
+/* كل مذكرة مستقلة بذاتها — لا فحص عبر الفواتير (أمر محمد 2026-11-02). */
 /* ---------- واجهة الإدارة في الإعدادات ---------- */
 function renderLineTypeSettings(){
   const box = document.getElementById('lineTypesBox'); if(!box) return;
