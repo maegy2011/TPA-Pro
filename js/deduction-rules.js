@@ -34,6 +34,7 @@ function bindDeductionRulesControls(){
 }
 function drStatus(r){
   const today = daysFromNow(0);
+  if(r.enabled === false) return { label:'موقوفة', cls:'inactive' };
   if(!r.active) return { label:'معطّلة', cls:'inactive' };
   if(r.effectiveFrom && today < r.effectiveFrom) return { label:'لم تبدأ', cls:'upcoming' };
   if(r.effectiveTo && today > r.effectiveTo) return { label:'منتهية', cls:'expired' };

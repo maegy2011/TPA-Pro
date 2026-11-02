@@ -48,6 +48,7 @@ function finalizeReview(){
   }
   const cid = activeClaim.id;
   activeClaim.invoices = JSON.parse(JSON.stringify(workingInvoices));
+  activeClaim._recalcUnlock = true;
   activeClaim.invoices.forEach(inv => (inv.patients||[]).forEach(p => computePatient(p, activeClaim, inv.date, inv)));
   activeClaim.reason = $('#rvReason').value;
   activeClaim.notes = $('#rvNotes').value.trim();
@@ -57,6 +58,7 @@ function finalizeReview(){
     activeClaim.priorApproval.date = $('#paDate').value;
   }
   recalcClaim(activeClaim);
+  delete activeClaim._recalcUnlock;
   if(activeClaim.status === 'pending') activeClaim.reviewedDate = daysFromNow(0);
   if(activeClaim.approved <= 0) activeClaim.status = 'rejected';
   else if(activeClaim.approved >= activeClaim.billed) activeClaim.status = 'approved';

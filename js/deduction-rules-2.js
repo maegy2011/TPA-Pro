@@ -142,12 +142,21 @@ function testDeductionRule(id){
   const rule = deductionRules.find(r => r.id === id);
   if(!rule){ showWarning('تنبيه','القاعدة غير موجودة'); return; }
   if(!claims.length){ showWarning('تنبيه','لا مطالبات للاختبار'); return; }
-  const claim = claims[0];
-  const inv0 = claim.invoices && claim.invoices[0];
-  const pat = inv0 && inv0.patients && inv0.patients[0];
-  if(!pat || !pat.lines || !pat.lines.length){ showWarning('تنبيه','لا بنود'); return; }
-  const line = pat.lines[0];
-  const inv = claim.invoices && claim.invoices[0];
+  let claim = null, inv0 = null, pat = null, line = null;
+  outer:
+  for(const c of claims){
+    const _ref = c.date || c.receivedDate || daysFromNow(0);
+    for(const inv of (c.invoices||[])){
+      for(const p of (inv.patients||[])){
+        for(const l of (p.lines||[])){
+          const _t = { claim: c, patient: p, invoice: inv, line: { ...l, lineBase: l.qty * l.billedUnit } };
+          if(ruleMatchesContext(rule, _t, _ref)){ claim = c; inv0 = inv; pat = p; line = l; break outer; }
+        }
+      }
+    }
+  }
+  if(!line){ showWarning('تنبيه','لا بند مطابق لنطاق هذه القاعدة في المطالبات الحالية — وسّع النطاق أو أضف بندًا تجريبيًا'); return; }
+  const inv = inv0;
   const ctx = { claim, patient: pat, invoice: inv, line: { ...line, lineBase: line.qty * line.billedUnit } };
   ctx.line.lineBase = line.qty * (line.tariffUnit != null ? Math.min(line.billedUnit, line.tariffUnit) : line.billedUnit);
   const refDate = claim.date || claim.receivedDate || daysFromNow(0);

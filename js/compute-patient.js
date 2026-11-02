@@ -304,6 +304,8 @@ function computePatient(pat, claim, refDate, invoice){
 }
 function recalcClaim(c){
   if(typeof clearValidationCache === 'function') clearValidationCache();
+  // تجميد المحفوظ: مطالبة مقفولة لا تُعاد حساب أرقامها المخزنة إلا لحظة حفظ مراجعة جديدة (عبر _recalcUnlock).
+  if(c && c.reviewedDate && c._recalcUnlock !== true) return;
   // Preserve the amount submitted by the source system before recalculation overwrites billed.
   // Existing records are migrated on first calculation; newly created claims should set this explicitly.
   if (c.submittedBilled === undefined || c.submittedBilled === null || c.submittedBilled === '') {
