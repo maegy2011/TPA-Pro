@@ -16,6 +16,7 @@ const VALIDATION_REASONS = {
   'cap-conflict':       { label: 'تعارض قواعد السقف — القرار للمراجع', severity: 'attention', category: 'rules' },
   'copay-conflict':     { label: 'تعارض قواعد التحمل — القرار للمراجع', severity: 'attention', category: 'rules' },
   'rule-cycle':         { label: 'اعتمادية دائرية — القرار للمراجع', severity: 'attention', category: 'rules' },
+  'rule-overlap':       { label: 'قواعد متداخلة على نفس البند — القرار للمراجع', severity: 'attention', category: 'rules' },
   'rule-requires-missing': { label: 'اعتمادية مفقودة — القرار للمراجع', severity: 'attention', category: 'rules' },
   'pa-pending':         { label: 'موافقة مسبقة قيد الطلب',       severity: 'attention', category: 'pa' },
   'duplicate':          { label: 'بند مكرر',                     severity: 'attention', category: 'duplication' },

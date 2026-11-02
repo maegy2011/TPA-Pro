@@ -256,6 +256,7 @@ function renderExceptions(){
       <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1}</div>
       <div style="font-size:12px;margin:6px 0">فاتورة ${fmt(billed)} · لائحة ${tariffTotal!==null?fmt(tariffTotal):'—'} · الأقل ${fmt(lesser)} · خصم ${rate}% → معتمد مقترح ${fmt(after)}</div>
       <div style="font-size:12px;font-weight:700;color:var(--warn)">⚠ ${escapeHtml(reasons)}</div>
+      ${ln._ruleOverlap ? `<div style="font-size:11.5px;color:var(--warn);margin:4px 0">⚖ القواعد: ${escapeHtml((ln._ruleOverlap.rules||[]).join(' × '))} — المطبق مؤقتًا (الأشد): ${fmt(ln._ruleOverlap.applied)} · التراكمي: ${fmt(ln._ruleOverlap.stacked)}</div>` : ''}
       <div style="font-size:11.5px;color:var(--muted);margin:4px 0">الاقتراح: ${escapeHtml(ln._suggestedAction?.type||'review')}</div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
         <button type="button" class="btn-sm" data-exc-act="approve" data-exc-key="${e.ii}-${e.pi}-${e.li}">اعتماد</button>

@@ -11,6 +11,24 @@ function resetComputedDeductionReasons(reasons){
  * @param {Object} [invoice] - الفاتورة
  * @returns {Object} pat بعد التحديث
  */
+function flagLineAskReviewer(l, code){
+  if(!l || !code) return;
+  if(!Array.isArray(l._checksFailed)) l._checksFailed = [];
+  if(!l._checksFailed.includes(code)) l._checksFailed.push(code);
+  if(l._decision !== 'auto-rejected'){
+    if(l._conflictForced !== true){ l._conflictForced = true; l._preConflictDecision = l._decision; }
+    l._decision = 'needs-attention';
+  }
+}
+function unflagLineAskReviewer(l, code){
+  if(!l || !Array.isArray(l._checksFailed)) return;
+  l._checksFailed = l._checksFailed.filter(x => x !== code);
+  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap');
+  if(!_still && l._conflictForced === true){
+    l._conflictForced = false;
+    if(l._decision === 'needs-attention') l._decision = l._preConflictDecision || 'auto-approved';
+  }
+}
 function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
   const allRules = deductionRules.filter(r => r.enabled !== false && r.active !== false);
@@ -90,6 +108,7 @@ function computePatient(pat, claim, refDate, invoice){
     const compositeLog = [];
     let current = (l.lineBaseAfterContract !== undefined ? l.lineBaseAfterContract : l.lineBase);
     let lastRuleId = null, lastRuleName = '', lastRuleRate = 0;
+    const _dedStart = pat.deductionReasons.length;
     for(const rule of lineRules){
       if(!checkRequires(rule, appliedIds)) continue;
       if(!ruleMatchesContext(rule, lctx, l._procedureDateUsed || refDate)) continue;
@@ -115,6 +134,47 @@ function computePatient(pat, claim, refDate, invoice){
           _addDed({ amount: _dedAmt, reason: rule.name || 'قاعدة خصم', reasonCode: rule.action || 'rule', source: 'rule', level: 'line', ref: { lineCode: l.code, ruleId: rule.id }, note: rule.rate ? `نسبة ${rule.rate}%` : '' });
         }
       }
+    }
+    // تراكم غير مصمم = سؤال للمراجع: إعادة تقييم مستقلة لكل وحدة مطبقة.
+    const _baseLine = (l.lineBaseAfterContract !== undefined ? l.lineBaseAfterContract : l.lineBase);
+    const _ind = [];
+    for(const rule of lineRules){
+      if(!appliedIds.has(rule.id)) continue;
+      let _p = null; const _ch = [];
+      try {
+        if(rule.isComposite){
+          const _r = evaluateCompositeRule(rule, { ...lctx, line: { ...l, lineBase: _baseLine } }, refDate);
+          if(_r && _r.newApproved !== undefined){ _p = Math.max(0, Math.min(_baseLine, _r.newApproved)); (_r.appliedChildRules||[]).forEach(c => _ch.push(c.id)); }
+        } else {
+          const _r = evaluateRuleAction(rule, { ...lctx, line: { ...l, lineBase: _baseLine } }, _baseLine);
+          if(_r && _r.newApproved !== undefined) _p = Math.max(0, Math.min(_baseLine, _r.newApproved));
+        }
+      } catch(e){}
+      if(_p !== null && _p < _baseLine) _ind.push({ rule, proposed: _p, children: _ch });
+    }
+    let _designed = true;
+    if(_ind.length > 1){
+      const _seen = new Set();
+      _ind.forEach((u, idx) => {
+        if(idx > 0){ const _req = (u.rule.requires && u.rule.requires.ruleIds) || []; if(!_req.some(id => _seen.has(id))) _designed = false; }
+        _seen.add(u.rule.id); (u.children||[]).forEach(id => _seen.add(id));
+      });
+    }
+    if(_ind.length > 1 && !_designed){
+      const _win = _ind.slice().sort((a,b)=>a.proposed-b.proposed)[0];
+      let _chained = _baseLine;
+      _ind.forEach(u => { _chained = Math.max(0, Math.min(_chained, u.proposed)); });
+      pat.deductionReasons.splice(_dedStart, pat.deductionReasons.length - _dedStart);
+      compositeLog.length = 0;
+      current = _win.proposed;
+      if(_win.rule.isComposite){ compositeLog.push({ id: _win.rule.id, name: _win.rule.name, children: _win.children }); lastRuleId = _win.rule.id; lastRuleName = _win.rule.name; lastRuleRate = 0; }
+      else { lastRuleId = _win.rule.id; lastRuleName = _win.rule.name; lastRuleRate = _win.rule.rate; }
+      l._ruleOverlap = { rules: _ind.map(u => u.rule.id), applied: _win.proposed, stacked: _chained };
+      _addDed({ amount: _baseLine - _win.proposed, reason: 'قواعد متداخلة — بانتظار المراجع', reasonCode: 'rule-overlap', source: 'rule', level: 'line', ref: { lineCode: l.code, ruleId: _win.rule.id }, note: _ind.map(u=>u.rule.name||u.rule.id).join(' × ') });
+      flagLineAskReviewer(l, 'rule-overlap');
+    } else {
+      l._ruleOverlap = null;
+      if(l._checksFailed && l._checksFailed.includes('rule-overlap')) unflagLineAskReviewer(l, 'rule-overlap');
     }
     l._autoApproved = current;
     l._appliedRuleIds = Array.from(appliedIds);
@@ -219,23 +279,13 @@ function computePatient(pat, claim, refDate, invoice){
   // تعليق البنود بانتظار قرار المراجع عند التعارض — تُرفع عنه تلقائيًا عند الحسم اليدوي (سقف/تحمل يدوي).
   if(needCapAsk || needCopayAsk){
     (pat.lines||[]).forEach(l => {
-      if(!Array.isArray(l._checksFailed)) l._checksFailed = [];
-      if(needCapAsk && !l._checksFailed.includes('cap-conflict')) l._checksFailed.push('cap-conflict');
-      if(needCopayAsk && !l._checksFailed.includes('copay-conflict')) l._checksFailed.push('copay-conflict');
-      if(l._decision !== 'auto-rejected'){
-        if(l._conflictForced !== true){ l._conflictForced = true; l._preConflictDecision = l._decision; }
-        l._decision = 'needs-attention';
-      }
+      if(needCapAsk) flagLineAskReviewer(l, 'cap-conflict');
+      if(needCopayAsk) flagLineAskReviewer(l, 'copay-conflict');
     });
   } else {
     (pat.lines||[]).forEach(l => {
-      if(!Array.isArray(l._checksFailed)) return;
-      const had = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict');
-      if(had) l._checksFailed = l._checksFailed.filter(x => x !== 'cap-conflict' && x !== 'copay-conflict');
-      if(had && l._conflictForced === true){
-        l._conflictForced = false;
-        if(l._decision === 'needs-attention') l._decision = l._preConflictDecision || 'auto-approved';
-      }
+      unflagLineAskReviewer(l, 'cap-conflict');
+      unflagLineAskReviewer(l, 'copay-conflict');
     });
   }
   if (pat._capAmt > 0) {
