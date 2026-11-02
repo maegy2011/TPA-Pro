@@ -5,6 +5,13 @@ function bindReviewModal(){
   if(pa) pa.addEventListener('change', updatePAWarning);
   const sr = document.getElementById('saveReview') || document.getElementById('rvPageSave');
   if(sr) sr.addEventListener('click', saveReview);
+  const sd = document.getElementById('rvPageSaveDraft');
+  if(sd && !sd.dataset.bound){ sd.dataset.bound='1'; sd.addEventListener('click', () => { const li = document.getElementById('rvDraftLabel'); saveReviewDraft(li ? li.value.trim() : ''); if(li) li.value=''; }); }
+  const dbox = document.getElementById('rvDraftsBox');
+  if(dbox && !dbox.dataset.bound){ dbox.dataset.bound='1'; dbox.addEventListener('click', (e) => {
+    const rs = e.target.closest('[data-restore-draft]'); if(rs){ restoreReviewDraft(rs.dataset.restoreDraft); return; }
+    const dl = e.target.closest('[data-delete-draft]'); if(dl){ deleteReviewDraft(dl.dataset.deleteDraft); return; }
+  }); }
   const sb = document.getElementById('rvPageBack');
   if(sb && !sb.dataset.bound) { sb.dataset.bound='1'; sb.addEventListener('click', () => closeReview()); }
   const st = document.getElementById('rvPageViewTimelineBtn');

@@ -31,6 +31,79 @@ function saveReview(){
   if(activeClaim.priorApproval && activeClaim.priorApproval.required && activeClaim.priorApproval.status !== 'approved'){ showWarning('موافقة ناقصة','متابعة؟', () => { if(!activeClaim._overrideChecklist) activeClaim._overrideChecklist=[]; activeClaim._overrideChecklist.push({ by:'reviewer', at:new Date().toISOString(), reason:'prior-approval', missing:['pa'] }); finalizeReview(); }); return; }
   finalizeReview();
 }
+/* ---------- مسودات المراجعة: نسخ عمل متعددة + اعتماد واحدة ---------- */
+const REVIEW_DRAFTS_MAX = 10;
+function _draftTotals(invoices){
+  let billed = 0, approved = 0;
+  (invoices||[]).forEach(inv => (inv.patients||[]).forEach(p => {
+    billed += (p.lines||[]).reduce((s,l) => s + (Number(l.qty)||0)*(Number(l.billedUnit)||0), 0);
+    approved += Number(p._final||0);
+  }));
+  return { billed: Math.round(billed), approved: Math.round(approved) };
+}
+function saveReviewDraft(label){
+  if(!activeClaim || !Array.isArray(workingInvoices)) return;
+  if(!Array.isArray(activeClaim._reviewDrafts)) activeClaim._reviewDrafts = [];
+  workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv); }));
+  const t = _draftTotals(workingInvoices);
+  const reviewer = (typeof appSettings !== 'undefined' && appSettings.reviewer && appSettings.reviewer.name) || 'المراجع';
+  activeClaim._reviewDrafts.push({
+    id: 'DRF-' + Date.now().toString(36),
+    at: new Date().toISOString(), actor: String(reviewer).slice(0,120),
+    label: String(label || '').slice(0,120),
+    billed: t.billed, approved: t.approved,
+    reason: ((document.getElementById('rvPageReason')||document.getElementById('rvReason')||{}).value)||'',
+    notes: ((document.getElementById('rvPageNotes')||document.getElementById('rvNotes')||{}).value||'').trim(),
+    invoices: JSON.parse(JSON.stringify(workingInvoices))
+  });
+  while(activeClaim._reviewDrafts.length > REVIEW_DRAFTS_MAX) activeClaim._reviewDrafts.shift();
+  if(typeof appendClaimAuditEvent === 'function') appendClaimAuditEvent(activeClaim, { action:'review.draft-saved', details:{ draft: activeClaim._reviewDrafts[activeClaim._reviewDrafts.length-1].id, label: String(label||''), billed: t.billed, approved: t.approved } });
+  if(typeof persistData === 'function') persistData(true);
+  if(typeof renderReviewDrafts === 'function') renderReviewDrafts();
+  if(typeof showSuccess === 'function') showSuccess('مسودة محفوظة', `المعتمد في هذه المسودة: ${fmt(t.approved)}`);
+}
+function restoreReviewDraft(id){
+  if(!activeClaim) return;
+  const d = (activeClaim._reviewDrafts||[]).find(x => x.id === id); if(!d) return;
+  const apply = () => {
+    workingInvoices = JSON.parse(JSON.stringify(d.invoices));
+    rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
+    workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv); }));
+    const rr = document.getElementById('rvPageReason')||document.getElementById('rvReason'); if(rr && d.reason !== undefined) rr.value = d.reason;
+    const nn = document.getElementById('rvPageNotes')||document.getElementById('rvNotes'); if(nn && d.notes !== undefined) nn.value = d.notes;
+    markSessionDirty(); renderActiveInvoice(); recalcReview();
+    if(typeof appendClaimAuditEvent === 'function') appendClaimAuditEvent(activeClaim, { action:'review.draft-restored', details:{ draft: id, label: d.label||'' } });
+    if(typeof persistData === 'function') persistData(true);
+    if(typeof showSuccess === 'function') showSuccess('تم', 'حُمّلت المسودة في مساحة العمل — راجع ثم احفظ أو اعتمد');
+  };
+  if(typeof isSessionDirty === 'function' && isSessionDirty()){ showWarning('مساحة العمل متغيرة', 'يوجد تعديلات غير محفوظة ستُستبدل بالمسودة. متابعة؟', apply); return; }
+  apply();
+}
+function deleteReviewDraft(id){
+  if(!activeClaim) return;
+  showDelete('حذف المسودة', 'سيتم حذف هذه المسودة نهائيًا.', () => {
+    activeClaim._reviewDrafts = (activeClaim._reviewDrafts||[]).filter(x => x.id !== id);
+    if(typeof appendClaimAuditEvent === 'function') appendClaimAuditEvent(activeClaim, { action:'review.draft-deleted', details:{ draft: id } });
+    if(typeof persistData === 'function') persistData(true);
+    if(typeof renderReviewDrafts === 'function') renderReviewDrafts();
+  });
+}
+function renderReviewDrafts(){
+  const box = document.getElementById('rvDraftsBox'); if(!box) return;
+  const drafts = (activeClaim && Array.isArray(activeClaim._reviewDrafts)) ? [...activeClaim._reviewDrafts].reverse() : [];
+  const cnt = document.getElementById('rvDraftsCount'); if(cnt) cnt.textContent = String(drafts.length);
+  if(!drafts.length){ box.innerHTML = '<div style="font-size:11px;color:var(--muted)">لا مسودات بعد — احفظ نسخة قبل التجربة.</div>'; return; }
+  box.innerHTML = drafts.map(d => `
+    <div class="rv-draft-row" style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px">
+      <div style="flex:1;min-width:0">
+        <b>${escapeHtml(d.label || 'مسودة بلا اسم')}</b>
+        <span style="color:var(--muted)"> · ${escapeHtml((d.at||'').slice(0,16).replace('T',' '))} · ${escapeHtml(d.actor||'')}</span>
+        <div style="color:var(--muted)">المطالب: ${fmt(d.billed||0)} · المعتمد: ${fmt(d.approved||0)}</div>
+      </div>
+      <button type="button" class="rv-ov-btn" data-restore-draft="${escapeHtml(d.id)}" title="استعادة في مساحة العمل">⤺</button>
+      <button type="button" class="rv-ov-btn reset" data-delete-draft="${escapeHtml(d.id)}" title="حذف">✕</button>
+    </div>`).join('');
+}
 function finalizeReview(){
   if(!activeClaim) return;
   if (typeof collectExceptions === 'function') {
@@ -47,6 +120,17 @@ function finalizeReview(){
   if(_noCapNote.length){ showWarning('سبب إلزامي', _noCapNote.join('<br>')+'<br><br>سجّل السبب بجانب حقل السقف/التحمل اليدوي.'); return; }
   }
   const cid = activeClaim.id;
+  // أرشفة تلقائية: النسخة المعتمدة السابقة تُحفظ كمسودة قبل الكتابة فوقها — لا يضيع تاريخ.
+  if(activeClaim.reviewedDate && Array.isArray(activeClaim.invoices) && activeClaim.invoices.length){
+    if(!Array.isArray(activeClaim._reviewDrafts)) activeClaim._reviewDrafts = [];
+    const _pt = _draftTotals(activeClaim.invoices);
+    activeClaim._reviewDrafts.push({ id:'DRF-'+Date.now().toString(36), at:new Date().toISOString(),
+      actor: ((typeof appSettings !== 'undefined' && appSettings.reviewer && appSettings.reviewer.name)||'المراجع'),
+      label:'نسخة معتمدة سابقة (أرشيف تلقائي)', billed:_pt.billed, approved:_pt.approved,
+      reason: activeClaim.reason||'', notes: activeClaim.notes||'',
+      invoices: JSON.parse(JSON.stringify(activeClaim.invoices)) });
+    while(activeClaim._reviewDrafts.length > REVIEW_DRAFTS_MAX) activeClaim._reviewDrafts.shift();
+  }
   activeClaim.invoices = JSON.parse(JSON.stringify(workingInvoices));
   activeClaim._recalcUnlock = true;
   activeClaim.invoices.forEach(inv => (inv.patients||[]).forEach(p => computePatient(p, activeClaim, inv.date, inv)));

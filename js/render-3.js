@@ -32,6 +32,8 @@ function buildClaimTimeline(claim){
     if(claim.reason) desc += ` — السبب: ${claim.reason}`;
     events.push({ date: claim.reviewedDate||claim.date, type:s.type, icon:s.icon, title:s.title, description:desc });
   } else events.push({ date: claim.reviewedDate||claim.receivedDate||claim.date, type:'review-pending', icon:'clock', title:'قيد المراجعة' });
+  (claim._reviewDrafts||[]).forEach(d => events.push({ date:(d.at||'').slice(0,10), type:'note', icon:'file', title:`مسودة — ${d.label||'بلا اسم'}`, description:`${d.actor||''} · المطالب ${fmtC(d.billed||0)} · المعتمد ${fmtC(d.approved||0)}` }));
+  if(claim._signedOff) events.push({ date:(claim._reviewedAt||claim.reviewedDate||'').slice(0,10), type:'review-approved', icon:'check', title:'توقيع المراجعة', description:`${claim._reviewedBy||''}` });
   if(claim.notes && claim.notes.trim()) events.push({ date: claim.reviewedDate||claim.date, type:'note', icon:'file', title:'ملاحظات', description: claim.notes });
   return events.sort((a,b)=> new Date(a.date) - new Date(b.date));
 }

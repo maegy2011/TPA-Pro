@@ -37,6 +37,16 @@ const PAGE_REVIEW = `
           </button>
         </div>
       </details>
+      <details class="rv-claim-header" id="rvDraftsDetails">
+        <summary>مسودات المراجعة <span id="rvDraftsCount" class="badge">0</span></summary>
+        <div class="rv-claim-header-body">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="rvDraftLabel" placeholder="اسم المسودة (اختياري)" style="flex:1">
+            <button type="button" class="btn-sm solid" id="rvPageSaveDraft">حفظ مسودة</button>
+          </div>
+          <div id="rvDraftsBox" style="display:grid;gap:6px"><div style="font-size:11px;color:var(--muted)">لا مسودات بعد — احفظ نسخة قبل التجربة.</div></div>
+        </div>
+      </details>
       <div class="rv-section-title">الفواتير</div>
       <div class="rv-invoice-tabs" id="rvPageInvoiceTabs"></div>
       <div id="rvPageInvoicePanel"></div>

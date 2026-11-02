@@ -56,6 +56,7 @@ function openReview(id){
   if(typeof recalcClaim === 'function') recalcClaim(c);
   workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, c, inv.date, inv); }));
   _fillReviewPage(c);
+  if(typeof renderReviewDrafts === 'function') renderReviewDrafts();
   // try modal for backward compat
   try {
     const sub = document.getElementById('rvSub');
