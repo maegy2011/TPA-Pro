@@ -39,6 +39,12 @@ function finalizeReview(){
       if(l._decision === 'needs-attention' || l._decision === 'pa-pending') pendingCount++;
     })));
     if (pendingCount > 0) { showWarning('استثناءات معلّقة', `بقي ${pendingCount} استثناء في المطالبة. انتقل إلى كل مريض وعالج استثناءاته قبل الحفظ.`); return; }
+  const _noCapNote = [];
+  (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach((p, pi) => {
+    if(p._capMode === 'manual' && Number(p._manualCapAmount||0) !== Number(p._autoCapAmt||0) && !(p._capNote||'').trim()) _noCapNote.push(`مريض ${pi+1}: سقف يدوي بلا سبب`);
+    if(p._copayMode === 'manual' && Number(p._manualCopayAmount||0) !== Number(p._autoCopayAmt||0) && !(p._copayNote||'').trim()) _noCapNote.push(`مريض ${pi+1}: تحمل يدوي بلا سبب`);
+  }));
+  if(_noCapNote.length){ showWarning('سبب إلزامي', _noCapNote.join('<br>')+'<br><br>سجّل السبب بجانب حقل السقف/التحمل اليدوي.'); return; }
   }
   const cid = activeClaim.id;
   activeClaim.invoices = JSON.parse(JSON.stringify(workingInvoices));

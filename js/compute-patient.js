@@ -217,7 +217,7 @@ function computePatient(pat, claim, refDate, invoice){
       } else if (l.approved < _baseForDed && _prevAuto >= _baseForDed) {
         _addDed({ amount: _baseForDed - l.approved, reason: 'تخفيض يدوي من المراجع', reasonCode: 'manual-reduction', source: 'manual', level: 'line', ref: { lineCode: l.code }, note: l.note || '' });
       }
-    } else if(l._overrideMode === 'reverted'){ l.approved = l.lineBase; }
+    } else if(l._overrideMode === 'reverted'){ l.approved = (l._autoApproved !== undefined ? l._autoApproved : l.lineBase); }
     else { l.approved = l._autoApproved; }
     if (!l._contractRejected && !l._maxlabsForced && !l.paRejected && !l._legalDeduction) {
       const _billed = (Number(l.qty)||0)*(Number(l.billedUnit)||0);
