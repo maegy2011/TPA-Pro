@@ -54,7 +54,7 @@ function saveInvoiceEditor(confirmed){
   const inpData = { category: invoiceCategory, invoiceCategory, admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'', letterDate, procedureDate };
   if(rvEditInvoiceIdx >= 0){
     const inv = workingInvoices[rvEditInvoiceIdx];
-    inv.type = type; inv.claimType = claimType; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; Object.assign(inv, inpData);
+    inv.type = type; inv.claimType = claimType; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; inv.patientName = pName; inv.patientNationalId = pNat; Object.assign(inv, inpData);
     if(inv.patients && inv.patients.length) inv.patients.forEach(p => { if(p.beneficiaryType === undefined) p.beneficiaryType = claimType; });
     else inv.patients = [mkPatient(newPatientId(inv), pName, pNat, [])];
     if(inv.patients[0]) { inv.patients[0].name = pName; inv.patients[0].nationalId = pNat; if(!inv.patients[0].beneficiaryType) inv.patients[0].beneficiaryType = claimType; }
@@ -62,7 +62,7 @@ function saveInvoiceEditor(confirmed){
   } else {
     const id = newInvoiceId();
     const inv = mkInvoice(id, type, date, [mkPatient(id+'-P1', pName, pNat, [])]);
-    inv.claimType = claimType; inv.debitNoteNumber = num || id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked;
+    inv.claimType = claimType; inv.debitNoteNumber = num || id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; inv.patientName = pName; inv.patientNationalId = pNat;
     if(inv.patients[0]) { inv.patients[0].beneficiaryType = claimType; inv.patients[0].documents = {}; }
     Object.assign(inv, inpData); workingInvoices.push(inv); rvActiveInvoiceIdx = workingInvoices.length-1;
   }
