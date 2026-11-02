@@ -136,7 +136,7 @@ function saveContract(){
 function suspendContractWithDialog(id){
   const c = getContractById(id); if(!c || c.suspended) return;
   const pname = (getProviderById(c.providerId)||{}).name || 'الجهة';
-  showWarning('تعليق العقد', `تعليق عقد "${pname}"؟ لن تُحتسب مطالباته في المراجعة حتى الاستئناف.`, () => {
+  showWarning('تعليق العقد', `تعليق عقد "${pname}"؟ التعليق علامة إدارية فقط — المراجعة تستمر تمهيدًا لسداد المديونية.`, () => {
     c.suspended = true;
     if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.suspended', details:{ startDate:c.startDate, endDate:c.endDate, discountRate:c.discountRate } });
     syncContractToProvider(c);
@@ -152,7 +152,6 @@ function resumeContract(id){
 }
 function renewContractWithDialog(id){
   const c = getContractById(id); if(!c) return;
-  if(c.suspended){ showWarning('تنبيه','العقد معلق — استأنفه أولًا قبل التجديد'); return; }
   const pname = (getProviderById(c.providerId)||{}).name || 'الجهة';
   const dur = c.durationYears || contractDurationYears(c.startDate, c.endDate) || 1;
   const newEnd = extendDateByYears(c.endDate, dur);

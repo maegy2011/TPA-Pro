@@ -30,7 +30,8 @@ function getContractContext(claim, effectiveDate) {
   if (!provider) return { ...empty, provider };
 
   const claimDate = String(effectiveDate || claim.date || claim.receivedDate || new Date().toISOString().slice(0,10)).slice(0,10);
-  let contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => { const start=String(c.startDate||''); const end=String(c.endDate||''); return c.providerId===provider.id && !c.suspended && (!start || start<=claimDate) && (!end || claimDate<=end); }) || null;
+  // ملاحظة: التعليق/التوقف حالة إدارية فقط — المراجعة لا تتوقف بتوقف العقد لأنها تمهيد لسداد المديونية.
+  let contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => { const start=String(c.startDate||''); const end=String(c.endDate||''); return c.providerId===provider.id && (!start || start<=claimDate) && (!end || claimDate<=end); }) || null;
 
   if (contract && Array.isArray(contract.rateVersions) && contract.rateVersions.length) {
     const version = contract.rateVersions.filter(v => (!v.effectiveFrom || v.effectiveFrom <= claimDate) && (!v.effectiveTo || claimDate <= v.effectiveTo))
