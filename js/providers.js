@@ -46,7 +46,7 @@ function renderProviders(){
     const st = getProviderStats(p.name);
     const c = getContractByProvider(p.id);
     return `<tr>
-      <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar">${escapeHtml(p.name.charAt(0))}</div><div><div class="prov-name">${escapeHtml(p.name)}</div><div class="prov-city">${escapeHtml(p.city)}</div></div></div></td>
+      <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar">${escapeHtml(p.name.charAt(0))}</div><div><div class="prov-name">${escapeHtml(p.name)}</div><div class="prov-city">${p.code != null ? 'كود '+escapeHtml(String(p.code))+' · ' : ''}${escapeHtml(p.city)}</div></div></div></td>
       <td data-label="النوع"><span class="badge ${TYPE_CLASS[p.type]||'info'}">${p.type}</span></td>
       <td data-label="التواصل" class="hide-sm">${escapeHtml(p.contact||'—')}</td>
       <td data-label="العقد"><span class="badge ${cs.cls}">${cs.label}</span>${c?`<div class="ctr-link" data-open-contract="${c.id}">خصم ${c.discountRate}%</div>`:''}</td>
@@ -75,11 +75,13 @@ function openProviderModal(id){
   selectedProvinces = isEdit ? (Array.isArray(p.province) ? [...p.province] : (p.city ? p.city.split('، ').map(x=>x.trim()).filter(Boolean) : [])) : [];
   if(isEdit){
     $('#pvName').value = p.name; $('#pvType').value = p.type;
+    const pvc = $('#pvCode'); if(pvc) pvc.value = (p.code != null ? p.code : '—');
     $('#pvContact').value = p.contact||''; $('#pvPhone').value = p.phone||'';
     $('#pvEmail').value = p.email||''; $('#pvNotes').value = p.notes||'';
     (el => { if (el) el.style.display = 'block'; })($('#deleteProvider'));
   } else {
     ['pvName','pvContact','pvPhone','pvEmail','pvNotes'].forEach(x => { const el = $('#'+x); if(el) el.value = ''; });
+    const pvc2 = $('#pvCode'); if(pvc2) pvc2.value = 'تلقائي';
     $('#pvType').value = 'مستشفى'; (el => { if (el) el.style.display = 'none'; })($('#deleteProvider'));
   }
   const s = $('#pvProvinceSearch'); if(s) s.value = '';
@@ -98,9 +100,9 @@ function saveProvider(){
   const provinceList = [...selectedProvinces];
   const data = { name, type:$('#pvType').value, province: provinceList, city: provinceList.join('، '), contact:$('#pvContact').value.trim(), phone:$('#pvPhone').value.trim(), email:$('#pvEmail').value.trim(), notes:$('#pvNotes').value.trim() };
   if(editingProviderId){ const p = getProviderById(editingProviderId); if(!p) return; const old = p.name; Object.assign(p, data); if(old !== name) renameProviderClaims(old, name); showSuccess('تم','تم التحديث'); }
-  else { const maxN = providers.reduce((m,p)=>{ const n = parseInt(p.id.split('-')[1], 10); return Math.max(m, isNaN(n)?0:n); }, 0); const newId = 'PRV-'+String(maxN+1).padStart(3,'0'); providers.push({ id:newId, ...data }); showSuccess('تم','تمت الإضافة'); }
+  else { const maxN = providers.reduce((m,p)=>{ const n = parseInt(p.id.split('-')[1], 10); return Math.max(m, isNaN(n)?0:n); }, 0); const newId = 'PRV-'+String(maxN+1).padStart(3,'0'); providers.push({ id:newId, code:nextProviderCode(), ...data }); showSuccess('تم','تمت الإضافة'); }
   closeProviderModal(); renderAll();
-  if(document.getElementById('batchModal')?.classList.contains('open')){ const sel = document.getElementById('btProvider'); if(sel && providers.length){ sel.innerHTML = providers.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${p.city?' — '+escapeHtml(p.city):''}</option>`).join(''); sel.value = providers[providers.length-1].id; } }
+  if(document.getElementById('batchModal')?.classList.contains('open')){ const sel = document.getElementById('btProvider'); if(sel && providers.length){ const contracted = providers.filter(p => (typeof contracts !== 'undefined' ? contracts : []).some(c => c.providerId === p.id)); renderProviderOptions(document.getElementById('btProviderSearch')?.value||''); if(contracted.length) sel.value = contracted[contracted.length-1].id; } }
 }
 function deleteProviderWithDialog(id){
   const p = getProviderById(id); if(!p) return;

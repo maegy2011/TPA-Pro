@@ -118,12 +118,36 @@ function getProviderStats(name){
   const r = b ? (d/b*100) : 0;
   return { claims:l.length, billed:b, approved:a, deduction:d, rate:r };
 }
-function providerHasClaims(name){ return claims.some(c => c.provider === name); }
+function providerHasClaims(ref){
+  const plist = (typeof providers !== 'undefined' ? providers : []);
+  const p = (typeof getProviderById === 'function' ? getProviderById(ref) : null) || plist.find(x => x.name === ref || x.code === ref);
+  const cl = (typeof claims !== 'undefined' ? claims : []);
+  if(p && p.code != null && cl.some(c => c.providerCode === p.code)) return true;
+  const nm = p ? p.name : ref;
+  return cl.some(c => c.provider === nm);
+}
+function nextProviderCode(){
+  const plist = (typeof providers !== 'undefined' ? providers : []);
+  return plist.reduce((m,p)=>Math.max(m, Number(p.code)||0), 0) + 1;
+}
+/** ترحيل: كود رقمي فريد لكل جهة + ربط المطالبات الموجودة بالكود. */
+function ensureProviderCodes(){
+  const plist = (typeof providers !== 'undefined' ? providers : []);
+  let max = plist.reduce((m,p)=>Math.max(m, Number(p.code)||0), 0);
+  plist.forEach(p => { if(!(Number(p.code)>0)){ max += 1; p.code = max; } });
+  const cl = (typeof claims !== 'undefined' ? claims : []);
+  cl.forEach(c => {
+    if(c.providerCode != null) return;
+    const p = plist.find(x => x.name === c.provider || x.id === c.provider || (c.providerId && x.id === c.providerId));
+    if(p) c.providerCode = p.code;
+  });
+}
 function contractHasClaims(id){
   const c = getContractById(id); if(!c) return false;
   if((typeof batches !== 'undefined' ? batches : []).some(b => b.providerId === c.providerId)) return true;
   const p = getProviderById(c.providerId);
-  if(p && (typeof claims !== 'undefined' ? claims : []).some(cl => cl.provider === p.name)) return true;
+  const cl = (typeof claims !== 'undefined' ? claims : []);
+  if(p && cl.some(x => (p.code != null && x.providerCode === p.code) || x.provider === p.name)) return true;
   return false;
 }
 function renameProviderClaims(oldName, newName){

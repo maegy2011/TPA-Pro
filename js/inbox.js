@@ -125,10 +125,10 @@ function saveBatch(another){
     const b = getBatchById(editingBatchId);
     if(b){ b.providerId = providerId; b.month = month; b.periodType = periodType; b.receivedDate = receivedDate; b.status = status; b.notes = notes; b.claimDate = claimDate; b.claimReceivedDate = claimReceivedDate; b.claimsCount = 1; }
   } else {
-    batches.push({ id: batchId, receivedNumber, providerId, month, periodType, receivedDate, status, notes, patient: '', claimDate, claimReceivedDate, claimsCount:1, totalBilled:billed });
+    batches.push({ id: batchId, receivedNumber, providerId, providerCode:(p&&p.code!=null?p.code:null), month, periodType, receivedDate, status, notes, patient: '', claimDate, claimReceivedDate, claimsCount:1, totalBilled:billed });
     // create a claim with the intake total — amounts recomputed during review from lines
     const claimId = generateClaimId();
-    claims.push({ id: claimId, patient: '', provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed });
+    claims.push({ id: claimId, patient: '', provider: p?p.name:'', providerCode:(p&&p.code!=null?p.code:null), type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed });
     // set billed on claim
     const c = claims[claims.length-1]; c.billed = billed; c.approved = 0; c.eligible = billed;
   }

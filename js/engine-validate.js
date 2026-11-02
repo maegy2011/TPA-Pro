@@ -26,34 +26,47 @@ function getContractContext(claim, effectiveDate) {
   const empty = { provider: null, contract: null, tariff: null, serviceOverrides: {} };
   if (!claim) return empty;
 
-  const provider = (typeof providers !== 'undefined' ? providers : []).find(p => p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId)) || null;
+  const plist = (typeof providers !== 'undefined' ? providers : []);
+  const provider = plist.find(p => (claim.providerCode != null && p.code === claim.providerCode) || p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId)) || null;
   if (!provider) return { ...empty, provider };
 
   const claimDate = String(effectiveDate || claim.date || claim.receivedDate || new Date().toISOString().slice(0,10)).slice(0,10);
-  // ملاحظة: التعليق/التوقف حالة إدارية فقط — المراجعة لا تتوقف بتوقف العقد لأنها تمهيد لسداد المديونية.
-  let contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => { const start=String(c.startDate||''); const end=String(c.endDate||''); return c.providerId===provider.id && (!start || start<=claimDate) && (!end || claimDate<=end); }) || null;
+  // لا يجوز عقدان فعالان لنفس الجهة — الأفضلية للعقد الفعال ثم الأحدث؛ والمراجعة لا تتوقف بتوقف العقد.
+  const covering = (typeof contracts !== 'undefined' ? contracts : []).filter(c => { const start=String(c.startDate||''); const end=String(c.endDate||''); return c.providerId===provider.id && (!start || start<=claimDate) && (!end || claimDate<=end); });
+  let contract = covering.find(c => (typeof effectiveContractStatus === 'function' ? effectiveContractStatus(c) : '') === 'active')
+    || covering.slice().sort((a,b)=>String(b.startDate||'').localeCompare(String(a.startDate||'')) || String(b.endDate||'').localeCompare(String(a.endDate||'')))[0] || null;
 
+  // العقد على أحدث نسخة خصم دائمًا.
   if (contract && Array.isArray(contract.rateVersions) && contract.rateVersions.length) {
-    const version = contract.rateVersions.filter(v => (!v.effectiveFrom || v.effectiveFrom <= claimDate) && (!v.effectiveTo || claimDate <= v.effectiveTo))
-      .sort((a,b)=>String(b.effectiveFrom||'').localeCompare(String(a.effectiveFrom||'')))[0];
+    const version = contract.rateVersions.slice().sort((a,b)=>String(b.effectiveFrom||'').localeCompare(String(a.effectiveFrom||'')))[0];
     if (version) contract = { ...contract, ...version, id:contract.id, providerId:contract.providerId, startDate:contract.startDate, endDate:contract.endDate, rateVersionEffectiveDate:version.effectiveFrom };
   }
-  let tariffBase = null;
-  const applicable = t => (typeof isTariffApplicableForDate === 'function') ? isTariffApplicableForDate(t, claimDate) : effectiveTariffStatus(t) === 'active';
-  if (contract?.tariffId) {
-    tariffBase = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId && applicable(t)) || null;
-  }
-  if (!tariffBase) {
-    tariffBase = (typeof tariffs !== 'undefined' ? tariffs : []).find(t =>
-      ((contract && (t.linkedContractIds || []).includes(contract.id)) ||
-       (t.linkedProviderIds || []).includes(provider.id)) && applicable(t)
-    ) || null;
-  }
-  const resolvedVersion = tariffBase && typeof getTariffVersionForDate==='function' ? getTariffVersionForDate(tariffBase,claimDate) : null;
-  let resolvedServices = (typeof getTariffServicesForDate === 'function') ? getTariffServicesForDate(tariffBase, claimDate) : ((tariffBase && tariffBase.services)||[]);
+  const tlist = (typeof tariffs !== 'undefined' ? tariffs : []);
+  const applicable = t => (typeof isTariffApplicableForDate === 'function') ? isTariffApplicableForDate(t, claimDate) : ((typeof effectiveTariffStatus === 'function' ? effectiveTariffStatus(t) : '') === 'active');
+  const TAPRIO = { general:0, supplementary:1, private:2 };
+  const trank = t => (t && TAPRIO[t.type] != null) ? TAPRIO[t.type] : 9;
+  let directBase = null;
+  if (contract && contract.tariffId) directBase = tlist.find(t => t.id === contract.tariffId && applicable(t)) || null;
+  const linked = tlist.filter(t =>
+    ((contract && (t.linkedContractIds || []).includes(contract.id)) ||
+     (t.linkedProviderIds || []).includes(provider.id)) && applicable(t)
+  );
+  if (directBase && !linked.includes(directBase)) linked.push(directBase);
+  // دمج اللوائح (عامة + مكملة + خاصة): الأعلى أولوية يغلب عند تعارض نفس الكود.
+  let mergedServices = [];
+  linked.slice().sort((a,b)=>trank(a)-trank(b)).forEach(t => {
+    const svcs = (typeof getTariffServicesForDate === 'function') ? getTariffServicesForDate(t, claimDate) : (t.services||[]);
+    (svcs||[]).forEach(s => {
+      const i = mergedServices.findIndex(x=>String(x.code)===String(s.code));
+      if(i>=0) mergedServices[i]=s; else mergedServices.push(s);
+    });
+  });
+  const primary = directBase || linked.slice().sort((a,b)=>trank(b)-trank(a))[0] || null;
+  const resolvedVersion = primary && typeof getTariffVersionForDate==='function' ? getTariffVersionForDate(primary,claimDate) : null;
+  let resolvedServices = mergedServices;
   const _incF = (typeof getContractIncreaseFactor === 'function') ? getContractIncreaseFactor(contract, claimDate) : 1;
   if(_incF !== 1 && Array.isArray(resolvedServices)) resolvedServices = resolvedServices.map(s => ({...s, currentPrice:(s.currentPrice===null||s.currentPrice===undefined)?s.currentPrice:(Math.round(Number(s.currentPrice)*_incF*100)/100)}));
-  const tariff = tariffBase ? { ...tariffBase, services: resolvedServices, _resolvedVersionEffectiveDate: resolvedVersion && resolvedVersion.effectiveDate || tariffBase.effectiveDate, _increaseFactorApplied: _incF } : null;
+  const tariff = primary ? { ...primary, services: resolvedServices, _resolvedVersionEffectiveDate: resolvedVersion && resolvedVersion.effectiveDate || primary.effectiveDate, _increaseFactorApplied: _incF } : null;
 
   const serviceOverrides = contract?.serviceOverrides || {};
 

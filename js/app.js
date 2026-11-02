@@ -143,6 +143,7 @@ function initApp(){
       setTimeout(() => showWarning('تنبيه جلسات المراجعة', 'تعذر قراءة جلسات المراجعة المحفوظة. تم الاحتفاظ بها ومنع استبدالها تلقائيًا.'), 500);
     }
   }
+  if(typeof ensureProviderCodes === 'function'){ try{ ensureProviderCodes(); }catch(e){} }
   renderAll();
   if (typeof checkOverdueClaims === 'function') setTimeout(checkOverdueClaims, 1000);
   setTimeout(() => { if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); }, 0);
