@@ -40,21 +40,7 @@ function computePatient(pat, claim, refDate, invoice){
   (pat.lines||[]).forEach(l => {
     const procedureDate = String(l.procedureDate || l.serviceDate || l.date || (invoice && invoice.procedureDate) || (invoice && invoice.date) || refDate).slice(0,10);
     const lineCtx = getContractContext(claim, procedureDate);
-    let lineTariff = lineCtx.tariff;
-    if (l.tariffId && typeof tariffs !== 'undefined') {
-      lineTariff = null;
-      const baseTariff = tariffs.find(t=>t.id===l.tariffId);
-      if (baseTariff && typeof isTariffApplicableForDate==='function' && isTariffApplicableForDate(baseTariff,procedureDate)) {
-        const version = typeof getTariffVersionForDate==='function' ? getTariffVersionForDate(baseTariff,procedureDate) : null;
-        let ovSvcs = version ? (version.services||[]) : (baseTariff.services||[]);
-        const _of = (typeof getContractIncreaseFactor==='function' && lineCtx.contract) ? getContractIncreaseFactor(lineCtx.contract, procedureDate) : 1;
-        if(_of !== 1 && Array.isArray(ovSvcs)) ovSvcs = ovSvcs.map(s => ({...s, currentPrice:(s.currentPrice===null||s.currentPrice===undefined)?s.currentPrice:(Math.round(Number(s.currentPrice)*_of*100)/100)}));
-        // توحيد: اللائحة المختارة يدويًا تُدمج فوق سياق اللوائح وتغلب عند تعارض نفس الكود، مع معامل الزيادة.
-        const base = (lineCtx.tariff && Array.isArray(lineCtx.tariff.services)) ? [...lineCtx.tariff.services] : [];
-        ovSvcs.forEach(s => { const i = base.findIndex(x => String(x.code) === String(s.code)); if(i>=0) base[i]=s; else base.push(s); });
-        lineTariff = { ...baseTariff, services: base, _resolvedVersionEffectiveDate:version&&version.effectiveDate||baseTariff.effectiveDate, _increaseFactorApplied:_of };
-      }
-    }
+    const lineTariff = (typeof resolveLineTariff === 'function') ? resolveLineTariff(l, lineCtx, procedureDate) : lineCtx.tariff;
     const effectiveLineCtx = { ...lineCtx, tariff:lineTariff };
     l._procedureDateUsed = procedureDate;
     if (typeof tpaBeneficiaryTypeForPatient === 'function') {
@@ -69,24 +55,14 @@ function computePatient(pat, claim, refDate, invoice){
       l._ageAtProcedure = beneficiary.age;
       if (beneficiary.dob) pat.dateOfBirthFromNationalId = beneficiary.dob;
     }
-    const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
-    // re-read tariff price from current tariff (source of truth)
-    let tariffUnit = (l.tariffUnit !== null && l.tariffUnit !== undefined) ? Number(l.tariffUnit) : null;
-    if (l.tariffId && !effectiveLineCtx.tariff) tariffUnit = null;
-    if (effectiveLineCtx.tariff) {
-      tariffUnit = null;
-      const svc = (effectiveLineCtx.tariff.services||[]).find(s => String(s.code) === String(l.code));
-      if (svc && svc.currentPrice !== undefined && svc.currentPrice !== null) tariffUnit = Number(svc.currentPrice);
-    }
-    l.tariffUnit = tariffUnit;
-    const hasT = (tariffUnit !== null && tariffUnit !== undefined);
-    const tariffTotal = hasT ? (Number(l.qty)||0) * tariffUnit : billed;
-    const lesser = hasT ? Math.min(billed, tariffTotal) : billed;
-    l.lineBase = lesser;
+    // مصدر الحقيقة الوحيد للحساب — أي تعديل مستقبلي في computeLineAmounts فقط.
+    const amounts = computeLineAmounts(l, effectiveLineCtx, procedureDate);
+    l.tariffUnit = amounts.tariffUnit;
+    const hasT = amounts.hasT;
+    l.lineBase = amounts.lesser;
     if(l._overrideMode === undefined) l._overrideMode = 'auto';
 
-    const adminExempt = !!(l && (l._adminExempt === true || l.adminExempt === true));
-    const covered = adminExempt ? true : (!l._manualEntry && isServiceCovered(effectiveLineCtx, l.code) && hasT);
+    const covered = amounts.covered;
     if(!covered){
       l._autoApproved = 0;
       l._contractRejected = true;
@@ -102,9 +78,8 @@ function computePatient(pat, claim, refDate, invoice){
       }
       return;
     }
-    const rate = getContractRateForService(effectiveLineCtx, l.code);
-    l._contractRate = rate;
-    l.lineBaseAfterContract = Math.round(lesser * (1 - rate / 100));
+    l._contractRate = amounts.rate;
+    l.lineBaseAfterContract = amounts.afterContract;
     l._contractRejected = false;
   });
   const compositeChildren = new Set((allRules.filter(r => r.isComposite)).flatMap(r => r.compositeConfig?.childRuleIds || []));

@@ -43,15 +43,18 @@ function renderDeductionRules(){
   const activeN = deductionRules.filter(r => drStatus(r).cls === 'active').length;
   const capN = deductionRules.filter(r => r.type === 'coverage_cap').length;
   const copayN = deductionRules.filter(r => r.type === 'retiree_copay').length;
+  const learnedN = deductionRules.filter(r => r.source === 'learned' && r.enabled === false).length;
   $('#drKpi').innerHTML = `
     <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">القواعد</div><div class="kpi-val">${deductionRules.length} <small>قاعدة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">${activeN} نشطة</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">سقف</div><div class="kpi-val">${capN} <small>قاعدة</small></div></div><div class="kpi-ico">${kpiIcon('file')}</div></div><div class="kpi-foot">للعاملين</div></div>
     <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">تحمل</div><div class="kpi-val">${copayN} <small>قاعدة</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">للمعاشات</div></div>
-    <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">إجراءات</div><div class="kpi-val">${paProcedures.length} <small>إجراء</small></div></div><div class="kpi-ico">${kpiIcon('contract')}</div></div><div class="kpi-foot">الموافقة</div></div>`;
+    <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">إجراءات</div><div class="kpi-val">${paProcedures.length} <small>إجراء</small></div></div><div class="kpi-ico">${kpiIcon('contract')}</div></div><div class="kpi-foot">الموافقة</div></div>
+    ${learnedN ? `<div class="kpi" style="cursor:pointer;border-color:var(--gold)" onclick="drFilter='learned';$$('#drFilterChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.drf==='learned'));renderDeductionRules()"><div class="kpi-top"><div><div class="kpi-label">مسودات مستفادة</div><div class="kpi-val">${learnedN} <small>بانتظار التفعيل</small></div></div><div class="kpi-ico">${kpiIcon('star')}</div></div><div class="kpi-foot">اضغط للعرض والتفعيل</div></div>` : ''}`;
   const list = deductionRules.filter(r => {
     if(drFilter === 'active' && drStatus(r).cls !== 'active') return false;
     if(drFilter === 'expired' && drStatus(r).cls !== 'expired') return false;
     if((drFilter === 'coverage_cap' || drFilter === 'retiree_copay') && r.type !== drFilter) return false;
+    if(drFilter === 'learned' && !(r.source === 'learned' && r.enabled === false)) return false;
     if(drSearch){ const q = drSearch; return r.name.toLowerCase().includes(q) || r.type.includes(q); }
     return true;
   });

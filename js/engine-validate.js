@@ -101,6 +101,42 @@ function isServiceCovered(ctx, code) {
   return true;
 }
 
+/* ---------- مصدر الحقيقة الوحيد لحساب البند (السعر/التغطية/الخصم) ----------
+أي تعديل مستقبلي على معادلة البند يتم هنا فقط — compute-patient و validateLine يستهلكانها. */
+function resolveLineTariff(line, baseCtx, procedureDate){
+  const baseTariff = (baseCtx && baseCtx.tariff) || null;
+  if(!(line && line.tariffId && typeof tariffs !== 'undefined')) return baseTariff;
+  let lineTariff = null;
+  const base = tariffs.find(t => t.id === line.tariffId);
+  if(base && typeof isTariffApplicableForDate === 'function' && isTariffApplicableForDate(base, procedureDate)){
+    const version = (typeof getTariffVersionForDate === 'function') ? getTariffVersionForDate(base, procedureDate) : null;
+    let ovSvcs = version ? (version.services||[]) : (base.services||[]);
+    const _of = (typeof getContractIncreaseFactor === 'function' && baseCtx && baseCtx.contract) ? getContractIncreaseFactor(baseCtx.contract, procedureDate) : 1;
+    if(_of !== 1 && Array.isArray(ovSvcs)) ovSvcs = ovSvcs.map(s => ({...s, currentPrice:(s.currentPrice===null||s.currentPrice===undefined)?s.currentPrice:(Math.round(Number(s.currentPrice)*_of*100)/100)}));
+    const merged = (baseTariff && Array.isArray(baseTariff.services)) ? [...baseTariff.services] : [];
+    (ovSvcs||[]).forEach(s => { const i = merged.findIndex(x => String(x.code) === String(s.code)); if(i>=0) merged[i]=s; else merged.push(s); });
+    lineTariff = { ...base, services: merged, _resolvedVersionEffectiveDate:version&&version.effectiveDate||base.effectiveDate, _increaseFactorApplied:_of };
+  }
+  return lineTariff;
+}
+function computeLineAmounts(line, ctx, procedureDate){
+  ctx = ctx || {};
+  const billedTotal = (Number(line.qty)||0) * (Number(line.billedUnit)||0);
+  const tariff = resolveLineTariff(line, { tariff: ctx.tariff, contract: ctx.contract }, procedureDate);
+  let tariffUnit = null;
+  if(tariff){
+    const svc = (tariff.services||[]).find(s => String(s.code) === String(line.code));
+    if(svc && svc.currentPrice !== undefined && svc.currentPrice !== null) tariffUnit = Number(svc.currentPrice);
+  }
+  const hasT = (tariffUnit !== null && tariffUnit !== undefined);
+  const tariffTotal = hasT ? (Number(line.qty)||0) * tariffUnit : null;
+  const lesser = (tariffTotal !== null) ? Math.min(billedTotal, tariffTotal) : billedTotal;
+  const rate = (typeof getContractRateForService === 'function') ? getContractRateForService({ contract: ctx.contract, serviceOverrides: ctx.serviceOverrides }, line.code) : 0;
+  const adminExempt = !!(line && (line._adminExempt === true || line.adminExempt === true));
+  const covered = adminExempt ? true : (!line._manualEntry && (typeof isServiceCovered === 'function' ? isServiceCovered({ tariff, contract: ctx.contract, serviceOverrides: ctx.serviceOverrides }, line.code) : true) && hasT);
+  const afterContract = covered ? Math.round(lesser * (1 - rate/100)) : 0;
+  return { billedTotal, tariff, tariffUnit, hasT, tariffTotal, lesser, rate, covered, afterContract };
+}
 /* ---------- التخزين المؤقت لنتائج الفحص ---------- */
 const VALIDATION_CACHE = new Map();
 function _validationCacheKey(line, ctx){
@@ -135,10 +171,12 @@ function validateLine(line, ctx) {
   const failed = [];
   const reductions = [];
 
-  const billedTotal = (Number(line.qty) || 0) * (Number(line.billedUnit) || 0);
   const code = String(line.code || '').trim();
-
-  const tariffSvc = (tariff?.services || []).find(s => String(s.code) === code) || null;
+  // نفس معادلة compute-patient — مصدر واحد للحقيقة.
+  const _procDate = String(line.procedureDate || line.serviceDate || line.date || (invoice && invoice.date) || (claim && (claim.date || claim.receivedDate)) || '').slice(0,10) || null;
+  const amounts = computeLineAmounts(line, ctxFull, _procDate);
+  const billedTotal = amounts.billedTotal;
+  const tariffSvc = amounts.tariff ? ((amounts.tariff.services||[]).find(s => String(s.code) === code) || null) : null;
   const adminExempt = !!(line && (line._adminExempt === true || line.adminExempt === true));
   if (!tariffSvc && !adminExempt) {
     failed.push(line._manualEntry ? 'manual-entry' : 'not-in-tariff');
@@ -149,7 +187,7 @@ function validateLine(line, ctx) {
   }
 
   if (tariffSvc && !line._manualEntry) {
-    if (!isServiceCovered(ctxFull, code)) {
+    if (!isServiceCovered({ ...ctxFull, tariff: amounts.tariff }, code)) {
       failed.push('not-covered');
     } else {
       passed.push('covered');
@@ -182,8 +220,8 @@ function validateLine(line, ctx) {
     }
   }
 
-  const tariffUnit = tariffSvc?.currentPrice ?? null;
-  const tariffTotal = tariffUnit !== null ? (Number(line.qty) || 0) * tariffUnit : null;
+  const tariffUnit = amounts.tariffUnit;
+  const tariffTotal = amounts.tariffTotal;
 
   if (tariffSvc && tariffTotal !== null) {
     if (billedTotal > tariffTotal + 0.01) {
@@ -245,10 +283,10 @@ function validateLine(line, ctx) {
     suggestedAction = { type: 'reduce', reason: reductions[0] };
   }
 
-  const contractRate = getContractRateForService(ctxFull, code);
-  const covered = adminExempt ? true : (!line._manualEntry && isServiceCovered(ctxFull, code) && !!tariffSvc);
-  const lesser = tariffTotal !== null ? Math.min(billedTotal, tariffTotal) : billedTotal;
-  const afterContract = covered ? Math.round(lesser * (1 - contractRate / 100)) : 0;
+  const contractRate = amounts.rate;
+  const covered = amounts.covered;
+  const lesser = amounts.lesser;
+  const afterContract = amounts.afterContract;
 
   function _mapLegalKey(r){ 
     if(r === 'not-in-tariff') return 'not-in-tariff';
