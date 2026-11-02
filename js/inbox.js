@@ -3,8 +3,9 @@ let intakeMonthFilter = 'all', intakeStatusFilter = 'all', intakeSearch = '', ed
 let workingBatchClaim = null;
 function renderProviderOptions(filter){
   const sel = $('#btProvider'); if(!sel) return;
+  const contracted = providers.filter(p => (typeof contracts !== 'undefined' ? contracts : []).some(c => c.providerId === p.id));
   const q = (filter||'').trim().toLowerCase();
-  const list = q ? providers.filter(p => (p.name||'').toLowerCase().includes(q) || (p.city||'').toLowerCase().includes(q)) : providers;
+  const list = q ? contracted.filter(p => (p.name||'').toLowerCase().includes(q) || (p.city||'').toLowerCase().includes(q)) : contracted;
   sel.innerHTML = list.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${p.city?' — '+escapeHtml(p.city):''}</option>`).join('');
   if(!list.length) sel.innerHTML = '<option value="">لا نتائج</option>';
 }
@@ -114,6 +115,7 @@ function saveBatch(another){
   const billed = Number($('#btBilled').value);
   const notes = $('#btNotes').value.trim();
   if(!providerId){ showWarning('تنبيه','اختر الجهة'); return; }
+  if(!(typeof contracts !== 'undefined' ? contracts : []).some(c => c.providerId === providerId)){ showWarning('تنبيه','لا يوجد تعاقد مع هذه الجهة — لا يمكن استلام مطالبة (حالة العقد لا تمنع الاستلام)'); return; }
   if(!month){ showWarning('تنبيه','أدخل فترة المطالبة'); return; }
   if(!billed || billed <= 0){ showWarning('تنبيه','أدخل القيمة الإجمالية'); return; }
   const p = getProviderById(providerId);
