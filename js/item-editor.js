@@ -51,9 +51,12 @@ function applyServiceToLine(svc) {
   $('#lnName').value = svc.name;
   $('#lnCategory').value = svc.category || 'أخرى';
   $('#lnTariffUnit').value = svc.currentPrice;
-  $('#lnBilledUnit').value = svc.currentPrice;
-  $('#lnBilledTotal').value = (Math.max(1, Number($('#lnQty').value)||1) * Number(svc.currentPrice||0)).toFixed(2);
   $('#lnContractDiscount').value = covered ? contractRate : '—';
+  // لا تعبئة سعر الوحدة/الإجمالي تلقائيًا؛ مربع 선택 مطابقة للائحة يتحكم بذلك.
+  const matchU = document.getElementById('lnBilledUnitMatch'); if (matchU) matchU.checked = false;
+  const matchT = document.getElementById('lnBilledTotalMatch'); if (matchT) matchT.checked = false;
+  const bu = document.getElementById('lnBilledUnit'); if (bu) { bu.value = ''; bu.readOnly = false; }
+  const bt = document.getElementById('lnBilledTotal'); if (bt) { bt.value = ''; bt.readOnly = false; }
 
   lnSelectedTariffId = svc.tariffId || ctx.contract?.tariffId || ctx.tariff?.id || '';
 
@@ -115,13 +118,18 @@ function openLineEditor(patIdx, lineIdx) {
 
   if (l) {
     const inTariff = services.some(s => String(s.code) === String(l.code));
+    if (document.getElementById('lnProcedureDate')) document.getElementById('lnProcedureDate').value = l.procedureDate || (inv.procedureDate || inv.date || '');
     if (inTariff) {
       sel.value = l.code;
       const svc = services.find(s => String(s.code) === String(l.code));
       applyServiceToLine(svc);
       $('#lnQty').value = l.qty;
+      const match = (Number(l.billedUnit) === Number(svc && svc.currentPrice));
+      const mu = document.getElementById('lnBilledUnitMatch'); if (mu) mu.checked = match;
+      const mt = document.getElementById('lnBilledTotalMatch'); if (mt) mt.checked = match;
       if (l.billedUnit !== null && l.billedUnit !== undefined) $('#lnBilledUnit').value = l.billedUnit;
       $('#lnBilledTotal').value = (Number(l.qty||1) * Number(l.billedUnit||0)).toFixed(2);
+      syncTariffMatch();
     } else {
       sel.value = '__manual__';
       $('#lnCode').value = l.code || '';
@@ -144,6 +152,7 @@ function openLineEditor(patIdx, lineIdx) {
     $('#lnQty').value = 1;
     $('#lnBilledUnit').value = '';
     $('#lnBilledTotal').value = '';
+    if (document.getElementById('lnProcedureDate')) document.getElementById('lnProcedureDate').value = inv.procedureDate || inv.date || '';
     toggleManualFields(false);
   }
 
@@ -177,6 +186,17 @@ function saveLineEditor() {
   const bu = totalBilled > 0 && Number(qtyInput.value) > 0 ? totalBilled / Number(qtyInput.value) : (Number($('#lnBilledUnit').value) || 0);
   const tuRaw = $('#lnTariffUnit').value.trim();
   const tu = (tuRaw === '' || tuRaw === '—') ? null : Number(tuRaw);
+  const procedureDate = document.getElementById('lnProcedureDate') ? document.getElementById('lnProcedureDate').value : (inv.procedureDate || inv.date || '');
+  // Enforce tariff match if checkbox selected
+  const matchChecked = (document.getElementById('lnBilledUnitMatch') && document.getElementById('lnBilledUnitMatch').checked) || (document.getElementById('lnBilledTotalMatch') && document.getElementById('lnBilledTotalMatch').checked);
+  if (matchChecked && tu !== null) {
+    const qtyEl = document.getElementById('lnQty');
+    const buEl = document.getElementById('lnBilledUnit');
+    const totEl = document.getElementById('lnBilledTotal');
+    const q = Math.max(1, Number(qtyEl?.value) || 1);
+    if (buEl) buEl.value = tu;
+    if (totEl) totEl.value = (q * tu).toFixed(2);
+  }
 
   if (!code) { showWarning('تنبيه', 'أدخل الكود'); return; }
   if (!name) { showWarning('تنبيه', 'أدخل الاسم'); return; }
@@ -195,6 +215,7 @@ function saveLineEditor() {
     billedUnit: bu,
     tariffUnit: tu,
     tariffId: lnSelectedTariffId || ctx.contract?.tariffId || ctx.tariff?.id || '',
+    procedureDate: procedureDate || '',
     _manualEntry: isManual,
     _contractRate: 0,
     _contractCovered: true,
@@ -254,6 +275,25 @@ function saveLineEditor() {
   } else if (validation.decision === 'needs-attention') {
     showToast(`⚠️ يحتاج مراجعة — ${data.note}`);
   }
+}
+function syncTariffMatch(){
+  const matchU = document.getElementById('lnBilledUnitMatch');
+  const matchT = document.getElementById('lnBilledTotalMatch');
+  const checked = !!(matchU && matchU.checked) || !!(matchT && matchT.checked);
+  if (matchU) matchU.checked = checked;
+  if (matchT) matchT.checked = checked;
+  const unit = document.getElementById('lnBilledUnit');
+  const total = document.getElementById('lnBilledTotal');
+  const tariffUnit = Number(document.getElementById('lnTariffUnit')?.value) || 0;
+  const qty = Math.max(1, Number(document.getElementById('lnQty')?.value) || 1);
+  if (checked) {
+    if (unit) { unit.value = tariffUnit; unit.readOnly = true; }
+    if (total) { total.value = (qty * tariffUnit).toFixed(2); total.readOnly = true; }
+  } else {
+    if (unit) unit.readOnly = false;
+    if (total) total.readOnly = false;
+  }
+  updateComputedPreview();
 }
 function closeLineEditor(){ if(!$('#lineModal').classList.contains('open')) return; $('#lineModal').classList.remove('open'); rvEditLineIdx = -1; }
 
@@ -391,6 +431,13 @@ function bindLineSmartForm() {
     const total = document.getElementById('lnBilledTotal');
     if(total && !total.dataset.bound){ total.dataset.bound='1'; total.addEventListener('input', () => syncLineBilledAmount('total')); }
   }
+  ['lnBilledUnitMatch','lnBilledTotalMatch'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.bound) {
+      el.dataset.bound = '1';
+      el.addEventListener('change', syncTariffMatch);
+    }
+  });
 }
 function updatePAWarning(){
   const status = $('#paStatus').value;

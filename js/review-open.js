@@ -42,11 +42,13 @@ function openReview(id){
   activeClaim = c;
   workingInvoices = JSON.parse(JSON.stringify(baseInvoices));
   rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
-  workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => {
+  workingInvoices.forEach(inv => (inv.patients||[]).forEach((p, pi) => {
     if(p.coverageCapOverride === undefined) p.coverageCapOverride = null;
     if(p.retireeCopayOverride === undefined) p.retireeCopayOverride = null;
     if(p.beneficiaryType === undefined) p.beneficiaryType = c.type || 'employee';
     if(!Array.isArray(p.deductionReasons)) p.deductionReasons = [];
+    p.patientNumber = pi + 1;
+    p.patientSeq = pi + 1;
     const _emptyPatientDocs = { patientId: false, referral: false, medicalReport: false, priorApprovalDoc: false };
     const _looksInheritedFromInvoice = !!(p.documents && inv.documents && JSON.stringify(p.documents) === JSON.stringify(inv.documents));
     if(!p.documents || _looksInheritedFromInvoice) p.documents = { ..._emptyPatientDocs };
@@ -78,6 +80,12 @@ function openReview(id){
       if(pab) pab.style.display = 'none';
     }
     document.querySelectorAll('#reviewModal .rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
+  } catch(e){}
+  try {
+    if (c.reviewProgress) {
+      rvActiveInvoiceIdx = Number(c.reviewProgress.invoiceIdx) || rvActiveInvoiceIdx || 0;
+      rvActivePatientIdx = Number(c.reviewProgress.patientIdx) || rvActivePatientIdx || 0;
+    }
   } catch(e){}
   if(typeof renderReviewInvoices === 'function') renderReviewInvoices();
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }

@@ -38,7 +38,7 @@ function computePatient(pat, claim, refDate, invoice){
     }, entry));
   };
   (pat.lines||[]).forEach(l => {
-    const procedureDate = String(l.procedureDate || l.serviceDate || l.date || (invoice && invoice.date) || refDate).slice(0,10);
+    const procedureDate = String(l.procedureDate || l.serviceDate || l.date || (invoice && invoice.procedureDate) || (invoice && invoice.date) || refDate).slice(0,10);
     const lineCtx = getContractContext(claim, procedureDate);
     let lineTariff = lineCtx.tariff;
     if (l.tariffId && typeof tariffs !== 'undefined') {
@@ -52,7 +52,7 @@ function computePatient(pat, claim, refDate, invoice){
     const effectiveLineCtx = { ...lineCtx, tariff:lineTariff };
     l._procedureDateUsed = procedureDate;
     if (typeof tpaBeneficiaryTypeForPatient === 'function') {
-      const letterStartDate = String(claim.letterStartDate || claim.startDate || claim.date || (invoice && invoice.date) || refDate).slice(0,10);
+      const letterStartDate = String((invoice && invoice.letterDate) || claim.letterStartDate || claim.startDate || claim.date || (invoice && invoice.date) || refDate).slice(0,10);
       const letterStatus = tpaBeneficiaryTypeForPatient(pat, letterStartDate);
       pat._letterStartDateUsed = letterStartDate;
       pat._ageAtLetterStart = letterStatus.age;
@@ -79,7 +79,8 @@ function computePatient(pat, claim, refDate, invoice){
     l.lineBase = lesser;
     if(l._overrideMode === undefined) l._overrideMode = 'auto';
 
-    const covered = !l._manualEntry && isServiceCovered(effectiveLineCtx, l.code) && hasT;
+    const adminExempt = !!(l && (l._adminExempt === true || l.adminExempt === true));
+    const covered = adminExempt ? true : (!l._manualEntry && isServiceCovered(effectiveLineCtx, l.code) && hasT);
     if(!covered){
       l._autoApproved = 0;
       l._contractRejected = true;

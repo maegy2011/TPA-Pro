@@ -221,6 +221,16 @@ function updateCurrentReviewProgressPoint(claimId, invoiceIdx, patientIdx, lineI
     timestamp: new Date().toISOString()
   };
   session.updatedAt = new Date().toISOString();
+  try {
+    if (typeof activeClaim !== 'undefined' && activeClaim && activeClaim.id === claimId) {
+      activeClaim.reviewProgress = {
+        invoiceIdx: invoiceIdx || 0,
+        patientIdx: patientIdx || 0,
+        lineIdx: lineIdx || 0,
+        updatedAt: new Date().toISOString()
+      };
+    }
+  } catch(e){}
   persistSessions();
 }
 function saveProgressPoint(claimId, invoiceIdx, patientIdx, lineIdx) {

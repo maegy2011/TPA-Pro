@@ -94,7 +94,7 @@ function renderActiveInvoice(){
   if(rvActivePatientIdx >= inv.patients.length) rvActivePatientIdx = 0;
   const t = INVOICE_TYPES[inv.type] || {label:inv.type};
   const tot = invoiceTotals(inv);
-  const invDocs = DOC_ITEMS.map(d => { const on = !!inv.documents[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-doc="${d.key}" ${on?'checked':''}>${d.label}</label>`; }).join('');
+  const invDocs = '';
   const rules = `<div class="rv-rule-bar"><button type="button" class="rv-rule-btn" data-rule="lesser">اعتماد الأقل</button><button type="button" class="rv-rule-btn" data-rule="billed">اعتماد كامل</button><button type="button" class="rv-rule-btn danger" data-rule="reject">رفض الكل</button><button type="button" class="rv-rule-btn warn" data-rule="maxlabs">حد التحاليل (${REVIEW_RULES.maxLabsPerVisit})</button></div>`;
 
   const _isExt = isExternalInvoice(inv);
@@ -115,8 +115,9 @@ function renderActiveInvoice(){
     const linesHtml = (p.lines||[]).length ? (p.lines||[]).map((ln,i)=>reviewLineRow(ln,i)).join('') : '<tr><td colspan="11" style="text-align:center;padding:18px;color:var(--muted)">لا بنود</td></tr>';
     const patDocs = p.documents || {};
     const pDocsHtml = DOC_ITEMS.map(d => { const on = !!patDocs[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-pat-doc="${d.key}" data-pat-idx="${pi}" ${on?'checked':''}>${d.label}</label>`; }).join('');
-    return `<details class="rv-patient-details" data-pat-idx="${pi}" ${pi===rvActivePatientIdx?'open':''}>
+    return `<details class="rv-patient-details ${pi===rvActivePatientIdx?'rv-patient-reviewing':''}" data-pat-idx="${pi}" ${pi===rvActivePatientIdx?'open':''}>
       <summary class="rv-patient-summary">
+        <span class="rv-patient-seq" style="margin-inline-end:6px;color:var(--teal);font-weight:800">#${pi+1}</span>
         <span class="rv-patient-name">${escapeHtml(p.name)}</span>
         <span class="rv-patient-totals">
           <span>إجمالي: <b>${fmtC(patBilled)}</b></span>
@@ -165,8 +166,6 @@ function renderActiveInvoice(){
     </div>
     <div class="rv-inv-total"><span>مطالب: <b>${fmtC(tot.billed)}</b></span><span>معتمد: <b style="color:var(--ok)">${fmtC(tot.approved)}</b></span><span>استقطاع: <b style="color:var(--bad)">${fmtC(tot.deduction)}</b></span></div>
     ${!_isExt ? (() => { const checks=[['surgery','الإجراء الجراحي ونوع العملية'],['surgeon','أتعاب الجراح'],['assistant','أتعاب مساعد الجراح'],['anesthesia','أتعاب التخدير وطبيب التخدير'],['or','استخدام وتجهيز غرفة العمليات'],['implants','الدعامات والمسامير والمستلزمات المزروعة'],['consumables','المستهلكات الطبية'],['admission','مبرر الدخول وقرار الحجز'],['stay','عدد أيام الإقامة ومطابقتها'],['room','فئة الغرفة وسعرها'],['icu','العناية المركزة ومبرراتها'],['nursing','خدمات التمريض'],['meds','الأدوية والجرعات'],['labs','التحاليل والفحوص'],['imaging','الأشعة والتقارير'],['blood','نقل الدم ومشتقاته'],['physio','العلاج الطبيعي والتأهيل'],['discharge','ملخص الخروج وخطة العلاج']]; const saved=inv.internalReview||{}; return `<details class="rv-internal-review"><summary>قائمة تدقيق الفاتورة الداخلية والعمليات والإقامة</summary><div class="rv-internal-check-grid">${checks.map(([k,label])=>`<label><input type="checkbox" data-internal-review="${k}" ${saved[k]===true?'checked':''}> ${label}</label>`).join('')}</div><div class="fg" style="margin-top:8px"><label>ملاحظات المراجع على الفاتورة الداخلية</label><textarea data-internal-review-note rows="2">${escapeHtml(saved.note||'')}</textarea></div></details>`; })() : ''}
-    <div class="rv-section-title">مستندات مذكرة الخصم</div>
-    <div class="rv-docs">${invDocs}</div>
     <div class="rv-section-title">المرضى (${(inv.patients||[]).length})</div>
     <div class="rv-patients-accordion">${sections || '<div class="rv-empty">لا مرضى</div>'}</div>
     <div class="rv-patients-footer">
@@ -376,7 +375,7 @@ function renderFinalSummary(){
     (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv); (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); }); }));
     const mismatch = Math.abs(billed - entered) > 1;
     const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
-    const missingDocsInv = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+    const missingDocsInv = 0;
     const missingDocsPat = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+DOC_ITEMS.filter(d=>!(p.documents&&p.documents[d.key])).length,0),0);
     const missingDocs = missingDocsInv + missingDocsPat;
     const items = [

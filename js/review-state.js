@@ -6,6 +6,16 @@ let _reviewAutoSaveTimer = null;
 function markSessionDirty(){
   _sessionDirty = true;
   try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = ''; } catch(e){}
+  try {
+    if (activeClaim) {
+      activeClaim.reviewProgress = {
+        invoiceIdx: rvActiveInvoiceIdx || 0,
+        patientIdx: rvActivePatientIdx || 0,
+        lineIdx: 0,
+        updatedAt: new Date().toISOString()
+      };
+    }
+  } catch(e){}
   // Snapshot the working copy, not the live claim, so interrupted reviews can be resumed safely.
   if(_reviewAutoSaveTimer) clearTimeout(_reviewAutoSaveTimer);
   _reviewAutoSaveTimer = setTimeout(()=>{

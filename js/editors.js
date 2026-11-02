@@ -18,11 +18,15 @@ function openInvoiceEditor(idx){
     const p0 = (inv.patients||[])[0];
     $('#invPatientName').value = p0 ? p0.name : ''; $('#invPatientId').value = p0 ? p0.nationalId : '';
     $('#invAdmission').value = inv.admissionDate||''; $('#invDischarge').value = inv.dischargeDate||''; $('#invRoomClass').value = inv.roomClass||'';
+    if(document.getElementById('invLetterDate')) document.getElementById('invLetterDate').value = inv.letterDate||'';
+    if(document.getElementById('invProcedureDate')) document.getElementById('invProcedureDate').value = inv.procedureDate||inv.date||'';
   } else {
     $('#invType').value = 'outpatient'; $('#invNumber').value = 'DN-' + Date.now().toString().slice(-6); $('#invDate').value = daysFromNow(0);
     if(document.getElementById('invLinkedInvoice')) document.getElementById('invLinkedInvoice').value = '';
     $('#invPatientName').value = ''; $('#invPatientId').value = '';
     $('#invAdmission').value = ''; $('#invDischarge').value = ''; $('#invRoomClass').value = '';
+    if(document.getElementById('invLetterDate')) document.getElementById('invLetterDate').value = '';
+    if(document.getElementById('invProcedureDate')) document.getElementById('invProcedureDate').value = daysFromNow(0);
   }
   toggleInpatientFields(); $('#invoiceModal').classList.add('open');
 }
@@ -45,7 +49,9 @@ function saveInvoiceEditor(confirmed){
     return;
   }
   const invoiceCategory = document.getElementById('invCategory') ? document.getElementById('invCategory').value : (type==='inpatient'?'internal':'external');
-  const inpData = { category: invoiceCategory, invoiceCategory, admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'' };
+  const letterDate = document.getElementById('invLetterDate') ? document.getElementById('invLetterDate').value : '';
+  const procedureDate = document.getElementById('invProcedureDate') ? document.getElementById('invProcedureDate').value : date;
+  const inpData = { category: invoiceCategory, invoiceCategory, admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'', letterDate, procedureDate };
   if(rvEditInvoiceIdx >= 0){
     const inv = workingInvoices[rvEditInvoiceIdx];
     inv.type = type; inv.claimType = claimType; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; Object.assign(inv, inpData);
@@ -72,6 +78,21 @@ function openPatientEditor(invIdx, patIdx){
   $('#patModalSub').textContent = inv.id;
   $('#patName').value = p ? p.name : ''; $('#patNationalId').value = p ? p.nationalId : '';
   if(document.getElementById('patBeneficiaryType')) document.getElementById('patBeneficiaryType').value = p ? (p.beneficiaryType || (inv.claimType || (activeClaim&&activeClaim.type) || 'employee')) : (inv.claimType || (activeClaim&&activeClaim.type) || 'employee');
+  const _nat = document.getElementById('patNationalId');
+  if(_nat && !_nat.dataset.bound){
+    _nat.dataset.bound='1';
+    _nat.addEventListener('input', () => {
+      const sel = document.getElementById('patBeneficiaryType');
+      if(!sel) return;
+      const id = _nat.value.trim();
+      if(!/^[23]\\d{13}$/.test(id)) return;
+      const refDate = (inv && (inv.procedureDate || inv.date)) || (activeClaim && (activeClaim.date || activeClaim.receivedDate)) || new Date().toISOString().slice(0,10);
+      if(typeof tpaBeneficiaryTypeForPatient === 'function'){
+        const info = tpaBeneficiaryTypeForPatient({nationalId:id}, refDate);
+        if(info && info.type) sel.value = info.type;
+      }
+    });
+  }
   $('#patientModal').classList.add('open'); setTimeout(()=>$('#patName').focus(), 120);
 }
 function savePatientEditor(){

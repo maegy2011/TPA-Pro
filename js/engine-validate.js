@@ -110,8 +110,11 @@ function validateLine(line, ctx) {
   const code = String(line.code || '').trim();
 
   const tariffSvc = (tariff?.services || []).find(s => String(s.code) === code) || null;
-  if (!tariffSvc || line._manualEntry) {
+  const adminExempt = !!(line && (line._adminExempt === true || line.adminExempt === true));
+  if (!tariffSvc && !adminExempt) {
     failed.push(line._manualEntry ? 'manual-entry' : 'not-in-tariff');
+  } else if (line._manualEntry && !adminExempt) {
+    failed.push('manual-entry');
   } else {
     passed.push('in-tariff');
   }
@@ -189,7 +192,7 @@ function validateLine(line, ctx) {
   }
 
   const contractRate = getContractRateForService(ctxFull, code);
-  const covered = !line._manualEntry && isServiceCovered(ctxFull, code) && !!tariffSvc;
+  const covered = adminExempt ? true : (!line._manualEntry && isServiceCovered(ctxFull, code) && !!tariffSvc);
   const lesser = tariffTotal !== null ? Math.min(billedTotal, tariffTotal) : billedTotal;
   const afterContract = covered ? Math.round(lesser * (1 - contractRate / 100)) : 0;
 
@@ -236,15 +239,8 @@ function validateInvoice(inv, ctx) {
   const passed = [];
   const failed = [];
   const missingDocs = [];
-  const DOC_ITEMS_LOCAL = (typeof DOC_ITEMS !== 'undefined' ? DOC_ITEMS : []);
-  DOC_ITEMS_LOCAL.forEach(d => {
-    if (!inv.documents || !inv.documents[d.key]) missingDocs.push(d.label);
-  });
-  if (missingDocs.length) {
-    failed.push('missing-docs');
-  } else {
-    passed.push('docs-present');
-  }
+  // مستندات مذكرة الخصم حُذفت؛ يكتفى بمستندات المريض.
+  passed.push('docs-present');
   const _vires = { passed, failed, missingDocs };
   if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_vires)));
   return _vires;

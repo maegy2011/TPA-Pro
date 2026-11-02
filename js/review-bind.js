@@ -292,7 +292,7 @@ function bindReviewModal(){
         ? getClaimReconciliationTarget(activeClaim)
         : { amount: billed, source: 'legacy-billed' };
       const mismatch = Math.abs(targetInfo.amount - entered) > 1;
-      const missingDocsInv = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
+      const missingDocsInv = 0;
       const missingDocsPat = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+DOC_ITEMS.filter(d=>!(p.documents&&p.documents[d.key])).length,0),0);
       const missingDocs = missingDocsInv + missingDocsPat;
       const finalReasonEl = document.getElementById('rvFinalReason') || document.getElementById('rvPageFinalReason');

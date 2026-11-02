@@ -13,6 +13,8 @@ const MODAL_INVOICE = `
             <div class="fg"><label>رقم مذكرة الخصم</label><input id="invNumber"></div>
             <div class="fg"><label>رقم الفاتورة المرتبطة *</label><input id="invLinkedInvoice"></div>
             <div class="fg"><label>تاريخ مذكرة الخصم *</label><input id="invDate" type="date"></div>
+            <div class="fg"><label>تاريخ إصدار خطاب التحويل</label><input id="invLetterDate" type="date"></div>
+            <div class="fg"><label>تاريخ الإجراء</label><input id="invProcedureDate" type="date"></div>
           </div>
           <div class="rv-section-title">بيانات المريض</div>
           <div class="form-grid">
