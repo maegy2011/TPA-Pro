@@ -13,6 +13,10 @@ const VALIDATION_REASONS = {
   'admin-exempt-no-note': { label: 'إعفاء إداري بلا سبب مسجل',    severity: 'attention', category: 'coverage' },
 
   'pa-required':        { label: 'تتطلب موافقة مسبقة — لم تُطلب', severity: 'attention', category: 'pa' },
+  'cap-conflict':       { label: 'تعارض قواعد السقف — القرار للمراجع', severity: 'attention', category: 'rules' },
+  'copay-conflict':     { label: 'تعارض قواعد التحمل — القرار للمراجع', severity: 'attention', category: 'rules' },
+  'rule-cycle':         { label: 'اعتمادية دائرية — القرار للمراجع', severity: 'attention', category: 'rules' },
+  'rule-requires-missing': { label: 'اعتمادية مفقودة — القرار للمراجع', severity: 'attention', category: 'rules' },
   'pa-pending':         { label: 'موافقة مسبقة قيد الطلب',       severity: 'attention', category: 'pa' },
   'duplicate':          { label: 'بند مكرر',                     severity: 'attention', category: 'duplication' },
   'over-frequency':     { label: 'تجاوز حد التكرار',             severity: 'attention', category: 'duplication' },
@@ -198,6 +202,27 @@ function validateLine(line, ctx) {
       passed.push('no-duplicate');
     }
   }
+
+  // أي تعارض أو اعتماد دائري يُرجع بسؤال المراجع بدل الحسم الصامت.
+  try {
+    const _allRules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r && r.enabled !== false && r.active !== false);
+    const _lineRules = _allRules.filter(r => (typeof isLineLevelAction === 'function' ? isLineLevelAction(r.action) : true));
+    const _cyc = (typeof getCyclicRuleIds === 'function') ? getCyclicRuleIds() : new Set();
+    const _refDate = (invoice && invoice.date) || (claim && (claim.date || claim.receivedDate)) || null;
+    const _lctx = { claim, patient, invoice, contract, tariff, serviceOverrides: ctxFull.serviceOverrides };
+    let _cycHit = false, _missHit = false;
+    for(const r of _lineRules){
+      let _match = false;
+      try { _match = (typeof ruleMatchesContext === 'function') ? ruleMatchesContext(r, _lctx, _refDate) : false; } catch(e){ _match = false; }
+      if(!_match) continue;
+      if(_cyc.has(r.id)) _cycHit = true;
+      const _req = (r.requires && r.requires.ruleIds) || [];
+      if(_req.some(id => !_allRules.some(x => x.id === id))) _missHit = true;
+      if(_cycHit && _missHit) break;
+    }
+    if(_cycHit) failed.push('rule-cycle');
+    if(_missHit) failed.push('rule-requires-missing');
+  } catch(e){}
 
   let decision = 'auto-approved';
   let suggestedAction = null;

@@ -204,6 +204,7 @@ function computePatient(pat, claim, refDate, invoice){
   const subtotal = pat.lines.reduce((s,l)=>s+(Number(l.approved)||0), 0);
   const pctx = { ...ctx, patient: pat };
   const patientRules = topoSortRules(allRules.filter(r => ['apply_cap','apply_copay'].includes(r.action)));
+  const capCandidates = [], copayCandidates = [];
   let autoCap = 0, capRule = null;
   let autoCopay = 0, copayRule = null;
   const appliedPids = new Set();
@@ -211,6 +212,7 @@ function computePatient(pat, claim, refDate, invoice){
     if(!checkRequires(rule, appliedPids)) continue;
     if(!ruleMatchesContext(rule, pctx, refDate)) continue;
     const r = evaluateRuleAction(rule, pctx, subtotal);
+    if(r.deduct !== undefined && r.deduct > 0) capCandidates.push({ rule, deduct: Math.round(r.deduct) });
     if(r.deduct !== undefined && r.deduct > autoCap){ autoCap = r.deduct; capRule = rule; }
     appliedPids.add(rule.id);
   }
@@ -218,9 +220,15 @@ function computePatient(pat, claim, refDate, invoice){
     if(!checkRequires(rule, appliedPids)) continue;
     if(!ruleMatchesContext(rule, pctx, refDate)) continue;
     const r = evaluateRuleAction(rule, pctx, subtotal-autoCap);
+    if(r.deduct !== undefined && r.deduct > 0) copayCandidates.push({ rule, deduct: Math.round(r.deduct) });
     if(r.deduct !== undefined && r.deduct > autoCopay){ autoCopay = r.deduct; copayRule = rule; }
     appliedPids.add(rule.id);
   }
+  // أي تعارض (سقفان/تحملان مختلفا النتيجة) يُرجع بسؤال المراجع: يُطبق الأكبر مؤقتًا وتُعلَّم البنود بانتظار القرار.
+  const needCapAsk = capCandidates.length > 1 && new Set(capCandidates.map(c => c.deduct)).size > 1 && pat._capMode !== 'manual' && pat._capMode !== 'reverted';
+  const needCopayAsk = copayCandidates.length > 1 && new Set(copayCandidates.map(c => c.deduct)).size > 1 && pat._copayMode !== 'manual' && pat._copayMode !== 'reverted';
+  pat._capConflict = needCapAsk ? { rules: capCandidates.map(c => c.rule.id), amounts: capCandidates.map(c => c.deduct), applied: autoCap } : null;
+  pat._copayConflict = needCopayAsk ? { rules: copayCandidates.map(c => c.rule.id), amounts: copayCandidates.map(c => c.deduct), applied: autoCopay } : null;
   let finalCap = autoCap, finalCopay = autoCopay;
   if(pat._capMode === 'manual' && pat._manualCapAmount !== null && pat._manualCapAmount !== undefined) finalCap = Number(pat._manualCapAmount)||0;
   else if(pat._capMode === 'reverted') finalCap = 0;
@@ -233,6 +241,28 @@ function computePatient(pat, claim, refDate, invoice){
   pat._copayAmt = Math.max(0, Math.min(subtotal-pat._capAmt, Math.round(finalCopay)));
   pat._final = Math.max(0, subtotal-pat._capAmt-pat._copayAmt);
   pat._beneficiaryPays = pat._capAmt + pat._copayAmt;
+  // تعليق البنود بانتظار قرار المراجع عند التعارض — تُرفع عنه تلقائيًا عند الحسم اليدوي (سقف/تحمل يدوي).
+  if(needCapAsk || needCopayAsk){
+    (pat.lines||[]).forEach(l => {
+      if(!Array.isArray(l._checksFailed)) l._checksFailed = [];
+      if(needCapAsk && !l._checksFailed.includes('cap-conflict')) l._checksFailed.push('cap-conflict');
+      if(needCopayAsk && !l._checksFailed.includes('copay-conflict')) l._checksFailed.push('copay-conflict');
+      if(l._decision !== 'auto-rejected'){
+        if(l._conflictForced !== true){ l._conflictForced = true; l._preConflictDecision = l._decision; }
+        l._decision = 'needs-attention';
+      }
+    });
+  } else {
+    (pat.lines||[]).forEach(l => {
+      if(!Array.isArray(l._checksFailed)) return;
+      const had = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict');
+      if(had) l._checksFailed = l._checksFailed.filter(x => x !== 'cap-conflict' && x !== 'copay-conflict');
+      if(had && l._conflictForced === true){
+        l._conflictForced = false;
+        if(l._decision === 'needs-attention') l._decision = l._preConflictDecision || 'auto-approved';
+      }
+    });
+  }
   if (pat._capAmt > 0) {
     pat._capLegal = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('coverage-cap', { claim, patient: pat, capRate: capRule ? capRule.rate : 0, capAmount: pat._capAmt }) : null;
     _addDed({ amount: pat._capAmt, reason: pat._capLegal ? pat._capLegal.title : 'تجاوز سقف التغطية المالي', reasonCode: 'coverage-cap', source: pat._capMode === 'manual' ? 'manual' : (capRule ? 'rule' : 'auto'), level: 'patient', ref: { ruleId: capRule ? capRule.id : null }, note: capRule ? capRule.name : '' });

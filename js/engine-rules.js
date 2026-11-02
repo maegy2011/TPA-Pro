@@ -37,11 +37,11 @@ function ruleMatchesContext(rule, ctx, refDate){
   const claim = ctx.claim;
   if(rule.scope?.claimTypes?.length && !rule.scope.claimTypes.includes(claim.type || 'employee')) return false;
   if(rule.scope?.providerIds?.length){
-    const prov = providers.find(p => p.name === claim.provider);
+    const prov = providers.find(p => (claim.providerCode != null && p.code === claim.providerCode) || p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId));
     if(!prov || !rule.scope.providerIds.includes(prov.id)) return false;
   }
   if(rule.scope?.contractIds?.length){
-    const prov = providers.find(p => p.name === claim.provider);
+    const prov = providers.find(p => (claim.providerCode != null && p.code === claim.providerCode) || p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId));
     const cids = prov ? contracts.filter(c => c.providerId === prov.id).map(c => c.id) : [];
     if(!rule.scope.contractIds.some(cid => cids.includes(cid))) return false;
   }
@@ -49,6 +49,22 @@ function ruleMatchesContext(rule, ctx, refDate){
     if(!evaluateConditionTree(rule.conditions, ctx)) return false;
   }
   return true;
+}
+/** القواعد الداخلة في اعتمادية دائرية — أي تعارض يُرجع بسؤال المراجع بدل الحسم الصامت. */
+function getCyclicRuleIds(){
+  const rules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r && r.enabled !== false && r.active !== false);
+  const byId = {}; rules.forEach(r => byId[r.id] = r);
+  const state = {}, cyclic = new Set(), stack = [];
+  function visit(id){
+    if(state[id] === 2) return;
+    if(state[id] === 1){ const i = stack.indexOf(id); if(i >= 0) stack.slice(i).forEach(x => cyclic.add(x)); return; }
+    state[id] = 1; stack.push(id);
+    const r = byId[id];
+    ((r && r.requires && r.requires.ruleIds) || []).forEach(dep => { if(byId[dep]) visit(dep); });
+    stack.pop(); state[id] = 2;
+  }
+  rules.forEach(r => visit(r.id));
+  return cyclic;
 }
 function evaluateRuleAction(rule, ctx, baseAmount){
   const amt = baseAmount !== undefined ? baseAmount : (ctx.line ? ctx.line.lineBase : 0);
