@@ -14,11 +14,9 @@ const PAGE_TARIFFS = `
           <button class="chip" data-tfilter="general">عامة</button>
           <button class="chip" data-tfilter="private">خاصة</button>
           <button class="chip" data-tfilter="supplementary">مكملة</button>
-          <button class="chip" data-tfilter="discount">خصم</button>
-          <button class="chip" data-tfilter="increase">زيادة</button>
         </div>
       </div>
       </div>
-      <div class="panel"><div class="table-wrap"><table><thead><tr><th data-i18n="common.num">رقم</th><th data-i18n="tariffs.name">الاسم</th><th data-i18n="providers.type">النوع</th><th data-i18n="tariffs.adjustment">التسوية</th><th data-i18n="tariffs.link">الربط</th><th data-i18n="common.status">الحالة</th><th></th></tr></thead><tbody id="tariffsBody"></tbody></table></div></div>
+      <div class="panel"><div class="table-wrap"><table><thead><tr><th data-i18n="common.num">رقم</th><th data-i18n="tariffs.name">الاسم</th><th data-i18n="providers.type">النوع</th><th data-i18n="tariffs.link">الربط</th><th data-i18n="common.status">الحالة</th><th></th></tr></thead><tbody id="tariffsBody"></tbody></table></div></div>
     </section>
 `;

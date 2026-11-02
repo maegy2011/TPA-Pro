@@ -8,7 +8,6 @@ const MODAL_TARIFF = `
         <div class="modal-body">
           <div class="tf-tabs">
             <button type="button" class="tf-tab active" data-tf-tab="basic">أساسية</button>
-            <button type="button" class="tf-tab" data-tf-tab="annual">زيادات</button>
             <button type="button" class="tf-tab" data-tf-tab="services">خدمات</button>
             <button type="button" class="tf-tab" data-tf-tab="links">ربط</button>
           </div>
@@ -16,23 +15,12 @@ const MODAL_TARIFF = `
             <div class="form-grid">
               <div class="fg full"><label>اسم اللائحة <span style="color:var(--bad,#DC2626)">*</span></label><input id="tfName" placeholder="مثال: لائحة 2026"><div class="hint">الاسم كما يظهر في التقارير</div></div>
               <div class="fg"><label>النوع</label><select id="tfType"><option value="general">عامة</option><option value="private">خاصة</option><option value="supplementary">مكملة</option></select></div>
-              <div class="fg"><label>الحالة</label><select id="tfStatus"><option value="active">نشطة</option><option value="pending">قيد الاعتماد</option><option value="cancelled">ملغاة</option></select></div>
+              <div class="fg"><label>الحالة</label><select id="tfStatus"><option value="active">نشطة</option><option value="disabled">معطلة</option></select></div>
               <div class="fg"><label>السريان *</label><input id="tfEffective" type="date"></div>
               <div class="fg"><label>الانتهاء</label><input id="tfExpiry" type="date"></div>
-              <div class="fg"><label>مستوى السعر %</label><input id="tfPriceLevel" type="number" min="1" max="500"></div>
               <div class="fg"><label>الرقم</label><input id="tfNumber" readonly></div>
               <div class="fg full"><label>الوصف</label><textarea id="tfDescription"></textarea></div>
             </div>
-          </div>
-          <div class="tf-panel" data-tf-panel="annual">
-            <div class="form-grid">
-              <div class="fg"><label>النسبة %</label><input id="tfIncreaseRate" type="number" min="0" max="100" step="0.5"></div>
-              <div class="fg"><label>آخر زيادة</label><input id="tfLastIncrease" type="date"></div>
-              <div class="fg full"><label>الموافقة</label><input id="tfApprovedBy"></div>
-            </div>
-            <div style="margin:14px 0"><button type="button" class="btn-apply" id="tfApplyAnnual">تطبيق الزيادة</button></div>
-            <div class="section-title" style="display:block">سجل الزيادات</div>
-            <div class="history-list" id="tfHistoryList"></div>
           </div>
           <div class="tf-panel" data-tf-panel="services">
             <input type="text" id="tfServicesSearch" placeholder="بحث في الخدمات..." style="margin-bottom:8px;width:100%">

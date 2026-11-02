@@ -2,8 +2,7 @@
 const STATUS = { new:{label:'جديدة',cls:'info'}, pending:{label:'قيد المراجعة',cls:'warn'}, approved:{label:'معتمدة',cls:'ok'}, partial:{label:'معتمدة جزئياً',cls:'info'}, rejected:{label:'مرفوضة',cls:'bad'} };
 const CONTRACT_STATUS = { active:{label:'مفعل',cls:'ok'}, 'under-review':{label:'تحت الفحص',cls:'warn'}, pending:{label:'معلق',cls:'info'}, terminated:{label:'مفسوخ',cls:'bad'}, expiring:{label:'قريب الانتهاء',cls:'warn'}, upcoming:{label:'لم يبدأ',cls:'info'}, expired:{label:'منتهي',cls:'bad'}, suspended:{label:'معلق',cls:'warn'} };
 const TARIFF_TYPES = { general:{label:'لائحة عامة',cls:'t-general'}, private:{label:'لائحة خاصة',cls:'t-private'}, supplementary:{label:'لائحة مكملة',cls:'t-supplementary'} };
-const TARIFF_STATUS = { active:{label:'نشطة',cls:'ok'}, pending:{label:'قيد الاعتماد',cls:'warn'}, expired:{label:'منتهية',cls:'bad'}, cancelled:{label:'ملغاة',cls:'bad'} };
-const ADJUST_TYPES = { none:{label:'بدون',cls:''}, discount:{label:'خصم',cls:'t-private'}, increase:{label:'زيادة',cls:'t-supplementary'} };
+const TARIFF_STATUS = { active:{label:'نشطة',cls:'ok'}, upcoming:{label:'لم تبدأ',cls:'info'}, pending:{label:'قيد الاعتماد',cls:'warn'}, expired:{label:'منتهية',cls:'bad'}, disabled:{label:'معطلة',cls:'bad'} };
 const TYPE_CLASS = { 'مستشفى':'type-hospital','مجمع طبي':'type-center','عيادة':'type-clinic','مركز تخصصي':'type-special','صيدلية':'type-pharmacy','معمل':'type-lab','معمل تحاليل':'type-lab','مركز أشعة':'type-special' };
 const BATCH_STATUS = { received:{label:'وارد جديد',cls:'info'}, 'under-review':{label:'قيد المعالجة',cls:'warn'}, completed:{label:'مكتمل',cls:'ok'}, rejected:{label:'مرفوض',cls:'bad'} };
 const PA_STATUS = { 'not-requested':{label:'لم تُطلب',cls:'bad'}, 'pending':{label:'قيد الطلب',cls:'warn'}, 'approved':{label:'موافق عليها',cls:'ok'}, 'rejected':{label:'مرفوضة',cls:'bad'} };

@@ -7,7 +7,7 @@ function getApplicableTariffs(providerName){
     list = tariffs.filter(t => (t.linkedProviderIds||[]).includes(provider.id) || (t.linkedContractIds||[]).some(cid => cids.includes(cid)));
     if(!list.length){ list = [...tariffs]; fallback = true; }
   } else { list = [...tariffs]; fallback = true; }
-  const order = { active:0, pending:1, expired:2, cancelled:3 };
+  const order = { active:0, upcoming:1, pending:1, expired:2, disabled:3, cancelled:3 };
   const claimDate = (typeof activeClaim!=='undefined' && activeClaim && (activeClaim.date||activeClaim.receivedDate)) || new Date().toISOString().slice(0,10);
   list = list.filter(t => (typeof isTariffApplicableForDate==='function') ? isTariffApplicableForDate(t, claimDate) : effectiveTariffStatus(t)==='active');
   list.sort((a,b) => (order[effectiveTariffStatus(a)]||9) - (order[effectiveTariffStatus(b)]||9));

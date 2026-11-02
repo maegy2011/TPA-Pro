@@ -18,7 +18,7 @@ function getTariffVersionForDate(t, date){
   return matches[0] || null;
 }
 function getTariffServicesForDate(t, date){ const v=getTariffVersionForDate(t,date); return v ? (v.services||[]) : (t&&Array.isArray(t.services)?t.services:[]); }
-function isTariffApplicableForDate(t,date){ return !!(t && t.status!=='cancelled' && getTariffVersionForDate(t,date)); }
+function isTariffApplicableForDate(t,date){ return !!(t && t.status!=='disabled' && getTariffVersionForDate(t,date)); }
 function archiveTariffVersion(t, newEffectiveDate, action, changes){
   if(!t) throw new Error('اللائحة غير موجودة');
   const next=String(newEffectiveDate||'').slice(0,10), current=String(t.effectiveDate||'').slice(0,10);
@@ -68,13 +68,28 @@ function effectiveContractStatus(c){
 }
 function effectiveTariffStatus(t){
   if(!t) return 'pending';
-  if(t.status === 'cancelled') return 'cancelled';
-  if(t.status === 'pending') return 'pending';
+  if(t.status === 'disabled') return 'disabled';
   if(!t.effectiveDate) return 'pending';
   const now = new Date(), e = new Date(t.effectiveDate), x = t.expiryDate ? new Date(t.expiryDate) : null;
-  if(now < e) return 'pending';
+  if(now < e) return 'upcoming';
   if(x && now > x) return 'expired';
   return 'active';
+}
+/** تجديد تلقائي للوائح النشطة عند انتهائها — يستمر السريان لحين التعطيل. */
+function autoRenewTariffs(){
+  const today = new Date().toISOString().slice(0,10);
+  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => {
+    if(!t || t.status === 'disabled') return;
+    if(!t.expiryDate || String(t.expiryDate) > today) return;
+    const eff = String(t.effectiveDate||'');
+    let days = 365;
+    if(eff && String(t.expiryDate) > eff) days = Math.max(1, Math.round((Date.parse(t.expiryDate) - Date.parse(eff))/86400000));
+    const d = new Date(t.expiryDate+'T12:00:00'); d.setDate(d.getDate() + days);
+    const newExp = d.toISOString().slice(0,10);
+    t.expiryDate = newExp;
+    if(!Array.isArray(t.changeLog)) t.changeLog = [];
+    t.changeLog.push({at:new Date().toISOString(), effectiveDate:eff, action:'auto-renew', actor:(typeof appSettings!=='undefined'&&appSettings.reviewer&&appSettings.reviewer.name)||'النظام', changes:[{note:'تجديد تلقائي حتى '+newExp}]});
+  });
 }
 function getEffectiveProviderStatus(p){
   const c = getContractByProvider(p.id);

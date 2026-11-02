@@ -4,7 +4,7 @@ const EGYPT_PROVINCES = ['القاهرة','الجيزة','الإسكندرية',
 let selectedProvinces = [];
 let contractStatusFilter = 'all', contractSearch = '', editingContractId = null;
 let tariffFilter = 'all', tariffSearch = '', editingTariffId = null;
-let workingServices = [], workingIncreaseHistory = [], editingServiceIndex = null;
+let workingServices = [], editingServiceIndex = null;
 function bindProvidersControls(){
   $('#providerSearch').addEventListener('input', e => { providerSearch = e.target.value.trim().toLowerCase(); renderProviders(); });
   $('#providerFilterChips').addEventListener('click', e => {
