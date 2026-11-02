@@ -33,6 +33,9 @@ const VALIDATION_REASONS = {
   'link-fee-nosurgery': { label: 'أتعاب (جراح/تخدير) بلا إجراء جراحي — القرار للمراجع', severity: 'attention', category: 'linkage' },
   'link-assistant':     { label: 'مساعد جراح بلا شروطه (جراح + عملية كبرى/متوسطة) — القرار للمراجع', severity: 'attention', category: 'linkage' },
   'opclass-stay-exceed': { label: 'تجاوز سقف أيام تصنيف العملية — القرار للمراجع', severity: 'attention', category: 'opclass' },
+  'link-implant-nosurgery': { label: 'مزروع بلا إجراء جراحي — القرار للمراجع', severity: 'attention', category: 'linkage' },
+  'consumables-share': { label: 'تجاوز حصة المستهلكات (25%) — القرار للمراجع', severity: 'attention', category: 'supplies' },
+  'stay-overlap':      { label: 'ازدواج أيام (عناية + غرفة) — القرار للمراجع', severity: 'attention', category: 'stay' },
   'contract-discount':  { label: 'خصم العقد',                    severity: 'reduce',    category: 'contract' },
 };
 

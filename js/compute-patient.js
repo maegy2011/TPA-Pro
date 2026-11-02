@@ -24,7 +24,7 @@ function flagLineAskReviewer(l, code){
 function unflagLineAskReviewer(l, code){
   if(!l || !Array.isArray(l._checksFailed)) return;
   l._checksFailed = l._checksFailed.filter(x => x !== code);
-  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap') || l._checksFailed.includes('stay-mismatch') || l._checksFailed.some(x => { const s = String(x); return s.startsWith('checklist-') || s.startsWith('link-') || s.startsWith('opclass-'); });
+  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap') || ['stay-mismatch','stay-overlap','consumables-share'].some(c => l._checksFailed.includes(c)) || l._checksFailed.some(x => { const s = String(x); return s.startsWith('checklist-') || s.startsWith('link-') || s.startsWith('opclass-'); });
   if(!_still && l._conflictForced === true){
     l._conflictForced = false;
     if(l._decision === 'needs-attention') l._decision = l._preConflictDecision || 'auto-approved';
@@ -92,9 +92,44 @@ function validateInpatientInvoice(inv){
       } else { delete l._opClassMax; unflagLineAskReviewer(l, 'opclass-stay-exceed'); }
     } else { delete l._opClassMax; unflagLineAskReviewer(l, 'opclass-stay-exceed'); }
   }));
+  // المزروعات تستلزم إجراءً جراحيًا + كشف ازدواج أيام العناية/الغرفة + حصة المستهلكات.
+  const hasProcAll = (inv.patients||[]).some(pp => (pp.lines||[]).some(ll => _isSurgProc(ll) && ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0));
+  let stayQty = 0, icuQty = 0, consBilled = 0, invBilled = 0;
+  (inv.patients||[]).forEach(pp => (pp.lines||[]).forEach(ll => {
+    const b = (Number(ll.qty)||0)*(Number(ll.billedUnit)||0);
+    invBilled += b;
+    const t = _lineText(ll).toLowerCase();
+    if(STAY_LINE_KW.some(k => t.includes(k))) stayQty += (Number(ll.qty)||0);
+    if(_isIcu(ll)) icuQty += (Number(ll.qty)||0);
+    if(_isConsumable(ll)) consBilled += b;
+  }));
+  const overlap = stayDays !== null && stayQty > 0 && icuQty > 0 && (stayQty + icuQty > stayDays + 0.01);
+  const consOver = invBilled > 0 && consBilled > invBilled * CONSUMABLES_MAX_SHARE + 0.01;
+  (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
+    const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
+    if(billed > 0 && _isImplant(l)){
+      if(!hasProcAll) flagLineAskReviewer(l, 'link-implant-nosurgery');
+      else unflagLineAskReviewer(l, 'link-implant-nosurgery');
+    } else { unflagLineAskReviewer(l, 'link-implant-nosurgery'); }
+    if(overlap && billed > 0 && (_isIcu(l) || STAY_LINE_KW.some(k => _lineText(l).toLowerCase().includes(k)))){
+      l._stayExpected = stayDays; l._stayBilled = Math.round((stayQty + icuQty) * 100) / 100;
+      flagLineAskReviewer(l, 'stay-overlap');
+    } else { unflagLineAskReviewer(l, 'stay-overlap'); }
+    if(consOver && billed > 0 && _isConsumable(l)){
+      l._consShare = Math.round(consBilled / invBilled * 1000) / 10;
+      flagLineAskReviewer(l, 'consumables-share');
+    } else { delete l._consShare; unflagLineAskReviewer(l, 'consumables-share'); }
+  }));
   applyClosedPackage(inv);
 }
 const FEE_KW = ['أتعاب','اتعاب','fee'];
+const IMPLANT_KW = ['دعامة','دعامات','مسمار','مسامير','مفصل','مفاصل','شبكة','صمام','شريحة','شرائح','مثبت','طرف صناعي','implant','stent'];
+const CONSUM_KW = ['شاش','خيط','خيوط','محلول','محاليل','قسطرة','أنبوب','أنبوبة','قفاز','سرنجة','ضماد','مستهلك','مستهلكات','مستلزم','غيار','بلاستر','كانيولا','consumable'];
+const ICU_KW = ['عناية','icu'];
+const CONSUMABLES_MAX_SHARE = 0.25;
+function _isImplant(l){ const t = _lineText(l).toLowerCase(); return IMPLANT_KW.some(k => t.includes(k)); }
+function _isConsumable(l){ const t = _lineText(l).toLowerCase(); return !_isImplant(l) && CONSUM_KW.some(k => t.includes(k)); }
+function _isIcu(l){ const t = _lineText(l).toLowerCase(); return ICU_KW.some(k => t.includes(k)); }
 const SURG_PROC_KW = ['جراح','عملية','جراحة'];
 const OP_CLASS_CAPS = { major:{ label:'كبرى', maxStay:14 }, medium:{ label:'متوسطة', maxStay:7 }, minor:{ label:'صغرى', maxStay:3 }, endo:{ label:'مناظير', maxStay:2 }, diag:{ label:'تشخيصية', maxStay:1 } };
 function _isFee(l){ return FEE_KW.some(k => _lineText(l).toLowerCase().includes(k)); }
