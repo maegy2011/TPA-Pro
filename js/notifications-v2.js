@@ -1,5 +1,17 @@
 // notifications-v2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let toastTimer;
+let _persistFailNotified = false;
+/* تنبيه فشل الحفظ: toast صامت عند التلقائي، وdialog صريح عند ضغطة المراجع. */
+function notifyPersistFailed(explicit){
+  if(explicit){
+    if(typeof showWarning === 'function') showWarning('تعذّر الحفظ', 'امتلأ التخزين المحلي أو تعذّرت الكتابة — التعديلات ظاهرة أمامك لكنها غير محفوظة. احذف مسودات/جلسات قديمة ثم أعد الحفظ.');
+    return;
+  }
+  if(_persistFailNotified) return;
+  _persistFailNotified = true;
+  showToast('⚠ تعذّر الحفظ التلقائي — قد يكون التخزين ممتلئًا');
+}
+function notifyPersistOk(){ _persistFailNotified = false; }
 function showToast(msg){
   const tm = $('#toastMsg'); if(tm) tm.textContent = msg;
   const t = $('#toast'); if(t) t.classList.add('show');

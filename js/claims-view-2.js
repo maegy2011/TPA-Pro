@@ -58,7 +58,12 @@ function saveReviewDraft(label){
   });
   while(activeClaim._reviewDrafts.length > REVIEW_DRAFTS_MAX) activeClaim._reviewDrafts.shift();
   if(typeof appendClaimAuditEvent === 'function') appendClaimAuditEvent(activeClaim, { action:'review.draft-saved', details:{ draft: activeClaim._reviewDrafts[activeClaim._reviewDrafts.length-1].id, label: String(label||''), billed: t.billed, approved: t.approved } });
-  if(typeof persistData === 'function') persistData(true);
+  if(typeof persistData === 'function'){
+    let _ok = persistData(true);
+    if(!_ok && activeClaim._reviewDrafts.length > 1){ activeClaim._reviewDrafts.shift(); _ok = persistData(true); }
+    if(_ok){ if(typeof notifyPersistOk === 'function') notifyPersistOk(); }
+    else { activeClaim._reviewDrafts.pop(); if(typeof notifyPersistFailed === 'function') notifyPersistFailed(true); return; }
+  }
   if(typeof renderReviewDrafts === 'function') renderReviewDrafts();
   if(typeof showSuccess === 'function') showSuccess('مسودة محفوظة', `المعتمد في هذه المسودة: ${fmt(t.approved)}`);
 }
@@ -73,7 +78,7 @@ function restoreReviewDraft(id){
     const nn = document.getElementById('rvPageNotes')||document.getElementById('rvNotes'); if(nn && d.notes !== undefined) nn.value = d.notes;
     markSessionDirty(); renderActiveInvoice(); recalcReview();
     if(typeof appendClaimAuditEvent === 'function') appendClaimAuditEvent(activeClaim, { action:'review.draft-restored', details:{ draft: id, label: d.label||'' } });
-    if(typeof persistData === 'function') persistData(true);
+    if(typeof persistData === 'function' && !persistData(true)){ if(typeof notifyPersistFailed === 'function') notifyPersistFailed(true); }
     if(typeof showSuccess === 'function') showSuccess('تم', 'حُمّلت المسودة في مساحة العمل — راجع ثم احفظ أو اعتمد');
   };
   if(typeof isSessionDirty === 'function' && isSessionDirty()){ showWarning('مساحة العمل متغيرة', 'يوجد تعديلات غير محفوظة ستُستبدل بالمسودة. متابعة؟', apply); return; }
@@ -84,7 +89,7 @@ function deleteReviewDraft(id){
   showDelete('حذف المسودة', 'سيتم حذف هذه المسودة نهائيًا.', () => {
     activeClaim._reviewDrafts = (activeClaim._reviewDrafts||[]).filter(x => x.id !== id);
     if(typeof appendClaimAuditEvent === 'function') appendClaimAuditEvent(activeClaim, { action:'review.draft-deleted', details:{ draft: id } });
-    if(typeof persistData === 'function') persistData(true);
+    if(typeof persistData === 'function' && !persistData(true)){ if(typeof notifyPersistFailed === 'function') notifyPersistFailed(true); }
     if(typeof renderReviewDrafts === 'function') renderReviewDrafts();
   });
 }
@@ -106,19 +111,20 @@ function renderReviewDrafts(){
 }
 function finalizeReview(){
   if(!activeClaim) return;
+  let pendingCount = 0;
   if (typeof collectExceptions === 'function') {
-    let pendingCount = 0;
     (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
       if(l._decision === 'needs-attention' || l._decision === 'pa-pending') pendingCount++;
     })));
     if (pendingCount > 0) { showWarning('استثناءات معلّقة', `بقي ${pendingCount} استثناء في المطالبة. انتقل إلى كل مريض وعالج استثناءاته قبل الحفظ.`); return; }
+  }
+  // بوابة السبب الإلزامي تعمل دائمًا — لا تعتمد على وجود collectExceptions.
   const _noCapNote = [];
   (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach((p, pi) => {
     if(p._capMode === 'manual' && Number(p._manualCapAmount||0) !== Number(p._autoCapAmt||0) && !(p._capNote||'').trim()) _noCapNote.push(`مريض ${pi+1}: سقف يدوي بلا سبب`);
     if(p._copayMode === 'manual' && Number(p._manualCopayAmount||0) !== Number(p._autoCopayAmt||0) && !(p._copayNote||'').trim()) _noCapNote.push(`مريض ${pi+1}: تحمل يدوي بلا سبب`);
   }));
   if(_noCapNote.length){ showWarning('سبب إلزامي', _noCapNote.join('<br>')+'<br><br>سجّل السبب بجانب حقل السقف/التحمل اليدوي.'); return; }
-  }
   const cid = activeClaim.id;
   // أرشفة تلقائية: النسخة المعتمدة السابقة تُحفظ كمسودة قبل الكتابة فوقها — لا يضيع تاريخ.
   if(activeClaim.reviewedDate && Array.isArray(activeClaim.invoices) && activeClaim.invoices.length){
@@ -163,7 +169,11 @@ function finalizeReview(){
   }
   workSessions = workSessions.filter(x => x.claimId !== activeClaim.id);
   persistSessions();
-  if (typeof persistData === 'function') persistData(true);
+  if (typeof persistData === 'function'){
+    const _ok = persistData(true);
+    if(_ok){ if(typeof notifyPersistOk === 'function') notifyPersistOk(); }
+    else if(typeof notifyPersistFailed === 'function') notifyPersistFailed(true);
+  }
   clearSessionDirty();
   closeReview({ discard:true });
   renderAll();

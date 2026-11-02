@@ -70,7 +70,10 @@ function upsertCurrentSession(){
   const s = captureCurrentSessionState(); if(!s) return null;
   const i = workSessions.findIndex(x => x.id === s.id);
   if(i >= 0) workSessions[i] = s; else workSessions.push(s);
-  persistSessions(); updateSessionsBadge(); return s;
+  const _ok = (typeof persistSessions === 'function') ? persistSessions() : true;
+  if(_ok){ if(typeof notifyPersistOk === 'function') notifyPersistOk(); }
+  else if(typeof notifyPersistFailed === 'function') notifyPersistFailed(false);
+  updateSessionsBadge(); return s;
 }
 function updateSessionsBadge(){
   const b = document.getElementById('sessionsCount');
@@ -101,7 +104,15 @@ function resumeSession(sessionId){
   }
   activeClaim = live;
   if(s.claimSnapshot && Array.isArray(s.claimSnapshot.invoices)) activeClaim.invoices = JSON.parse(JSON.stringify(s.claimSnapshot.invoices));
+  else if(!Array.isArray(activeClaim.invoices)) activeClaim.invoices = [];
   workingInvoices = JSON.parse(JSON.stringify(s.workingInvoices || []));
+  // H1: املأ صفحة المراجعة (الترويسة + السياق + المسودات) — لا تكتفِ بحقول المودال القديم.
+  try { if(typeof _fillReviewPage === 'function') _fillReviewPage(activeClaim); } catch(e){}
+  try {
+    const _pr = document.getElementById('rvPageReason'); if(_pr && s.reviewFormState && s.reviewFormState.reason !== undefined) _pr.value = s.reviewFormState.reason;
+    const _pn = document.getElementById('rvPageNotes'); if(_pn && s.reviewFormState && s.reviewFormState.notes !== undefined) _pn.value = s.reviewFormState.notes;
+  } catch(e){}
+  try { if(typeof renderReviewDrafts === 'function') renderReviewDrafts(); } catch(e){}
   rvActiveInvoiceIdx = s.rvActiveInvoiceIdx || 0;
   rvActivePatientIdx = s.rvActivePatientIdx || 0;
   activeSessionId = s.id;
@@ -241,16 +252,16 @@ function resumeSessionFromLastPoint(sessionId) {
   const session = workSessions.find(s => s.id === sessionId);
   if (!session) return;
   workSessions.forEach(s => { if (s.status === 'active') s.status = 'paused'; });
-  session.status = 'active';
-  activeSessionId = session.id;
-  try { openReview(session.claimId); } catch(e){}
+  // توحيد: نفس مسار resumeSession (يستعيد مساحة العمل + فحص التعارض) ثم القفز لآخر نقطة.
+  const ok = (typeof resumeSession === 'function') ? resumeSession(sessionId) : false;
+  if(ok === false) return;
   if (session.lastSavedPoint) {
     rvActiveInvoiceIdx = session.lastSavedPoint.invoiceIdx || 0;
     rvActivePatientIdx = session.lastSavedPoint.patientIdx || 0;
     try { renderReviewInvoices(); } catch(e){}
+    try { if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); } catch(e){}
   }
-  startSessionTimeTracker(session);
-  try { showSuccess('تم استئناف الجلسة', `الوقت المستغرق حتى الآن: ${formatElapsedTime(session.elapsedSeconds || 0)}`); } catch(e){}
+  try { if(typeof showToast === 'function') showToast(`تم الاستئناف — الوقت المستغرق: ${formatElapsedTime(session.elapsedSeconds || 0)}`); } catch(e){}
 }
 
 function formatElapsedTime(seconds) {
