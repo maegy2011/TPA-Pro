@@ -122,10 +122,7 @@ function initApp(){
 
     // ⌨️ اختصارات لوحة المفاتيح
     document.addEventListener('keydown', e => {
-      if(document.getElementById('reviewModal')?.classList.contains('open') || (typeof currentPage !== 'undefined' && currentPage === 'review')){
-        if((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); if(typeof saveReview === 'function') saveReview(); return; }
-        if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); if(typeof finalizeReview === 'function') finalizeReview(); return; }
-      }
+      // ملاحظة: اختصارات المراجعة (Ctrl+S / Ctrl+Enter) في shortcuts.js فقط — مصدر واحد.
       if((e.ctrlKey || e.metaKey) && e.key === '/'){
         e.preventDefault();
         if(currentPage === 'claims') $('#searchInput')?.focus();

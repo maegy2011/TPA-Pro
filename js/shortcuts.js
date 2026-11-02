@@ -2,9 +2,17 @@
 function bindShortcuts(){
   document.addEventListener('keydown', e => {
     const ctrl = e.ctrlKey || e.metaKey;
-    if(ctrl && e.key === 'k'){ e.preventDefault(); navHistory=[]; navigateTo('search',{noPush:true}); const inp = document.getElementById('srchQuery')||document.getElementById('searchInput'); if(inp) setTimeout(()=>inp.focus(),50); return; }
-    if(ctrl && e.key === 'n'){ e.preventDefault(); if(currentPage!=='inbox') navigateTo('inbox',{noPush:true}); setTimeout(()=>{ const b=document.getElementById('addBatchBtn'); if(b) b.click(); },50); return; }
-  if(ctrl && e.key === 's'){ e.preventDefault(); if(typeof saveReview === 'function' && (document.getElementById('reviewModal')?.classList.contains('open') || (typeof currentPage !== 'undefined' && currentPage === 'review'))) saveReview(); else if(typeof saveLineEditor === 'function' && document.getElementById('lineModal')?.classList.contains('open')) saveLineEditor(); return; }
+    const inField = (() => { const a = document.activeElement; return a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'); })();
+    const reviewOpen = (document.getElementById('reviewModal')?.classList.contains('open')) || (typeof currentPage !== 'undefined' && currentPage === 'review');
+    const lineOpen = document.getElementById('lineModal')?.classList.contains('open');
+    // Ctrl+S: حفظ — preventDefault فقط عند المعالجة الفعلية حتى لا نحجب حفظ المتصفح خارج المراجعة.
+    if(ctrl && (e.key === 's' || e.key === 'S')){ if(reviewOpen || lineOpen){ e.preventDefault(); if(reviewOpen && typeof saveReview === 'function') saveReview(); else if(lineOpen && typeof saveLineEditor === 'function') saveLineEditor(); return; } }
+    // Ctrl+Enter: اعتماد — آمن، لا ارتباط له في المتصفح.
+    if(ctrl && e.key === 'Enter'){ if(reviewOpen){ e.preventDefault(); if(typeof finalizeReview === 'function') finalizeReview(); return; } }
+    // اختصارات التنقل: لا تعمل أثناء الكتابة في الحقول.
+    if(ctrl && (e.key === 'k' || e.key === 'K') && !inField){ e.preventDefault(); navHistory=[]; navigateTo('search',{noPush:true}); const inp = document.getElementById('srchQuery')||document.getElementById('searchInput'); if(inp) setTimeout(()=>inp.focus(),50); return; }
+    // Alt+N بدل Ctrl+N: الأخير محجوز للمتصفح (نافذة جديدة) ولا يمكن اعتراضه.
+    if(e.altKey && !ctrl && (e.key === 'n' || e.key === 'N') && !inField){ e.preventDefault(); if(currentPage!=='inbox') navigateTo('inbox',{noPush:true}); setTimeout(()=>{ const b=document.getElementById('addBatchBtn'); if(b) b.click(); },50); return; }
     if(e.key === 'Escape'){
       const openModal = document.querySelector('.modal.open, .dialog-overlay.open');
       if(openModal){

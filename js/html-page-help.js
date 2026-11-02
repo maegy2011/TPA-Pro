@@ -34,7 +34,7 @@ const PAGE_HELP = `
           <div class="panel-body">
             <div class="info-list">
               <div class="info-row"><span class="k"><kbd>Ctrl+K</kbd></span><span class="v">بحث سريع</span></div>
-              <div class="info-row"><span class="k"><kbd>Ctrl+N</kbd></span><span class="v">دفعة جديدة</span></div>
+              <div class="info-row"><span class="k"><kbd>Alt+N</kbd></span><span class="v">دفعة جديدة</span></div>
               <div class="info-row"><span class="k"><kbd>Ctrl+S</kbd></span><span class="v">حفظ (في المراجعة)</span></div>
               <div class="info-row"><span class="k"><kbd>Ctrl+Enter</kbd></span><span class="v">اعتماد (في المراجعة)</span></div>
               <div class="info-row"><span class="k"><kbd>Esc</kbd></span><span class="v">إغلاق نافذة</span></div>
