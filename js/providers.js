@@ -139,6 +139,8 @@ function bindContractsControls(){
   $$('[data-close-contract]').forEach(el => el.addEventListener('click', closeContractModal));
   $('#saveContract').addEventListener('click', saveContract);
   const cs = $('#ctrServicesSearch'); if(cs) cs.addEventListener('input', e => renderContractServicesOptions(e.target.value));
+  const csv = $('#ctrSelectVisible'); if(csv) csv.addEventListener('click', () => setVisibleExcluded(true));
+  const ccv = $('#ctrClearVisible'); if(ccv) ccv.addEventListener('click', () => setVisibleExcluded(false));
   const cai = $('#ctrApplyIncrease'); if(cai) cai.addEventListener('click', applyContractIncrease);
   const coa = $('#ctrOvAdd'); if(coa) coa.addEventListener('click', addServiceOverride);
   const cos = $('#ctrOvSearch'); if(cos) cos.addEventListener('input', () => renderServiceOverrides());

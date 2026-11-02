@@ -37,6 +37,14 @@ function renderContractServicesOptions(q){
     });
   });
 }
+function setVisibleExcluded(on){
+  const box = $('#ctrServicesList'); if(!box) return;
+  box.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.checked = on;
+    if(on){ if(!selectedExcludedServices.includes(cb.value)) selectedExcludedServices.push(cb.value); }
+    else selectedExcludedServices = selectedExcludedServices.filter(x => x !== cb.value);
+  });
+}
 function renderContracts(){
   const activeN = contracts.filter(c=>effectiveContractStatus(c)==='active').length;
   const expN = contracts.filter(c=>effectiveContractStatus(c)==='expiring').length;
