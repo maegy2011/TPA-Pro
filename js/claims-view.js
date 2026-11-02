@@ -180,11 +180,22 @@ function renderActiveInvoice(){
       const _ext = isExternalInvoice(inv);
       const _totalDed = totalBilled - totalNet;
       if (_ext) {
-        const _reasons = (inv.patients||[]).flatMap(p => (p.deductionReasons||[])).map(d => d.reason).filter(Boolean);
-        const _reason = _reasons.length ? _reasons[0] : '—';
-        return `<div class="rv-section-title">مذكرة الخصم (خارجية — بند واحد)</div>
-        <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>البند</th><th>المبلغ</th><th>السبب</th></tr></thead><tbody>
-          <tr><td>إجمالي الخصم</td><td class="mono" style="color:var(--bad);font-weight:700">${fmtC(_totalDed)}</td><td>${escapeHtml(_reason)}</td></tr>
+        // تجميع أسباب الخصم المتكررة: سبب واحد + مجموع المبلغ + أرقام مسلسل الحالات.
+        const _groups = new Map();
+        (inv.patients||[]).forEach((p, pi) => (p.deductionReasons||[]).forEach(d => {
+          const amt = Number(d.amount)||0; if(amt <= 0 || !d.reason) return;
+          const key = `${d.reason}‖${d.source||''}`;
+          if(!_groups.has(key)) _groups.set(key, { reason:d.reason, source:d.source||'', amount:0, cases:[] });
+          const g = _groups.get(key); g.amount += amt; if(!g.cases.includes(pi+1)) g.cases.push(pi+1);
+        }));
+        const _fmtCases = (arr) => arr.length > 1 ? arr.slice(0,-1).join('، ') + ' و' + arr[arr.length-1] : String(arr[0]);
+        const _grow = [..._groups.values()].sort((a,b)=>b.amount-a.amount).map(g =>
+          `<tr><td>${escapeHtml(g.reason)}<div style="color:var(--muted);font-size:10.5px">الحالات رقم ${_fmtCases(g.cases)}${g.source==='manual'?' · يدوي':g.source==='rule'?' · قاعدة':''}</div></td><td class="mono" style="color:var(--bad);font-weight:700">${fmtC(g.amount)}</td></tr>`
+        ).join('');
+        return `<div class="rv-section-title">مذكرة الخصم (خارجية — مجمعة بالأسباب)</div>
+        <div class="rv-lines-wrap"><table class="rv-lines-table"><thead><tr><th>سبب الخصم (بالحالات)</th><th>المبلغ</th></tr></thead><tbody>
+          ${_grow || '<tr><td colspan="2" style="text-align:center;color:var(--muted)">لا خصومات</td></tr>'}
+          <tr style="font-weight:800"><td>الإجمالي</td><td class="mono" style="color:var(--bad)">${fmtC(_totalDed)}</td></tr>
         </tbody></table></div>`;
       }
       // internal: per-line discounts
@@ -365,6 +376,29 @@ function renderFinalSummary(){
   const rb = document.getElementById('rvFinalReasons') || document.getElementById('rvPageFinalReasons');
   if (rb) {
     let html = '<div class="rv-section-title">أسباب الخصم — كل المرضى (كل مبلغ له سبب)</div>';
+    // ملخص مجمع للفواتير الخارجية: سبب واحد + المبلغ + أرقام الحالات.
+    try {
+      const _eg = new Map();
+      (workingInvoices||[]).forEach(inv => { if(!(typeof isExternalInvoice === 'function' ? isExternalInvoice(inv) : true)) return;
+        (inv.patients||[]).forEach((p, pi) => (p.deductionReasons||[]).forEach(d => {
+          const amt = Number(d.amount)||0; if(amt <= 0 || !d.reason) return;
+          const key = `${d.reason}‖${d.source||''}`;
+          if(!_eg.has(key)) _eg.set(key, { reason:d.reason, source:d.source||'', amount:0, cases:[] });
+          const g = _eg.get(key); g.amount += amt;
+          const _tag = `${inv.debitNoteNumber||inv.number||inv.id}#${pi+1}`; if(!g.cases.includes(_tag)) g.cases.push(_tag);
+        }));
+      });
+      if(_eg.size){
+        const _fmtC = (arr) => arr.length > 1 ? arr.slice(0,-1).join('، ') + ' و' + arr[arr.length-1] : String(arr[0]);
+        html += '<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:#F8FAFC">';
+        html += '<div style="font-weight:800;margin-bottom:6px">المجمع الخارجي (سبب واحد + الحالات)</div>';
+        html += '<table style="width:100%;font-size:11.5px;border-collapse:collapse"><thead><tr style="background:#fff"><th style="text-align:right;padding:6px;border:1px solid var(--line)">السبب</th><th style="text-align:left;padding:6px;border:1px solid var(--line)">المبلغ</th></tr></thead><tbody>';
+        [..._eg.values()].sort((a,b)=>b.amount-a.amount).forEach(g => {
+          html += `<tr><td style="padding:6px;border:1px solid var(--line)">${escapeHtml(g.reason)}<div style="color:var(--muted);font-size:10.5px">الحالات: ${escapeHtml(_fmtC(g.cases))}</div></td><td style="text-align:left;padding:6px;border:1px solid var(--line);color:var(--bad);font-weight:700" class="mono">${fmtC(g.amount)}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+      }
+    } catch(e){}
     (workingInvoices||[]).forEach((inv, ii) => (inv.patients||[]).forEach((p, pi) => {
         if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv);
         const drs = p.deductionReasons || [];
