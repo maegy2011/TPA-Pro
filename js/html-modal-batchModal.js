@@ -15,13 +15,12 @@ const MODAL_BATCH = `
               <select id="btProvider" style="margin-top:6px"></select>
             </div>
             <div class="fg"><label>نوع الفترة</label><select id="btPeriodType"><option value="single">فترة واحدة</option><option value="multi">فترات متعددة (متتالية)</option><option value="scattered">فترات متفرقة</option></select></div>
-            <div class="fg"><label>الشهر / الأشهر *</label><input id="btMonth" placeholder="2025-01 أو 2025-01,2025-02"></div>
+            <div class="fg"><label>فترة المطالبة *</label><input id="btMonth" placeholder="نوفمبر 2025"><small class="fg-hint" style="display:block;margin-top:4px">واحدة: نوفمبر 2025 — متتالية: نوفمبر 2025 حتى يناير 2026 — متفرقة: اكتوبر 2025 وديسمبر 2025 وفبراير 2026 حتى أبريل 2026</small></div>
 
-            <div class="fg"><label>الحالة</label><select id="btStatus"><option value="new">جديدة</option><option value="received">وارد جديد</option><option value="under-review">قيد المعالجة</option><option value="completed">مكتمل</option></select></div>
+            <div class="fg"><label>الحالة</label><select id="btStatus"><option value="new">مطالبة جديدة</option><option value="istifa">استيفا</option></select></div>
             <div class="fg"><label>رقم وارد المطالبة</label><input id="btNumber" readonly></div>
 
             <div class="fg"><label>تاريخ وارد المطالبة</label><input id="btClaimReceivedDate" type="date"></div>
-            <div class="fg"><label>القيمة الإجمالية (ج.م) *</label><input id="btBilled" type="number" min="0" placeholder="0"></div>
             <div class="fg full"><label>ملاحظات</label><textarea id="btNotes"></textarea></div>
           </div>
         </div>

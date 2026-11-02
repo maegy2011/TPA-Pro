@@ -4,7 +4,7 @@ const CONTRACT_STATUS = { active:{label:'مفعل',cls:'ok'}, 'under-review':{la
 const TARIFF_TYPES = { general:{label:'لائحة عامة',cls:'t-general'}, private:{label:'لائحة خاصة',cls:'t-private'}, supplementary:{label:'لائحة مكملة',cls:'t-supplementary'} };
 const TARIFF_STATUS = { active:{label:'نشطة',cls:'ok'}, upcoming:{label:'لم تبدأ',cls:'info'}, pending:{label:'قيد الاعتماد',cls:'warn'}, expired:{label:'منتهية',cls:'bad'}, disabled:{label:'معطلة',cls:'bad'} };
 const TYPE_CLASS = { 'مستشفى':'type-hospital','مجمع طبي':'type-center','عيادة':'type-clinic','مركز تخصصي':'type-special','صيدلية':'type-pharmacy','معمل':'type-lab','معمل تحاليل':'type-lab','مركز أشعة':'type-special' };
-const BATCH_STATUS = { received:{label:'وارد جديد',cls:'info'}, 'under-review':{label:'قيد المعالجة',cls:'warn'}, completed:{label:'مكتمل',cls:'ok'}, rejected:{label:'مرفوض',cls:'bad'} };
+const BATCH_STATUS = { new:{label:'مطالبة جديدة',cls:'info'}, istifa:{label:'استيفا',cls:'warn'} };
 const PA_STATUS = { 'not-requested':{label:'لم تُطلب',cls:'bad'}, 'pending':{label:'قيد الطلب',cls:'warn'}, 'approved':{label:'موافق عليها',cls:'ok'}, 'rejected':{label:'مرفوضة',cls:'bad'} };
 const INVOICE_TYPES = {
   outpatient:{label:'عيادة خارجية / كشف'}, lab:{label:'تحاليل مخبرية'},

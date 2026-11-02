@@ -33,16 +33,13 @@ function bindIntakeControls(){
 }
 function renderIntake(){
   const total = batches.length;
-  const tc = batches.reduce((s,b)=>s+b.claimsCount,0);
-  const tv = batches.reduce((s,b)=>s+b.totalBilled,0);
-  const rc = batches.filter(b=>b.status==='received' || b.status==='new').length;
-  const uc = batches.filter(b=>b.status==='under-review').length;
-  const cc = batches.filter(b=>b.status==='completed').length;
+  const tc = batches.reduce((s,b)=>s+(b.claimsCount||0),0);
+  const nc = batches.filter(b=>b.status==='new').length;
+  const ic = batches.filter(b=>b.status==='istifa').length;
   $('#intakeKpi').innerHTML = `
-    <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الدفعات</div><div class="kpi-val">${total} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('inbox')}</div></div><div class="kpi-foot">${rc} وارد · ${uc} قيد · ${cc} مكتمل</div></div>
+    <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الدفعات</div><div class="kpi-val">${total} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('inbox')}</div></div><div class="kpi-foot">${nc} جديدة · ${ic} استيفا</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">المطالبات</div><div class="kpi-val">${fmt(tc)} <small>مطالبة</small></div></div><div class="kpi-ico">${kpiIcon('file')}</div></div><div class="kpi-foot">${total} دفعة</div></div>
-    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">القيمة</div><div class="kpi-val">${fmt(tv)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">مجموع</div></div>
-    <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">بحاجة إجراء</div><div class="kpi-val">${rc+uc} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">لم تكتمل</div></div>`;
+    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">استيفا</div><div class="kpi-val">${ic} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">بانتظار الاستكمال</div></div>`;
   const months = [...new Set(batches.map(b=>b.month))].sort().reverse();
   const mHtml = ['<button class="month-chip '+(intakeMonthFilter==='all'?'active':'')+'" data-month="all">الكل <span class="mc-count">'+total+'</span></button>']
     .concat(months.map(m => { const cnt = batches.filter(b=>b.month===m).length; return `<button class="month-chip ${intakeMonthFilter===m?'active':''}" data-month="${m}">${formatMonth(String(m).split(',')[0])} <span class="mc-count">${cnt}</span></button>`; }));
@@ -50,22 +47,21 @@ function renderIntake(){
   const list = batches.filter(b => {
     if(intakeMonthFilter !== 'all' && String(b.month) !== intakeMonthFilter && !(String(b.month).split(',').includes(intakeMonthFilter))) return false;
     if(intakeStatusFilter !== 'all' && b.status !== intakeStatusFilter) return false;
-    if(intakeSearch){ const p = getProviderById(b.providerId); const q = intakeSearch; return b.id.toLowerCase().includes(q) || (p && p.name.toLowerCase().includes(q)); }
+    if(intakeSearch){ const p = getProviderById(b.providerId); const q = intakeSearch; return (b.receivedNumber||b.id).toLowerCase().includes(q) || (p && p.name.toLowerCase().includes(q)); }
     return true;
   }).sort((a,b) => (b.receivedDate||'').localeCompare(a.receivedDate||''));
   const body = $('#batchesBody');
-  if(!list.length){ body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--muted)">لا دفعات</td></tr>'; return; }
+  if(!list.length){ body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--muted)">لا دفعات</td></tr>'; return; }
   body.innerHTML = list.map(b => {
     const p = getProviderById(b.providerId);
     const pName = p ? p.name : '—';
-    const bs = BATCH_STATUS[b.status] || BATCH_STATUS.received;
+    const bs = BATCH_STATUS[b.status] || BATCH_STATUS.new;
     return `<tr>
-      <td data-label="رقم"><span class="clm-id">${escapeHtml(b.id)}</span></td>
+      <td data-label="رقم"><span class="clm-id">${escapeHtml(b.receivedNumber||b.id)}</span></td>
       <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar alt">${pName.charAt(0)}</div><div><div class="prov-name">${escapeHtml(pName)}</div><div class="prov-city">${escapeHtml(p?p.city:'' )}</div></div></div></td>
-      <td data-label="الشهر"><span class="mono">${escapeHtml(String(b.month))}</span></td>
+      <td data-label="فترة المطالبة"><span class="mono">${escapeHtml(String(b.month))}</span></td>
       <td data-label="الاستلام" class="hide-sm mono">${formatDate(b.receivedDate)}</td>
       <td data-label="المطالبات" class="mono">${fmt(b.claimsCount)}</td>
-      <td data-label="القيمة" class="mono big">${fmt(b.totalBilled)}</td>
       <td data-label="الحالة"><span class="badge ${bs.cls}">${bs.label}</span></td>
       <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-batch="${b.id}">تعديل</button><button class="btn-xs danger" data-delete-batch="${b.id}">×</button></div></td>
     </tr>`;
@@ -75,7 +71,7 @@ function openBatchModal(id){
   editingBatchId = id || null; const isEdit = !!id;
   const b = isEdit ? getBatchById(id) : null; if(isEdit && !b) return;
   $('#btModalTitle').textContent = isEdit ? 'تعديل الدفعة' : 'استلام مطالبة';
-  $('#btModalSub').textContent = isEdit ? b.id : 'بيانات جديدة';
+  $('#btModalSub').textContent = isEdit ? (b.receivedNumber||b.id) : 'بيانات جديدة';
   renderProviderOptions('');
   $('#btProviderSearch').value = '';
   workingBatchClaim = null;
@@ -84,10 +80,9 @@ function openBatchModal(id){
     $('#btPeriodType').value = b.periodType || 'single';
     $('#btMonth').value = b.month;
     $('#btStatus').value = b.status;
-    $('#btNumber').value = b.id;
+    $('#btNumber').value = b.receivedNumber||'';
     $('#btNotes').value = b.notes||'';
     $('#btClaimReceivedDate').value = b.claimReceivedDate||'';
-    $('#btBilled').value = b.totalBilled||0;
     (el => { if (el) el.style.display = 'block'; })($('#deleteBatch'));
   } else {
     const today = daysFromNow(0);
@@ -97,7 +92,6 @@ function openBatchModal(id){
     $('#btNumber').value = nextReceivedNumber();
     $('#btNotes').value = '';
     $('#btClaimReceivedDate').value = today;
-    $('#btBilled').value = '';
     (el => { if (el) el.style.display = 'none'; })($('#deleteBatch'));
   }
   $('#btMonth').onchange = () => { if(!isEdit) $('#btNumber').value = nextReceivedNumber(); };
@@ -112,23 +106,22 @@ function saveBatch(another){
   const receivedDate = claimReceivedDate;
   const status = $('#btStatus').value;
   const claimDate = receivedDate;
-  const billed = Number($('#btBilled').value);
   const notes = $('#btNotes').value.trim();
   if(!providerId){ showWarning('تنبيه','اختر الجهة'); return; }
-  if(!month){ showWarning('تنبيه','أدخل الشهر'); return; }
-  if(!billed || billed <= 0){ showWarning('تنبيه','أدخل القيمة الإجمالية'); return; }
+  if(!month){ showWarning('تنبيه','أدخل فترة المطالبة'); return; }
   const p = getProviderById(providerId);
-  const batchId = editingBatchId || ('BTH-'+month.split(',')[0]+'-'+$('#btNumber').value);
+  const receivedNumber = $('#btNumber').value;
+  const batchId = editingBatchId || ('BTH-'+month.split(',')[0]+'-'+receivedNumber);
   if(editingBatchId){
     const b = getBatchById(editingBatchId);
-    if(b){ b.providerId = providerId; b.month = month; b.periodType = periodType; b.receivedDate = receivedDate; b.status = status; b.notes = notes; b.claimDate = claimDate; b.claimReceivedDate = claimReceivedDate; b.totalBilled = billed; b.claimsCount = 1; }
+    if(b){ b.providerId = providerId; b.month = month; b.periodType = periodType; b.receivedDate = receivedDate; b.status = status; b.notes = notes; b.claimDate = claimDate; b.claimReceivedDate = claimReceivedDate; b.claimsCount = 1; }
   } else {
-    batches.push({ id: batchId, providerId, month, periodType, receivedDate, status, notes, patient: '', claimDate, claimReceivedDate, claimsCount:1, totalBilled:billed });
-    // create a claim with status 'new' and total billed
+    batches.push({ id: batchId, receivedNumber, providerId, month, periodType, receivedDate, status, notes, patient: '', claimDate, claimReceivedDate, claimsCount:1 });
+    // create a claim with status 'new' — amounts computed during review from lines
     const claimId = generateClaimId();
-    claims.push({ id: claimId, patient: '', provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber: $('#btNumber').value, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed });
+    claims.push({ id: claimId, patient: '', provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed:0 });
     // set billed on claim
-    const c = claims[claims.length-1]; c.billed = billed; c.approved = 0; c.eligible = billed;
+    const c = claims[claims.length-1]; c.billed = 0; c.approved = 0; c.eligible = 0;
   }
   persistData(true); renderIntake(); updateBackupStats();
   if(another){ openBatchModal(null); }
@@ -136,7 +129,7 @@ function saveBatch(another){
 }
 function deleteBatchWithDialog(id){
   const b = getBatchById(id); if(!b) return;
-  showDelete('حذف الدفعة', `سيتم حذف ${escapeHtml(b.id)}.`, () => {
+  showDelete('حذف الدفعة', `سيتم حذف وارد ${escapeHtml(b.receivedNumber||b.id)}.`, () => {
     batches = batches.filter(x => x.id !== id);
     claims = claims.filter(c => c.batchId !== id);
     persistData(true); renderIntake(); updateBackupStats(); showSuccess('تم','تم');

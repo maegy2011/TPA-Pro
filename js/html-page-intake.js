@@ -13,10 +13,9 @@ const PAGE_INTAKE = `
       <div class="month-chips" id="monthChips"></div>
       <div class="chips" id="intakeStatusChips" style="margin-bottom:14px">
         <button class="chip active" data-istatus="all" data-i18n="common.all">الكل</button>
-        <button class="chip" data-istatus="received">وارد جديد</button>
-        <button class="chip" data-istatus="under-review">قيد المعالجة</button>
-        <button class="chip" data-istatus="completed">مكتمل</button>
+        <button class="chip" data-istatus="new">مطالبة جديدة</button>
+        <button class="chip" data-istatus="istifa">استيفا</button>
       </div>
-      <div class="panel"><div class="table-wrap"><table><thead><tr><th data-i18n="common.num">رقم</th><th data-i18n="providers.provider">الجهة</th><th data-i18n="intake.month">الشهر</th><th class="hide-sm" data-i18n="intake.received">الاستلام</th><th>العدد</th><th data-i18n="intake.value">القيمة</th><th data-i18n="common.status">الحالة</th><th></th></tr></thead><tbody id="batchesBody"></tbody></table></div></div>
+      <div class="panel"><div class="table-wrap"><table><thead><tr><th data-i18n="common.num">رقم</th><th data-i18n="providers.provider">الجهة</th><th>فترة المطالبة</th><th class="hide-sm" data-i18n="intake.received">الاستلام</th><th>العدد</th><th data-i18n="common.status">الحالة</th><th></th></tr></thead><tbody id="batchesBody"></tbody></table></div></div>
     </section>
 `;
