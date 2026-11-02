@@ -21,6 +21,8 @@ function bindProvidersControls(){
   $$('[data-close-provider]').forEach(el => el.addEventListener('click', closeProviderModal));
   $('#saveProvider').addEventListener('click', saveProvider);
   const ps = $('#pvProvinceSearch'); if(ps) ps.addEventListener('input', e => renderProvinceOptions(e.target.value));
+  const psv = $('#pvSelectVisible'); if(psv && !psv.dataset.bound){ psv.dataset.bound='1'; psv.addEventListener('click', () => setVisibleChecks('pvProvinceList', selectedProvinces, true)); }
+  const pcv = $('#pvClearVisible'); if(pcv && !pcv.dataset.bound){ pcv.dataset.bound='1'; pcv.addEventListener('click', () => setVisibleChecks('pvProvinceList', selectedProvinces, false)); }
   $('#deleteProvider').addEventListener('click', () => { if(editingProviderId) deleteProviderWithDialog(editingProviderId); });
 }
 function renderProviders(){

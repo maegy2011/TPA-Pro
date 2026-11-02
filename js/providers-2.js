@@ -37,13 +37,18 @@ function renderContractServicesOptions(q){
     });
   });
 }
-function setVisibleExcluded(on){
-  const box = $('#ctrServicesList'); if(!box) return;
+/** قاعدة عامة: تحديد/إلغاء كل الظاهر في أي قائمة بحثية. */
+function setVisibleChecks(listId, values, on){
+  const box = document.getElementById(listId); if(!box || !Array.isArray(values)) return;
   box.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.checked = on;
-    if(on){ if(!selectedExcludedServices.includes(cb.value)) selectedExcludedServices.push(cb.value); }
-    else selectedExcludedServices = selectedExcludedServices.filter(x => x !== cb.value);
+    const i = values.indexOf(cb.value);
+    if(on && i < 0) values.push(cb.value);
+    if(!on && i >= 0) values.splice(i, 1);
   });
+}
+function setVisibleExcluded(on){
+  setVisibleChecks('ctrServicesList', selectedExcludedServices, on);
 }
 function renderContracts(){
   const activeN = contracts.filter(c=>effectiveContractStatus(c)==='active').length;
@@ -293,6 +298,8 @@ function bindTariffsControls(){
   const lpl = $('#linkProvidersList'); if(lpl) lpl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
   const lcl = $('#linkContractsList'); if(lcl) lcl.addEventListener('change', e => { if(e.target.type === 'checkbox') e.target.closest('.link-item').classList.toggle('checked', e.target.checked); });
   const tss = $('#tfServicesSearch'); if(tss && !tss.dataset.bound){ tss.dataset.bound='1'; tss.addEventListener('input', e => renderTariffServicesChecklist(e.target.value)); }
+  const tsv = $('#tfSelectVisible'); if(tsv && !tsv.dataset.bound){ tsv.dataset.bound='1'; tsv.addEventListener('click', () => setVisibleChecks('tfServicesChecklist', workingLinkedServices, true)); }
+  const tcv = $('#tfClearVisible'); if(tcv && !tcv.dataset.bound){ tcv.dataset.bound='1'; tcv.addEventListener('click', () => setVisibleChecks('tfServicesChecklist', workingLinkedServices, false)); }
 
 
   $$('[data-close-tariff]').forEach(el => el.addEventListener('click', closeTariffModal));

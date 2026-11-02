@@ -16,7 +16,11 @@ const MODAL_PROVIDER = `
           <div class="rv-section-title">الموقع</div>
           <div class="form-grid">
             <div class="fg full"><label>المحافظة</label>
-              <input id="pvProvinceSearch" placeholder="بحث في المحافظات..." style="margin-bottom:6px">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <input id="pvProvinceSearch" placeholder="بحث في المحافظات..." style="flex:1">
+                <button type="button" class="btn-xs" id="pvSelectVisible">تحديد الظاهر</button>
+                <button type="button" class="btn-xs" id="pvClearVisible">إلغاء الظاهر</button>
+              </div>
               <div id="pvProvinceList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
             </div>
           </div>

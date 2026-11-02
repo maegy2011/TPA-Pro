@@ -23,7 +23,11 @@ const MODAL_TARIFF = `
             </div>
           </div>
           <div class="tf-panel" data-tf-panel="services">
-            <input type="text" id="tfServicesSearch" placeholder="بحث في الخدمات..." style="margin-bottom:8px;width:100%">
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input type="text" id="tfServicesSearch" placeholder="بحث في الخدمات..." style="flex:1">
+              <button type="button" class="btn-xs" id="tfSelectVisible">تحديد الظاهر</button>
+              <button type="button" class="btn-xs" id="tfClearVisible">إلغاء الظاهر</button>
+            </div>
             <div id="tfServicesChecklist" style="max-height:260px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
           </div>
           <div class="tf-panel" data-tf-panel="links">
