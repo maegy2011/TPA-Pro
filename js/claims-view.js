@@ -205,17 +205,39 @@ function renderActiveInvoice(){
 }
 
 function collectExceptions(){
+  // كل بنود المطالبة (كل الفواتير والمرضى) — لا المريض النشط فقط.
   const pending = [], processed = [], pa = [];
-  const inv = (workingInvoices||[])[rvActiveInvoiceIdx];
-  const pat = inv && (inv.patients||[])[rvActivePatientIdx];
-  if(pat) (pat.lines||[]).forEach((ln, li) => {
-    const item = { inv, ii:rvActiveInvoiceIdx, pat, pi:rvActivePatientIdx, ln, li };
+  (workingInvoices||[]).forEach((inv, ii) => (inv.patients||[]).forEach((pat, pi) => (pat.lines||[]).forEach((ln, li) => {
+    const item = { inv, ii, pat, pi, ln, li };
     const d = ln._decision;
     if (d === 'needs-attention') pending.push(item);
     else if (d === 'pa-pending') pa.push(item);
     else processed.push(item);
-  });
+  })));
   return { pending, processed, pa };
+}
+/* بوابة تحقق مشتركة للحفظ والتوقيع — مصدر واحد حتى لا يتباعد المساران. */
+function validateReviewForSign(){
+  const ce = (typeof collectExceptions === 'function') ? collectExceptions() : { pending:[], processed:[], pa:[] };
+  const pendingN = (ce.pending||[]).length, paN = (ce.pa||[]).length;
+  const billed = (typeof activeClaim !== 'undefined' && activeClaim) ? (Number(activeClaim.billed)||0) : 0;
+  let entered = 0;
+  (typeof workingInvoices !== 'undefined' ? workingInvoices||[] : []).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
+  const targetInfo = (typeof getClaimReconciliationTarget === 'function' && typeof activeClaim !== 'undefined')
+    ? getClaimReconciliationTarget(activeClaim)
+    : { amount: billed, source: 'legacy-billed' };
+  const mismatch = Math.abs(targetInfo.amount - entered) > 1;
+  const missingDocs = (typeof workingInvoices !== 'undefined' ? workingInvoices||[] : []).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+((typeof DOC_ITEMS !== 'undefined' ? DOC_ITEMS : []).filter(d=>!(p.documents&&p.documents[d.key])).length),0),0);
+  const finalReasonEl = document.getElementById('rvFinalReason') || document.getElementById('rvPageFinalReason');
+  const finalReason = finalReasonEl ? finalReasonEl.value : '';
+  const decision = (document.querySelector('input[name="rvDecision"]:checked')||document.querySelector('input[name="rvPageDecision"]:checked')||{}).value || 'partial';
+  const needsReason = (decision !== 'approved');
+  const missing = [];
+  if (pendingN + paN) missing.push(`${pendingN + paN} بند غير معالج`);
+  if (mismatch) missing.push('الإجمالي غير مُطابق');
+  if (missingDocs) missing.push(`${missingDocs} مستند ناقص`);
+  if (needsReason && !finalReason) missing.push('سبب الاستقطاع العام');
+  return { pendingN, paN, billed, entered, targetInfo, mismatch, missingDocs, finalReason, decision, needsReason, missing };
 }
 function _excFilter(){ return (window._excFilterVal || 'all'); }
 function setExcFilter(v){ window._excFilterVal = v; renderExceptions(); }
@@ -330,25 +352,23 @@ function renderFinalSummary(){
   // numbers
   const nb = document.getElementById('rvFinalNumbers') || document.getElementById('rvPageFinalNumbers');
   if (nb) {
-    const inv = (workingInvoices||[])[rvActiveInvoiceIdx];
-    const p = inv && (inv.patients||[])[rvActivePatientIdx];
-    const billed = p ? (p.lines||[]).reduce((a,l)=>a+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0) : 0;
-    if(p && typeof computePatient==='function') computePatient(p,activeClaim,inv.date,inv);
-    const approved = p ? (p._final||0) : 0;
+    let billed = 0, approved = 0;
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => {
+      if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv);
+      billed += (p.lines||[]).reduce((a,l)=>a+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
+      approved += (p._final||0);
+    }));
     const ded = billed - approved;
-    nb.innerHTML = `<div class="calc-box"><div class="calc-item"><span>المطالب به</span><b>${fmt(billed)}</b></div><div class="calc-item ded"><span>الاستقطاع</span><b>${fmt(ded)}</b></div><div class="calc-item rate"><span>النسبة</span><b>${billed?Math.round(ded/billed*100):0}%</b></div><div class="calc-item ok"><span>المعتمد</span><b>${fmt(approved)}</b></div></div>`;
+    nb.innerHTML = `<div class="calc-box"><div class="calc-item"><span>المطالب به (إجمالي المطالبة)</span><b>${fmt(billed)}</b></div><div class="calc-item ded"><span>الاستقطاع</span><b>${fmt(ded)}</b></div><div class="calc-item rate"><span>النسبة</span><b>${billed?Math.round(ded/billed*100):0}%</b></div><div class="calc-item ok"><span>المعتمد</span><b>${fmt(approved)}</b></div></div>`;
   }
   // reasons breakdown - per patient with all deduction reasons
   const rb = document.getElementById('rvFinalReasons') || document.getElementById('rvPageFinalReasons');
   if (rb) {
-    let html = '<div class="rv-section-title">أسباب الخصم للمريض المحدد (كل مبلغ له سبب)</div>';
-    const inv = (workingInvoices||[])[rvActiveInvoiceIdx];
-    const p = inv && (inv.patients||[])[rvActivePatientIdx];
-    if(inv && p) {
-        const ii=rvActiveInvoiceIdx, pi=rvActivePatientIdx;
+    let html = '<div class="rv-section-title">أسباب الخصم — كل المرضى (كل مبلغ له سبب)</div>';
+    (workingInvoices||[]).forEach((inv, ii) => (inv.patients||[]).forEach((p, pi) => {
         if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv);
         const drs = p.deductionReasons || [];
-        if(!drs.length) { html += '<div style="color:var(--muted)">لا توجد استقطاعات مسجلة لهذا المريض</div>'; } else {
+        if(!drs.length) return;
         const pBilled = (p.lines||[]).reduce((s,l)=>s+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
         const pDed = drs.reduce((s,d)=>s+(Number(d.amount)||0),0);
         html += `<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:#fff">`;
@@ -363,8 +383,7 @@ function renderFinalSummary(){
           html += `<tr><td style="padding:6px;border:1px solid var(--line)">${escapeHtml(dr.reason||'—')} ${dr.note?'<div style="color:var(--muted);font-size:10.5px">'+escapeHtml(dr.note)+'</div>':''}</td><td style="text-align:center;padding:6px;border:1px solid var(--line)">${escapeHtml(src)}</td><td style="text-align:center;padding:6px;border:1px solid var(--line)">${escapeHtml(lvl)}</td><td style="text-align:center;padding:6px;border:1px solid var(--line);font-family:monospace">${escapeHtml(ref)}</td><td style="text-align:left;padding:6px;border:1px solid var(--line);color:var(--bad);font-weight:700" class="mono">${fmtC(amt)}</td></tr>`;
         });
         html += `</tbody></table></div>`;
-        }
-    }
+    }));
     if(html.indexOf('<table') === -1) html += '<div style="font-size:12px;color:var(--muted)">لا توجد استقطاعات مسجلة</div>';
     rb.innerHTML = html;
   }

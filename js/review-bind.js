@@ -303,30 +303,10 @@ function bindReviewModal(){
   if (finBtn && !finBtn.dataset.bound) {
     finBtn.dataset.bound = '1';
     finBtn.addEventListener('click', () => {
-      // validation
-      const excs = typeof collectExceptions === 'function' ? collectExceptions() : [];
-      const paPending = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p.lines||[]).filter(l=>l._decision==='pa-pending').length,0),0);
-      const billed = activeClaim ? (Number(activeClaim.billed)||0) : 0;
-      let entered = 0;
-      (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
-      // Keep reconciliation tied to the source-submitted amount after recalculation.
-      const targetInfo = typeof getClaimReconciliationTarget === 'function'
-        ? getClaimReconciliationTarget(activeClaim)
-        : { amount: billed, source: 'legacy-billed' };
-      const mismatch = Math.abs(targetInfo.amount - entered) > 1;
-      const missingDocsInv = 0;
-      const missingDocsPat = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+DOC_ITEMS.filter(d=>!(p.documents&&p.documents[d.key])).length,0),0);
-      const missingDocs = missingDocsInv + missingDocsPat;
-      const finalReasonEl = document.getElementById('rvFinalReason') || document.getElementById('rvPageFinalReason');
-      const finalReason = finalReasonEl ? finalReasonEl.value : '';
-      const decision = (document.querySelector('input[name="rvDecision"]:checked')||document.querySelector('input[name="rvPageDecision"]:checked')||{}).value || 'partial';
-      const needsReason = (decision !== 'approved');
-      const missing = [];
-      if (excs.length) missing.push(`${excs.length} بند غير معالج`);
-      if (paPending) missing.push(`${paPending} بند بانتظار PA`);
-      if (mismatch) missing.push('الإجمالي غير مُطابق');
-      if (missingDocs) missing.push(`${missingDocs} مستند ناقص`);
-      if (needsReason && !finalReason) missing.push('سبب الاستقطاع العام');
+      // validation — بوابة مشتركة واحدة مع الحفظ (validateReviewForSign).
+      const v = (typeof validateReviewForSign === 'function') ? validateReviewForSign() : { missing:[] };
+      const { missingDocs, finalReason, decision } = v;
+      const missing = v.missing || [];
 
       if (missing.length) {
         const msg = 'لا يمكن إتمام التوقيع — ' + missing.length + ' نقص:\n\n• ' + missing.join('\n• ') + '\n\n[العودة للمعالجة]   [تجاوز وتوقيع مع توثيق]';
@@ -340,6 +320,7 @@ function bindReviewModal(){
 
       // signature dialog
       const approved = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+(p._final||0),0),0);
+      const billed = (v && typeof v.billed === 'number') ? v.billed : (activeClaim ? (Number(activeClaim.billed)||0) : 0);
       const ded = billed - approved;
       const sig = confirm(`توقيع المراجعة\n\nالمطالبة: ${activeClaim.id}\nالمطالب: ${fmt(billed)}\nالمعتمد: ${fmt(approved)}\nالاستقطاع: ${fmt(ded)}\nالقرار: ${decision}\nالسبب: ${finalReason||'—'}\n\nأقر بأنني راجعت هذه المطالبة.`);
       if (!sig) return;

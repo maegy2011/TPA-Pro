@@ -122,9 +122,9 @@ function initApp(){
 
     // ⌨️ اختصارات لوحة المفاتيح
     document.addEventListener('keydown', e => {
-      if(document.getElementById('reviewModal')?.classList.contains('open')){
-        if((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); saveReview(); return; }
-        if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); finalizeReview(); return; }
+      if(document.getElementById('reviewModal')?.classList.contains('open') || (typeof currentPage !== 'undefined' && currentPage === 'review')){
+        if((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); if(typeof saveReview === 'function') saveReview(); return; }
+        if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); if(typeof finalizeReview === 'function') finalizeReview(); return; }
       }
       if((e.ctrlKey || e.metaKey) && e.key === '/'){
         e.preventDefault();

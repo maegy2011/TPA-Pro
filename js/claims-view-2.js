@@ -112,7 +112,11 @@ function renderReviewDrafts(){
 function finalizeReview(){
   if(!activeClaim) return;
   let pendingCount = 0;
-  if (typeof collectExceptions === 'function') {
+  if (typeof validateReviewForSign === 'function') {
+    const v = validateReviewForSign();
+    pendingCount = (v.pendingN||0) + (v.paN||0);
+    if (pendingCount > 0) { showWarning('استثناءات معلّقة', `بقي ${pendingCount} استثناء في المطالبة. انتقل إلى كل مريض وعالج استثناءاته قبل الحفظ.`); return; }
+  } else if (typeof collectExceptions === 'function') {
     (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
       if(l._decision === 'needs-attention' || l._decision === 'pa-pending') pendingCount++;
     })));
