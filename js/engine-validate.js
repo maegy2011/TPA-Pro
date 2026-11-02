@@ -50,7 +50,10 @@ function getContractContext(claim, effectiveDate) {
     ) || null;
   }
   const resolvedVersion = tariffBase && typeof getTariffVersionForDate==='function' ? getTariffVersionForDate(tariffBase,claimDate) : null;
-  const tariff = tariffBase ? { ...tariffBase, services: (typeof getTariffServicesForDate === 'function') ? getTariffServicesForDate(tariffBase, claimDate) : (tariffBase.services||[]), _resolvedVersionEffectiveDate: resolvedVersion && resolvedVersion.effectiveDate || tariffBase.effectiveDate } : null;
+  let resolvedServices = (typeof getTariffServicesForDate === 'function') ? getTariffServicesForDate(tariffBase, claimDate) : ((tariffBase && tariffBase.services)||[]);
+  const _incF = (typeof getContractIncreaseFactor === 'function') ? getContractIncreaseFactor(contract, claimDate) : 1;
+  if(_incF !== 1 && Array.isArray(resolvedServices)) resolvedServices = resolvedServices.map(s => ({...s, currentPrice:(s.currentPrice===null||s.currentPrice===undefined)?s.currentPrice:(Math.round(Number(s.currentPrice)*_incF*100)/100)}));
+  const tariff = tariffBase ? { ...tariffBase, services: resolvedServices, _resolvedVersionEffectiveDate: resolvedVersion && resolvedVersion.effectiveDate || tariffBase.effectiveDate, _increaseFactorApplied: _incF } : null;
 
   const serviceOverrides = contract?.serviceOverrides || {};
 

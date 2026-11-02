@@ -39,6 +39,14 @@ function archiveTariffVersion(t, newEffectiveDate, action, changes){
 function getBatchById(id){ return batches.find(b=>b.id===id); }
 function getClaimById(id){ return claims.find(c=>c.id===id); }
 function getContractByProvider(pid){ return contracts.find(c=>c.providerId===pid); }
+/** معامل الزيادة السنوية للعقد بتاريخ المطالبة — حاصل ضرب الزيادات المطبقة حتى ذلك التاريخ. */
+function getContractIncreaseFactor(contract, date){
+  if(!contract || !Array.isArray(contract.increaseHistory) || !contract.increaseHistory.length) return 1;
+  const d = String(date||'').slice(0,10);
+  let f = 1;
+  contract.increaseHistory.forEach(h => { if(h && h.date && String(h.date).slice(0,10) <= d) f *= (1 + (Number(h.rate)||0)/100); });
+  return Math.round(f*10000)/10000;
+}
 /** Contract-level audit trail — same pattern as appendClaimAuditEvent: operational traceability, not tamper-proof. */
 function appendContractAuditEvent(contract, event){
   if(!contract || !event || typeof event !== 'object') return null;

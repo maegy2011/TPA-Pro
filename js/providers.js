@@ -137,5 +137,6 @@ function bindContractsControls(){
   $$('[data-close-contract]').forEach(el => el.addEventListener('click', closeContractModal));
   $('#saveContract').addEventListener('click', saveContract);
   const cs = $('#ctrServicesSearch'); if(cs) cs.addEventListener('input', e => renderContractServicesOptions(e.target.value));
+  const cai = $('#ctrApplyIncrease'); if(cai) cai.addEventListener('click', applyContractIncrease);
   $('#deleteContract').addEventListener('click', () => { if(editingContractId) deleteContractWithDialog(editingContractId); });
 }
