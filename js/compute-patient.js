@@ -24,11 +24,53 @@ function flagLineAskReviewer(l, code){
 function unflagLineAskReviewer(l, code){
   if(!l || !Array.isArray(l._checksFailed)) return;
   l._checksFailed = l._checksFailed.filter(x => x !== code);
-  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap');
+  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap') || l._checksFailed.includes('stay-mismatch') || l._checksFailed.some(x => String(x).startsWith('checklist-'));
   if(!_still && l._conflictForced === true){
     l._conflictForced = false;
     if(l._decision === 'needs-attention') l._decision = l._preConflictDecision || 'auto-approved';
   }
+}
+const STAY_LINE_KW = ['إقامة','اقامه','إقامه','stay','room','يوم','أيام','ايام','ليلة','سرير'];
+const INPATIENT_CRITICAL_CHECKS = {
+  icu:        { kw:['عناية','icu'] },
+  surgery:    { kw:['جراح','عملية','جراحة'] },
+  anesthesia: { kw:['تخدير','بنج'] },
+  blood:      { kw:['نقل دم','نقل الدم'] },
+};
+function _lineText(l){ return `${l.category||''} ${l.name||''} ${l.code||''}`; }
+function invoiceStayDays(inv){
+  if(!inv || !inv.admissionDate || !inv.dischargeDate) return null;
+  const a = new Date(inv.admissionDate), d = new Date(inv.dischargeDate);
+  if(isNaN(a) || isNaN(d) || d < a) return null;
+  return Math.max(1, Math.round((d - a) / 86400000));
+}
+/* تحقق الفاتورة الداخلية: أيام الإقامة + تفعيل قائمة التدقيق الحرجة. */
+function validateInpatientInvoice(inv){
+  if(!inv) return;
+  if(typeof isExternalInvoice === 'function' && isExternalInvoice(inv)) return; // خارجية: لا تحقق إقامة
+  const stayDays = invoiceStayDays(inv);
+  const chk = inv.internalReview || {};
+  (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
+    const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
+    const txt = _lineText(l).toLowerCase();
+    const isStay = STAY_LINE_KW.some(k => txt.includes(k));
+    if(stayDays !== null && isStay && billed > 0){
+      const billedDays = (inv.patients||[]).reduce((s,pp) => s + (pp.lines||[]).reduce((a,ll) => {
+        const t = _lineText(ll).toLowerCase();
+        return a + (STAY_LINE_KW.some(k => t.includes(k)) ? (Number(ll.qty)||0) : 0);
+      }, 0), 0);
+      if(Math.abs(billedDays - stayDays) > 0.01){
+        l._stayExpected = stayDays; l._stayBilled = billedDays;
+        flagLineAskReviewer(l, 'stay-mismatch');
+      } else { delete l._stayExpected; delete l._stayBilled; unflagLineAskReviewer(l, 'stay-mismatch'); }
+    }
+    Object.keys(INPATIENT_CRITICAL_CHECKS).forEach(key => {
+      const code = 'checklist-' + key;
+      const hit = billed > 0 && INPATIENT_CRITICAL_CHECKS[key].kw.some(k => txt.includes(k));
+      if(hit && chk[key] !== true) flagLineAskReviewer(l, code);
+      else unflagLineAskReviewer(l, code);
+    });
+  }));
 }
 function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);

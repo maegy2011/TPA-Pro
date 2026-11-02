@@ -25,6 +25,11 @@ const VALIDATION_REASONS = {
   'waiting-period':     { label: 'داخل فترة الانتظار',            severity: 'attention', category: 'eligibility' },
 
   'tariff-limit':       { label: 'تجاوز سعر اللائحة',            severity: 'reduce',    category: 'pricing' },
+  'stay-mismatch':      { label: 'فرق أيام الإقامة — القرار للمراجع', severity: 'attention', category: 'stay' },
+  'checklist-icu':      { label: 'عناية مركزة بلا تعليم تدقيق — القرار للمراجع', severity: 'attention', category: 'checklist' },
+  'checklist-surgery':  { label: 'إجراء جراحي بلا تعليم تدقيق — القرار للمراجع', severity: 'attention', category: 'checklist' },
+  'checklist-anesthesia': { label: 'تخدير بلا تعليم تدقيق — القرار للمراجع', severity: 'attention', category: 'checklist' },
+  'checklist-blood':    { label: 'نقل دم بلا تعليم تدقيق — القرار للمراجع', severity: 'attention', category: 'checklist' },
   'contract-discount':  { label: 'خصم العقد',                    severity: 'reduce',    category: 'contract' },
 };
 

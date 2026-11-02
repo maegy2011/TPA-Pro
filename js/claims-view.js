@@ -460,12 +460,13 @@ function renderFinalSummary(){
 function recalcReview(){
   if(typeof clearValidationCache === 'function') clearValidationCache();
   let billed = 0, eligible = 0, finalApproved = 0;
-  workingInvoices.forEach(inv => (inv.patients||[]).forEach(pat => {
+  workingInvoices.forEach(inv => { (inv.patients||[]).forEach(pat => {
     computePatient(pat, activeClaim, inv.date, inv);
     billed += (pat.lines||[]).reduce((s,l)=>s + (Number(l.qty)||0)*(Number(l.billedUnit)||0), 0);
     eligible += pat._subtotal || 0;
     finalApproved += pat._final || 0;
-  }));
+  });
+  if(typeof validateInpatientInvoice === 'function') validateInpatientInvoice(inv); });
   const ded = Math.max(0, billed-finalApproved);
   const rate = billed ? (ded/billed*100) : 0;
   const b1 = document.getElementById('calcBilled') || document.getElementById('rvPageCalcBilled');
