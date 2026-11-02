@@ -27,6 +27,14 @@ const MODAL_INVOICE = `
               <div class="fg"><label>فئة الغرفة</label><input id="invRoomClass"></div>
             </div>
           </div>
+          <div id="invInpPkg" style="display:none">
+            <div class="rv-section-title">العملية والباكج (داخلية)</div>
+            <div class="form-grid">
+              <div class="fg"><label>تصنيف العملية</label><select id="invOpClass"><option value="">— بلا تصنيف —</option><option value="major">كبرى (سقف 14 يوم)</option><option value="medium">متوسطة (سقف 7 أيام)</option><option value="minor">صغرى (سقف 3 أيام)</option><option value="endo">مناظير (سقف يومين)</option><option value="diag">تشخيصية (سقف يوم)</option></select></div>
+              <div class="fg"><label>نوع الحساب</label><select id="invPackageType"><option value="open">مفتوح (بند بند)</option><option value="closed">مغلق (سقف إجمالي)</option></select></div>
+              <div class="fg"><label>سعر الباكج المغلق</label><input id="invPackagePrice" type="number" min="0"></div>
+            </div>
+          </div>
         </div>
         <div class="modal-foot"><button class="btn solid" id="saveInvoiceBtn">حفظ</button><button class="btn out" data-close-invoice>إلغاء</button></div>
       </div>

@@ -160,6 +160,7 @@ function renderActiveInvoice(){
       <div class="rv-meta-item"><span>الرقم القومي</span><b>${escapeHtml((inv.patients&&inv.patients[0]&&inv.patients[0].nationalId) || '—')}</b></div>
       <div class="rv-meta-item"><span>تاريخ</span><b>${inv.debitNoteDate||inv.date||'—'}</b></div>
       <div class="rv-meta-item"><span>${inv.type==='inpatient'?'الإقامة':'عدد المرضى'}</span><b>${inv.type==='inpatient'?(inv.admissionDate||'—')+' ← '+(inv.dischargeDate||'—'):inv.patients.length}</b></div>
+      ${!_isExt ? `<div class="rv-meta-item"><span>تصنيف العملية</span><b>${(typeof OP_CLASS_CAPS !== 'undefined' && inv.operationClass && OP_CLASS_CAPS[inv.operationClass]) ? OP_CLASS_CAPS[inv.operationClass].label : '—'}</b></div><div class="rv-meta-item"><span>الباكج</span><b>${inv.packageType==='closed' ? 'مغلق ('+fmtC(Number(inv.packagePrice)||0)+')' : 'مفتوح'}</b></div>` : ''}
     </div>
     <div class="rv-inv-actions">
       <button type="button" class="rv-act-btn primary" data-add-patient="1">+ مريض</button>

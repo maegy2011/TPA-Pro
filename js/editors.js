@@ -2,6 +2,8 @@
 function toggleInpatientFields(){
   const on = $('#invType').value === 'inpatient';
   ['#invInp1','#invInp2','#invInp3'].forEach(s => { const el = $(s); if(el) el.style.display = on ? 'block' : 'none'; });
+  const cat = document.getElementById('invCategory') ? document.getElementById('invCategory').value : '';
+  const pkg = document.getElementById('invInpPkg'); if(pkg) pkg.style.display = (on || cat === 'internal') ? 'block' : 'none';
 }
 function openInvoiceEditor(idx){
   rvEditInvoiceIdx = (idx === undefined || idx === null) ? -1 : idx;
@@ -18,11 +20,19 @@ function openInvoiceEditor(idx){
     const p0 = (inv.patients||[])[0];
     $('#invPatientName').value = p0 ? p0.name : ''; $('#invPatientId').value = p0 ? p0.nationalId : '';
     $('#invAdmission').value = inv.admissionDate||''; $('#invDischarge').value = inv.dischargeDate||''; $('#invRoomClass').value = inv.roomClass||'';
+    if(document.getElementById('invOpClass')) document.getElementById('invOpClass').value = inv.operationClass||'';
+    if(document.getElementById('invPackageType')) document.getElementById('invPackageType').value = inv.packageType||'open';
+    if(document.getElementById('invPackagePrice')) document.getElementById('invPackagePrice').value = inv.packagePrice||'';
+    const _oc = document.getElementById('invCategory'); if(_oc && !_oc.dataset.pkgBound){ _oc.dataset.pkgBound='1'; _oc.addEventListener('change', toggleInpatientFields); }
+    const _ot = document.getElementById('invType'); if(_ot && !_ot.dataset.pkgBound){ _ot.dataset.pkgBound='1'; _ot.addEventListener('change', toggleInpatientFields); }
   } else {
     $('#invType').value = 'outpatient'; $('#invNumber').value = 'DN-' + Date.now().toString().slice(-6); $('#invDate').value = daysFromNow(0);
     if(document.getElementById('invLinkedInvoice')) document.getElementById('invLinkedInvoice').value = '';
     $('#invPatientName').value = ''; $('#invPatientId').value = '';
     $('#invAdmission').value = ''; $('#invDischarge').value = ''; $('#invRoomClass').value = '';
+    if(document.getElementById('invOpClass')) document.getElementById('invOpClass').value = '';
+    if(document.getElementById('invPackageType')) document.getElementById('invPackageType').value = 'open';
+    if(document.getElementById('invPackagePrice')) document.getElementById('invPackagePrice').value = '';
   }
   toggleInpatientFields(); $('#invoiceModal').classList.add('open');
 }
@@ -45,7 +55,11 @@ function saveInvoiceEditor(confirmed){
     return;
   }
   const invoiceCategory = document.getElementById('invCategory') ? document.getElementById('invCategory').value : (type==='inpatient'?'internal':'external');
-  const inpData = { category: invoiceCategory, invoiceCategory, admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'' };
+  const _opCls = document.getElementById('invOpClass') ? document.getElementById('invOpClass').value : '';
+  const _pkgT = document.getElementById('invPackageType') ? document.getElementById('invPackageType').value : 'open';
+  const _pkgP = document.getElementById('invPackagePrice') ? (Number(document.getElementById('invPackagePrice').value)||0) : 0;
+  if(_pkgT === 'closed' && !(_pkgP > 0)){ showWarning('تنبيه','أدخل سعر الباكج المغلق'); return; }
+  const inpData = { category: invoiceCategory, invoiceCategory, admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'', operationClass: _opCls||'', packageType: _pkgT, packagePrice: _pkgP };
   if(rvEditInvoiceIdx >= 0){
     const inv = workingInvoices[rvEditInvoiceIdx];
     inv.type = type; inv.claimType = claimType; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; inv.patientName = pName; inv.patientNationalId = pNat; Object.assign(inv, inpData);

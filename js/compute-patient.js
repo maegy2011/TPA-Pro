@@ -24,7 +24,7 @@ function flagLineAskReviewer(l, code){
 function unflagLineAskReviewer(l, code){
   if(!l || !Array.isArray(l._checksFailed)) return;
   l._checksFailed = l._checksFailed.filter(x => x !== code);
-  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap') || l._checksFailed.includes('stay-mismatch') || l._checksFailed.some(x => String(x).startsWith('checklist-'));
+  const _still = l._checksFailed.includes('cap-conflict') || l._checksFailed.includes('copay-conflict') || l._checksFailed.includes('rule-overlap') || l._checksFailed.includes('stay-mismatch') || l._checksFailed.some(x => { const s = String(x); return s.startsWith('checklist-') || s.startsWith('link-') || s.startsWith('opclass-'); });
   if(!_still && l._conflictForced === true){
     l._conflictForced = false;
     if(l._decision === 'needs-attention') l._decision = l._preConflictDecision || 'auto-approved';
@@ -70,7 +70,59 @@ function validateInpatientInvoice(inv){
       if(hit && chk[key] !== true) flagLineAskReviewer(l, code);
       else unflagLineAskReviewer(l, code);
     });
+    // ترابط الأتعاب: أتعاب الجراح/التخدير تستلزم إجراءً جراحيًا في نفس الفاتورة.
+    if(billed > 0 && (_isSurgeonFee(l) || _isAnesFee(l))){
+      const hasProc = (inv.patients||[]).some(pp => (pp.lines||[]).some(ll => _isSurgProc(ll) && ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0));
+      if(!hasProc) flagLineAskReviewer(l, 'link-fee-nosurgery');
+      else unflagLineAskReviewer(l, 'link-fee-nosurgery');
+    } else { unflagLineAskReviewer(l, 'link-fee-nosurgery'); }
+    // المساعد يستلزم: أتعاب جراح + تصنيف كبرى/متوسطة (إن وُجد التصنيف).
+    if(billed > 0 && _isAssistFee(l)){
+      const hasSurgeon = (inv.patients||[]).some(pp => (pp.lines||[]).some(ll => _isSurgeonFee(ll) && ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0));
+      const cls = inv.operationClass || '';
+      const clsOk = !cls || cls === 'major' || cls === 'medium';
+      if(!hasSurgeon || !clsOk) flagLineAskReviewer(l, 'link-assistant');
+      else unflagLineAskReviewer(l, 'link-assistant');
+    } else { unflagLineAskReviewer(l, 'link-assistant'); }
+    // سقف أيام تصنيف العملية.
+    if(stayDays !== null && isStay && billed > 0 && inv.operationClass && OP_CLASS_CAPS[inv.operationClass]){
+      if(stayDays > OP_CLASS_CAPS[inv.operationClass].maxStay){
+        l._opClassMax = OP_CLASS_CAPS[inv.operationClass].maxStay;
+        flagLineAskReviewer(l, 'opclass-stay-exceed');
+      } else { delete l._opClassMax; unflagLineAskReviewer(l, 'opclass-stay-exceed'); }
+    } else { delete l._opClassMax; unflagLineAskReviewer(l, 'opclass-stay-exceed'); }
   }));
+  applyClosedPackage(inv);
+}
+const FEE_KW = ['أتعاب','اتعاب','fee'];
+const SURG_PROC_KW = ['جراح','عملية','جراحة'];
+const OP_CLASS_CAPS = { major:{ label:'كبرى', maxStay:14 }, medium:{ label:'متوسطة', maxStay:7 }, minor:{ label:'صغرى', maxStay:3 }, endo:{ label:'مناظير', maxStay:2 }, diag:{ label:'تشخيصية', maxStay:1 } };
+function _isFee(l){ return FEE_KW.some(k => _lineText(l).toLowerCase().includes(k)); }
+function _isSurgProc(l){ const t = _lineText(l).toLowerCase(); return SURG_PROC_KW.some(k => t.includes(k)) && !_isFee(l); }
+function _isSurgeonFee(l){ const t = _lineText(l).toLowerCase(); return (t.includes('جراح')) && _isFee(l); }
+function _isAnesFee(l){ const t = _lineText(l).toLowerCase(); return (t.includes('تخدير') || t.includes('بنج')) && _isFee(l); }
+function _isAssistFee(l){ const t = _lineText(l).toLowerCase(); return t.includes('مساعد') && _isFee(l); }
+/* الباكج المغلق: سقف إجمالي واحد للفاتورة — يُطبق بعد الحساب في كل إعادة حساب. */
+function applyClosedPackage(inv){
+  if(!inv || inv.packageType !== 'closed') return;
+  const price = Number(inv.packagePrice)||0; if(price <= 0) return;
+  const pats = (inv.patients||[]);
+  const total = pats.reduce((s,p) => s + (Number(p._final)||0), 0);
+  if(total <= price + 0.01) return;
+  let excess = Math.round((total - price) * 100) / 100;
+  const weights = pats.map(p => Number(p._final)||0);
+  pats.forEach((p, i) => {
+    if(excess <= 0 || weights[i] <= 0) return;
+    const last = (i === pats.length - 1) || weights.slice(i+1).every(w => w <= 0);
+    let share = last ? excess : Math.min(excess, Math.round(excess * weights[i] / weights.reduce((a,w)=>a+w,0) * 100) / 100);
+    share = Math.min(share, weights[i]);
+    p._final = Math.round((weights[i] - share) * 100) / 100;
+    excess = Math.round((excess - share) * 100) / 100;
+    if(share > 0){
+      if(!Array.isArray(p.deductionReasons)) p.deductionReasons = [];
+      p.deductionReasons.push({ reason:'سقف الباكج المغلق', amount: Math.round(share*100)/100, source:'rule', level:'patient', _generatedByCompute:true, ref:{ packageType:'closed', packagePrice: price } });
+    }
+  });
 }
 function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
