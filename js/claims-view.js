@@ -156,11 +156,9 @@ function renderActiveInvoice(){
       <div class="rv-meta-item"><span>نوع المطالبة</span><b>${inv.claimType === 'retiree' ? 'معاشات' : 'عاملين'}</b></div>
       <div class="rv-meta-item"><span>رقم مذكرة الخصم</span><b>${escapeHtml(inv.debitNoteNumber||inv.number||inv.id)}</b></div>
       <div class="rv-meta-item"><span>رقم الفاتورة المرتبطة</span><b>${escapeHtml(inv.linkedInvoiceNumber||inv.invoiceNumber||'—')}</b></div>
-      <div class="rv-meta-item"><span>المريض</span><b>${escapeHtml(inv.patientName || (inv.patients&&inv.patients[0]&&inv.patients[0].name) || '—')}</b></div>
-      <div class="rv-meta-item"><span>الرقم القومي</span><b>${escapeHtml(inv.patientNationalId || (inv.patients&&inv.patients[0]&&inv.patients[0].nationalId) || '—')}</b></div>
+      <div class="rv-meta-item"><span>المريض</span><b>${escapeHtml((inv.patients&&inv.patients[0]&&inv.patients[0].name) || '—')}</b></div>
+      <div class="rv-meta-item"><span>الرقم القومي</span><b>${escapeHtml((inv.patients&&inv.patients[0]&&inv.patients[0].nationalId) || '—')}</b></div>
       <div class="rv-meta-item"><span>تاريخ</span><b>${inv.debitNoteDate||inv.date||'—'}</b></div>
-      <div class="rv-meta-item"><span>تاريخ إصدار خطاب التحويل</span><b>${inv.letterDate||'—'}</b></div>
-      <div class="rv-meta-item"><span>تاريخ الإجراء</span><b>${inv.procedureDate||inv.date||'—'}</b></div>
       <div class="rv-meta-item"><span>${inv.type==='inpatient'?'الإقامة':'عدد المرضى'}</span><b>${inv.type==='inpatient'?(inv.admissionDate||'—')+' ← '+(inv.dischargeDate||'—'):inv.patients.length}</b></div>
     </div>
     <div class="rv-inv-actions">

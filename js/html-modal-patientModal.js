@@ -9,6 +9,7 @@ const MODAL_PATIENT = `
           <div class="fg full"><label>الاسم *</label><input id="patName"></div>
           <div class="fg full"><label>الرقم القومي</label><input id="patNationalId" inputmode="numeric" maxlength="14"></div>
           <div class="fg full"><label>نوع العامل / المستفيد *</label><select id="patBeneficiaryType"><option value="employee">عامل خدمة</option><option value="retiree">معاش</option></select></div>
+          <div class="fg full"><label>تاريخ إصدار خطاب التحويل</label><input id="patLetterDate" type="date"></div>
         </div></div>
         <div class="modal-foot"><button class="btn solid" id="savePatientBtn" data-i18n="common.save">حفظ</button><button class="btn out" data-close-patient data-i18n="common.cancel">إلغاء</button></div>
       </div>

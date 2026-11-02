@@ -52,7 +52,7 @@ function computePatient(pat, claim, refDate, invoice){
     const effectiveLineCtx = { ...lineCtx, tariff:lineTariff };
     l._procedureDateUsed = procedureDate;
     if (typeof tpaBeneficiaryTypeForPatient === 'function') {
-      const letterStartDate = String((invoice && invoice.letterDate) || claim.letterStartDate || claim.startDate || claim.date || (invoice && invoice.date) || refDate).slice(0,10);
+      const letterStartDate = String((pat && pat.letterDate) || (invoice && invoice.letterDate) || claim.letterStartDate || claim.startDate || claim.date || (invoice && invoice.date) || refDate).slice(0,10);
       const letterStatus = tpaBeneficiaryTypeForPatient(pat, letterStartDate);
       pat._letterStartDateUsed = letterStartDate;
       pat._ageAtLetterStart = letterStatus.age;
