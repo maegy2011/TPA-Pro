@@ -47,6 +47,8 @@ function renderContracts(){
   if(!list.length){ body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--muted)">لا عقود</td></tr>'; return; }
   body.innerHTML = list.map(c => {
     const p = getProviderById(c.providerId);
+    const eff = effectiveContractStatus(c);
+    const renewBtn = (eff === 'expiring' || eff === 'expired') ? `<button class="btn-xs" data-renew-contract="${c.id}">تجديد</button>` : '';
     return `<tr>
       <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar alt">${escapeHtml((p?p.name:'—').charAt(0))}</div><div><div class="prov-name">${escapeHtml(p?p.name:'—')}</div><div class="prov-city">${escapeHtml(p?p.city:'' )}</div></div></div></td>
       <td data-label="البداية" class="hide-sm mono">${formatDate(c.startDate)}</td>
@@ -54,7 +56,7 @@ function renderContracts(){
       <td data-label="المدة" class="mono">${yearsLabel(c.durationYears || contractDurationYears(c.startDate, c.endDate))}</td>
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
       <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div></td>
-      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">${renewBtn}<button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
     </tr>`;
   }).join('');
 }
@@ -129,6 +131,19 @@ function saveContract(){
   }
   else { const nid = nextContractNumber(s); contracts.push({ id:nid, ...data }); syncContractToProvider({ id:nid, ...data }); showSuccess('تم','تمت الإضافة'); }
   closeContractModal(); renderAll();
+}
+function renewContractWithDialog(id){
+  const c = getContractById(id); if(!c) return;
+  const pname = (getProviderById(c.providerId)||{}).name || 'الجهة';
+  const dur = c.durationYears || contractDurationYears(c.startDate, c.endDate) || 1;
+  const newEnd = extendDateByYears(c.endDate, dur);
+  showWarning('تجديد العقد', `تمديد عقد "${pname}" ${yearsLabel(dur)} حتى ${formatDate(newEnd)}؟`, () => {
+    const oldEnd = c.endDate;
+    c.endDate = newEnd;
+    (c.rateVersions||[]).forEach(v => { if(v.effectiveTo === oldEnd) v.effectiveTo = newEnd; });
+    syncContractToProvider(c);
+    renderAll(); showSuccess('تم', `تم التجديد حتى ${formatDate(newEnd)}`);
+  });
 }
 function deleteContractWithDialog(id){
   const c = getContractById(id); if(!c) return;

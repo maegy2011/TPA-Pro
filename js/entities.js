@@ -107,6 +107,12 @@ function yearsLabel(n){
   if(n <= 10) return n + ' سنوات';
   return n + ' سنة';
 }
+function extendDateByYears(iso, years){
+  const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return '';
+  const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  d.setFullYear(d.getFullYear() + (Number(years)||0));
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function nextContractNumber(sd){  const y = sd ? new Date(sd).getFullYear() : new Date().getFullYear();
   const pre = 'CTR-'+y+'-';
   let m = 0;
