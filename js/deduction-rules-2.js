@@ -55,6 +55,71 @@ function deleteDr(id){
     if (typeof renderAll === 'function') renderAll();
   });
 }
+/** التعلم من المراجع: أي خصم يدوي (تخفيض/رفض/سقف/تحمل) يُحفظ كمسودة قاعدة بنطاق ضيق — تُفعَّل من صفحة القواعد. */
+function nextLearnedRuleId(){
+  const y = new Date().getFullYear(), pre = 'DR-'+y+'-';
+  let m = 0;
+  (typeof deductionRules !== 'undefined' ? deductionRules : []).forEach(x => { if(x.id && x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m, n); } });
+  return pre+String(m+1).padStart(3,'0');
+}
+function ruleAlreadyCovers(action, providerId, conditions){
+  const key = JSON.stringify(conditions || {});
+  return (typeof deductionRules !== 'undefined' ? deductionRules : []).some(r => r && r.action === action && r.enabled !== false && r.active !== false
+    && (!providerId || ((r.scope||{}).providerIds||[]).includes(providerId))
+    && JSON.stringify((r||{}).conditions || {}) === key);
+}
+function learnRuleFromReviewer(kind, d){
+  try {
+    if(typeof deductionRules === 'undefined' || !d || !d.claim) return null;
+    const claim = d.claim;
+    const plist = (typeof providers !== 'undefined' ? providers : []);
+    const provider = plist.find(x => (claim.providerCode != null && x.code === claim.providerCode) || x.name === claim.provider || x.id === claim.provider) || null;
+    const providerIds = provider ? [provider.id] : [];
+    let contractIds = [];
+    try { const cx = (typeof getContractContext === 'function') ? getContractContext(claim) : null; if(cx && cx.contract) contractIds = [cx.contract.id]; } catch(e){}
+    const claimTypes = [claim.type || 'employee'];
+    const today = new Date().toISOString().slice(0,10);
+    const pname = provider ? provider.name : (claim.provider || '');
+    let action = null, rate = 0, conditions = null, name = '';
+    if(kind === 'line-reject' && d.line){
+      if(((d.line._appliedRuleIds)||[]).length) return null;
+      action = 'reject_line'; rate = 0;
+      conditions = { logic:'AND', rules:[{ mode:'expr', field:'line.code', op:'eq', value:String(d.line.code) }] };
+      name = `مستفادة: رفض ${d.line.code||''} — ${pname}`.trim();
+    } else if(kind === 'line-reduce' && d.line){
+      if(((d.line._appliedRuleIds)||[]).length) return null;
+      const base = Number(d.base)||0, v = Number(d.value)||0;
+      if(!(base > 0) || !(v >= 0) || !(v < base)) return null;
+      rate = Math.min(100, Math.round((1 - v/base)*100));
+      if(rate <= 0) return null;
+      action = 'reduce_by_percent';
+      conditions = { logic:'AND', rules:[{ mode:'expr', field:'line.code', op:'eq', value:String(d.line.code) }] };
+      name = `مستفادة: خصم ${rate}% ${d.line.code||''} — ${pname}`.trim();
+    } else if(kind === 'manual-cap' || kind === 'manual-copay'){
+      const subtotal = Number(d.subtotal)||0, v = Number(d.value)||0, auto = Number(d.auto)||0;
+      if(!(subtotal > 0) || v < 0 || v >= subtotal || v === auto) return null;
+      rate = Math.round(v/subtotal*100);
+      if(rate <= 0 || rate >= 100) return null;
+      action = kind === 'manual-cap' ? 'apply_cap' : 'apply_copay';
+      conditions = { logic:'AND', rules:[] };
+      name = `مستفادة: ${kind === 'manual-cap' ? 'سقف' : 'تحمل'} ${rate}% — ${pname}`.trim();
+    } else return null;
+    if(ruleAlreadyCovers(action, provider ? provider.id : null, conditions)) return 'exists';
+    const originNote = `مسودة مستفادة من ${claim.id}${d.line ? ' بند '+d.line.code : ''} بتاريخ ${today}${d.note ? ' — '+d.note : ''}`;
+    const sameSig = (r) => r && r.source === 'learned' && r.enabled === false && r.action === action
+      && JSON.stringify(((r.scope)||{}).providerIds||[]) === JSON.stringify(providerIds)
+      && JSON.stringify(((r.scope)||{}).contractIds||[]) === JSON.stringify(contractIds)
+      && JSON.stringify(((r.scope)||{}).claimTypes||[]) === JSON.stringify(claimTypes)
+      && JSON.stringify(r.conditions||{}) === JSON.stringify(conditions);
+    const prior = deductionRules.find(sameSig);
+    if(prior){ prior.rate = rate; prior.name = name; prior.effectiveFrom = today; prior.notes = originNote; if(typeof persistData === 'function') persistData(true); return 'updated'; }
+    const id = nextLearnedRuleId();
+    deductionRules.push({ id, name, type: action === 'apply_cap' ? 'coverage_cap' : action === 'apply_copay' ? 'retiree_copay' : 'custom', action, rate, isComposite:false, compositeConfig:null, requires:null, scope:{ providerIds, contractIds, claimTypes }, conditions, effectiveFrom:today, effectiveTo:'', active:true, enabled:false, notes:originNote, source:'learned' });
+    if(typeof persistData === 'function') persistData(true);
+    if(typeof renderDeductionRules === 'function' && document.getElementById('deductionRulesBody')){ try{ renderDeductionRules(); }catch(e){} }
+    return id;
+  } catch(e){ return null; }
+}
 function openPaProcModal(code){
   editingPaProcCode = code || null;
   const p = code ? paProcedures.find(x=>x.code===code) : null;

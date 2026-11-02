@@ -58,10 +58,10 @@ function bindReviewModal(){
     // تجاوزات المريض
     if(e.target.closest('[data-revert-cap]')){ markSessionDirty(); pat._capMode='reverted'; renderActiveInvoice(); recalcReview(); return; }
     if(e.target.closest('[data-reset-cap]')){ markSessionDirty(); pat._capMode='auto'; pat._manualCapAmount=null; renderActiveInvoice(); recalcReview(); return; }
-    if(e.target.closest('[data-manual-cap-toggle]')){ markSessionDirty(); pat._capMode='manual'; pat._manualCapAmount = pat._capAmt||0; renderActiveInvoice(); recalcReview(); return; }
+    if(e.target.closest('[data-manual-cap-toggle]')){ markSessionDirty(); pat._capMode='manual'; pat._manualCapAmount = pat._capAmt||0; if(typeof learnRuleFromReviewer === 'function'){ const _lr = learnRuleFromReviewer('manual-cap', { claim: (typeof activeClaim !== 'undefined' ? activeClaim : null), subtotal: pat._subtotal||0, value: pat._manualCapAmount, auto: pat._capAmt||0, note:'' }); if(_lr && _lr !== 'exists' && _lr !== 'updated' && typeof showSuccess === 'function') showSuccess('مسودة قاعدة','أُضيفت كمسودة بانتظار التفعيل في القواعد'); } renderActiveInvoice(); recalcReview(); return; }
     if(e.target.closest('[data-revert-copay]')){ markSessionDirty(); pat._copayMode='reverted'; renderActiveInvoice(); recalcReview(); return; }
     if(e.target.closest('[data-reset-copay]')){ markSessionDirty(); pat._copayMode='auto'; pat._manualCopayAmount=null; renderActiveInvoice(); recalcReview(); return; }
-    if(e.target.closest('[data-manual-copay-toggle]')){ markSessionDirty(); pat._copayMode='manual'; pat._manualCopayAmount = pat._copayAmt||0; renderActiveInvoice(); recalcReview(); return; }
+    if(e.target.closest('[data-manual-copay-toggle]')){ markSessionDirty(); pat._copayMode='manual'; pat._manualCopayAmount = pat._copayAmt||0; if(typeof learnRuleFromReviewer === 'function'){ const _lr = learnRuleFromReviewer('manual-copay', { claim: (typeof activeClaim !== 'undefined' ? activeClaim : null), subtotal: pat._subtotal||0, value: pat._manualCopayAmount, auto: pat._copayAmt||0, note:'' }); if(_lr && _lr !== 'exists' && _lr !== 'updated' && typeof showSuccess === 'function') showSuccess('مسودة قاعدة','أُضيفت كمسودة بانتظار التفعيل في القواعد'); } renderActiveInvoice(); recalcReview(); return; }
 
     // تجاوزات البند
     const rvl = e.target.closest('[data-revert-line]'); if(rvl){ markSessionDirty(); pat.lines[Number(rvl.dataset.revertLine)]._overrideMode='reverted'; renderActiveInvoice(); recalcReview(); return; }
@@ -122,12 +122,12 @@ function bindReviewModal(){
     if(e.target.classList.contains('rv-manual-input') && e.target.dataset.manualCap !== undefined){
       const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
       const p = inv.patients[_patIdxIn]; if(!p) return;
-      rvActivePatientIdx = _patIdxIn; p._capMode='manual'; p._manualCapAmount = Math.max(0, Number(e.target.value)||0); recalcReview(); return;
+      rvActivePatientIdx = _patIdxIn; p._capMode='manual'; p._manualCapAmount = Math.max(0, Number(e.target.value)||0); if(typeof learnRuleFromReviewer === 'function'){ const _lr = learnRuleFromReviewer('manual-cap', { claim: (typeof activeClaim !== 'undefined' ? activeClaim : null), subtotal: p._subtotal||0, value: p._manualCapAmount, auto: p._capAmt||0, note:'' }); if(_lr && _lr !== 'exists' && _lr !== 'updated' && typeof showSuccess === 'function') showSuccess('مسودة قاعدة','أُضيفت كمسودة بانتظار التفعيل في القواعد'); } recalcReview(); return;
     }
     if(e.target.classList.contains('rv-manual-input') && e.target.dataset.manualCopay !== undefined){
       const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
       const p = inv.patients[_patIdxIn]; if(!p) return;
-      rvActivePatientIdx = _patIdxIn; p._copayMode='manual'; p._manualCopayAmount = Math.max(0, Number(e.target.value)||0); recalcReview(); return;
+      rvActivePatientIdx = _patIdxIn; p._copayMode='manual'; p._manualCopayAmount = Math.max(0, Number(e.target.value)||0); if(typeof learnRuleFromReviewer === 'function'){ const _lr = learnRuleFromReviewer('manual-copay', { claim: (typeof activeClaim !== 'undefined' ? activeClaim : null), subtotal: p._subtotal||0, value: p._manualCopayAmount, auto: p._copayAmt||0, note:'' }); if(_lr && _lr !== 'exists' && _lr !== 'updated' && typeof showSuccess === 'function') showSuccess('مسودة قاعدة','أُضيفت كمسودة بانتظار التفعيل في القواعد'); } recalcReview(); return;
     }
     if(!e.target.classList.contains('rv-line-approved')) return;
     const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
@@ -229,6 +229,7 @@ function bindReviewModal(){
         ln._decidedAt = new Date().toISOString();
         ln._decisionReason = (ln._checksFailed||[])[0] || '';
         ln._decisionNote = note;
+        if(typeof learnRuleFromReviewer === 'function'){ const _lr = learnRuleFromReviewer('line-reject', { claim: (typeof activeClaim !== 'undefined' ? activeClaim : null), line: ln, note }); if(_lr && _lr !== 'exists' && _lr !== 'updated' && typeof showSuccess === 'function') showSuccess('مسودة قاعدة','أُضيفت كمسودة بانتظار التفعيل في القواعد'); }
       } else if (act === 'reduce') {
         const reduceWrap = excBox.querySelector(`[data-exc-reduce="${key}"]`);
         if (reduceWrap) reduceWrap.style.display = '';
@@ -246,6 +247,7 @@ function bindReviewModal(){
         ln._decidedAt = new Date().toISOString();
         ln._decisionReason = (ln._checksFailed||[])[0] || '';
         ln._decisionNote = note;
+        if(typeof learnRuleFromReviewer === 'function'){ const _lr = learnRuleFromReviewer('line-reduce', { claim: (typeof activeClaim !== 'undefined' ? activeClaim : null), line: ln, base: (ln._contractCovered ? (ln.lineBaseAfterContract||ln.lineBase||0) : 0), value: v, note }); if(_lr && _lr !== 'exists' && _lr !== 'updated' && typeof showSuccess === 'function') showSuccess('مسودة قاعدة','أُضيفت كمسودة بانتظار التفعيل في القواعد'); }
       } else if (act === 'pa') {
         ln._decision = 'pa-pending';
         ln._overrideMode = 'auto';
