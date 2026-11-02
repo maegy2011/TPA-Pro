@@ -36,9 +36,10 @@ function getContractContext(claim, effectiveDate) {
   let contract = covering.find(c => (typeof effectiveContractStatus === 'function' ? effectiveContractStatus(c) : '') === 'active')
     || covering.slice().sort((a,b)=>String(b.startDate||'').localeCompare(String(a.startDate||'')) || String(b.endDate||'').localeCompare(String(a.endDate||'')))[0] || null;
 
-  // العقد على أحدث نسخة خصم دائمًا.
+  // النسخة المطبقة = النسخة المغطية لتاريخ إجراء البند؛ فاتورة من سنتين تتحاسب بأسعار وخصم سنتين.
   if (contract && Array.isArray(contract.rateVersions) && contract.rateVersions.length) {
-    const version = contract.rateVersions.slice().sort((a,b)=>String(b.effectiveFrom||'').localeCompare(String(a.effectiveFrom||'')))[0];
+    const version = contract.rateVersions.filter(v => (!v.effectiveFrom || v.effectiveFrom <= claimDate) && (!v.effectiveTo || claimDate <= v.effectiveTo))
+      .sort((a,b)=>String(b.effectiveFrom||'').localeCompare(String(a.effectiveFrom||'')))[0];
     if (version) contract = { ...contract, ...version, id:contract.id, providerId:contract.providerId, startDate:contract.startDate, endDate:contract.endDate, rateVersionEffectiveDate:version.effectiveFrom };
   }
   const tlist = (typeof tariffs !== 'undefined' ? tariffs : []);
