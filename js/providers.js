@@ -140,5 +140,7 @@ function bindContractsControls(){
   $('#saveContract').addEventListener('click', saveContract);
   const cs = $('#ctrServicesSearch'); if(cs) cs.addEventListener('input', e => renderContractServicesOptions(e.target.value));
   const cai = $('#ctrApplyIncrease'); if(cai) cai.addEventListener('click', applyContractIncrease);
+  const coa = $('#ctrOvAdd'); if(coa) coa.addEventListener('click', addServiceOverride);
+  const cos = $('#ctrOvSearch'); if(cos) cos.addEventListener('input', () => renderServiceOverrides());
   $('#deleteContract').addEventListener('click', () => { if(editingContractId) deleteContractWithDialog(editingContractId); });
 }

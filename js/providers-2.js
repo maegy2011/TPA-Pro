@@ -1,17 +1,35 @@
 // providers-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let selectedExcludedServices = [];
 let workingContractIncreases = [];
+let workingServiceOverrides = [];
 function getAllServiceNames(){
-  const set = new Set();
-  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s && s.name) set.add(s.name); }));
-  if(!set.size){ ['جميع الخدمات','الخدمات الأساسية','الطوارئ','العلاج الطبيعي'].forEach(x => set.add(x)); }
-  return [...set];
+  return getAllServicesDistinct().map(s => s.name);
+}
+function getAllServicesDistinct(){
+  const map = new Map();
+  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s && s.code && !map.has(String(s.code))) map.set(String(s.code), { code:String(s.code), name:s.name||String(s.code) }); }));
+  if(!map.size){ ['CONS-01','LAB-01','RAD-01','DENT-01'].forEach((c,i) => map.set(c, { code:c, name:['كشف','تحاليل','أشعة','أسنان'][i] })); }
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+}
+function svcNameByCode(code){
+  const s = getAllServicesDistinct().find(x => x.code === String(code));
+  return s ? s.name : null;
+}
+/** تحويل الاستثناءات القديمة (أسماء) إلى أكواد — الربط بالكود، والبحث يدعم الكود والاسم. */
+function resolveExcludedToCodes(list){
+  const all = getAllServicesDistinct();
+  return (Array.isArray(list) ? list : []).map(e => {
+    const v = String(e||'').trim(); if(!v) return null;
+    if(all.some(s => s.code === v)) return v;
+    const hit = all.find(s => s.name === v);
+    return hit ? hit.code : v;
+  }).filter((v,i,a) => v && a.indexOf(v) === i);
 }
 function renderContractServicesOptions(q){
   const box = $('#ctrServicesList'); if(!box) return;
   const term = (q||'').trim().toLowerCase();
-  const list = getAllServiceNames().filter(s => !term || s.toLowerCase().includes(term));
-  box.innerHTML = list.map(s => `<label style="display:block;margin:2px 0"><input type="checkbox" value="${escapeHtml(s)}" ${selectedExcludedServices.includes(s)?'checked':''}> ${escapeHtml(s)}</label>`).join('');
+  const list = getAllServicesDistinct().filter(s => !term || s.name.toLowerCase().includes(term) || s.code.toLowerCase().includes(term));
+  box.innerHTML = list.map(s => `<label style="display:block;margin:2px 0"><input type="checkbox" value="${escapeHtml(s.code)}" ${selectedExcludedServices.includes(s.code)?'checked':''}> ${escapeHtml(s.name)} <span style="color:var(--muted);font-size:11px">(${escapeHtml(s.code)})</span></label>`).join('');
   box.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', () => {
       if(cb.checked){ if(!selectedExcludedServices.includes(cb.value)) selectedExcludedServices.push(cb.value); }
@@ -57,7 +75,7 @@ function renderContracts(){
       <td data-label="النهاية" class="hide-sm mono">${formatDate(c.endDate)}</td>
       <td data-label="المدة" class="mono">${yearsLabel(c.durationYears || contractDurationYears(c.startDate, c.endDate))}</td>
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
-      <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div>${(Array.isArray(c.increaseHistory)&&c.increaseHistory.length)?`<div style="font-size:10px;color:var(--teal);font-weight:800">زيادة +${Number(c.increaseHistory[c.increaseHistory.length-1].rate)||0}%</div>`:''}</td>
+      <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div>${(Array.isArray(c.increaseHistory)&&c.increaseHistory.length)?`<div style="font-size:10px;color:var(--teal);font-weight:800">زيادة +${Number(c.increaseHistory[c.increaseHistory.length-1].rate)||0}%</div>`:''}${(c.serviceOverrides&&Object.keys(c.serviceOverrides).length)?`<div style="font-size:10px;color:var(--gold);font-weight:800">خاص: ${Object.keys(c.serviceOverrides).length} بند</div>`:''}</td>
       <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">${renewBtn}${suspBtn}<button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
     </tr>`;
   }).join('');
@@ -78,8 +96,10 @@ function openContractModal(id){
   if(isEdit){
     $('#ctrStart').value = c.startDate; $('#ctrDuration').value = c.durationYears || contractDurationYears(c.startDate, c.endDate); $('#ctrEnd').value = c.endDate;
     $('#ctrDiscount').value = c.discountRate; $('#ctrVersionEffective').value = daysFromNow(0);
-    selectedExcludedServices = Array.isArray(c.excludedServices) ? [...c.excludedServices] : (c.coveredServices ? String(c.coveredServices).split('، ').map(x=>x.trim()).filter(Boolean) : []);
+    selectedExcludedServices = resolveExcludedToCodes(Array.isArray(c.excludedServices) ? c.excludedServices : (c.coveredServices ? String(c.coveredServices).split('، ').map(x=>x.trim()).filter(Boolean) : []));
     workingContractIncreases = Array.isArray(c.increaseHistory) ? c.increaseHistory.map(h => ({...h})) : [];
+    workingServiceOverrides = serviceOverridesToArray(c.serviceOverrides);
+    renderServiceOverrides();
     const ci = $('#ctrIncreaseRate'); if(ci) ci.value = '';
     renderContractIncreaseHistory();
     $('#ctrNotes').value = c.notes||''; (el => { if (el) el.style.display = 'block'; })($('#deleteContract'));
@@ -87,6 +107,8 @@ function openContractModal(id){
     const today = daysFromNow(0);
     selectedExcludedServices = [];
     workingContractIncreases = [];
+    workingServiceOverrides = [];
+    renderServiceOverrides();
     const ci2 = $('#ctrIncreaseRate'); if(ci2) ci2.value = '';
     renderContractIncreaseHistory();
     $('#ctrStart').value = today; $('#ctrDuration').value = 1; $('#ctrEnd').value = contractEndFrom(today, 1);
@@ -118,6 +140,42 @@ function applyContractIncrease(){
   renderContractIncreaseHistory();
   showSuccess('تم',`زيادة ${rate}% بتاريخ ${date} — تُطبق في المراجعة`);
 }
+function serviceOverridesToArray(ov){
+  if(!ov || typeof ov !== 'object') return [];
+  return Object.keys(ov).map(code => ({ code, name: (typeof svcNameByCode === 'function' && svcNameByCode(code)) || code, covered: !(ov[code] && ov[code].covered === false), discountRate: (ov[code] && ov[code].discountRate !== null && ov[code].discountRate !== undefined) ? Number(ov[code].discountRate) : '', requiresPA: !!(ov[code] && ov[code].requiresPA) }));
+}
+function renderServiceOverrides(){
+  const box = $('#ctrOvList'); if(!box) return;
+  const sel = $('#ctrOvService');
+  if(sel){
+    const used = new Set(workingServiceOverrides.map(o=>o.code));
+    const all = getAllServicesDistinct().filter(s => !used.has(s.code));
+    const term = ($('#ctrOvSearch')?.value||'').trim().toLowerCase();
+    const list = term ? all.filter(s => s.name.toLowerCase().includes(term) || s.code.toLowerCase().includes(term)) : all;
+    sel.innerHTML = list.map(s => `<option value="${escapeHtml(s.code)}">${escapeHtml(s.name)} (${escapeHtml(s.code)})</option>`).join('') || '<option value="">لا بنود متاحة</option>';
+  }
+  if(!workingServiceOverrides.length){ box.innerHTML = '<span style="color:var(--muted)">لا بنود خاصة — يُطبق خصم العقد العام</span>'; return; }
+  box.innerHTML = workingServiceOverrides.map((o,i) => `<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap"><b style="flex:1;min-width:120px">${escapeHtml(o.name)} <span style="color:var(--muted);font-size:11px">(${escapeHtml(o.code)})</span></b><label style="font-size:12px"><input type="checkbox" data-ov="covered" data-i="${i}" ${o.covered?'checked':''}> مغطاة</label><label style="font-size:12px">خصم % <input type="number" min="0" max="100" step="0.5" data-ov="discountRate" data-i="${i}" value="${o.discountRate===''?'':Number(o.discountRate)}" placeholder="عام" style="width:64px"></label><label style="font-size:12px"><input type="checkbox" data-ov="requiresPA" data-i="${i}" ${o.requiresPA?'checked':''}> موافقة مسبقة</label><button type="button" class="btn-xs danger" data-ov-del="${i}">×</button></div>`).join('');
+  box.querySelectorAll('[data-ov]').forEach(el => {
+    el.addEventListener('change', () => {
+      const i = Number(el.dataset.i), f = el.dataset.ov, o = workingServiceOverrides[i]; if(!o) return;
+      if(f === 'discountRate') o.discountRate = el.value === '' ? '' : Number(el.value);
+      else o[f] = el.checked;
+    });
+  });
+  box.querySelectorAll('[data-ov-del]').forEach(btn => {
+    btn.addEventListener('click', () => { workingServiceOverrides.splice(Number(btn.dataset.ovDel),1); renderServiceOverrides(); });
+  });
+}
+function addServiceOverride(){
+  const sel = $('#ctrOvService'); if(!sel || !sel.value){ showWarning('تنبيه','اختر البند'); return; }
+  const code = sel.value;
+  if(workingServiceOverrides.some(o => o.code === code)) return;
+  const s = getAllServicesDistinct().find(x => x.code === code);
+  workingServiceOverrides.push({ code, name: s ? s.name : code, covered:true, discountRate:'', requiresPA:false });
+  const si = $('#ctrOvSearch'); if(si) si.value = '';
+  renderServiceOverrides();
+}
 function updateContractEnd(){
   const s = $('#ctrStart')?.value || '', d = Math.max(1, Math.round(Number($('#ctrDuration')?.value)||1));
   const e = $('#ctrEnd'); if(e) e.value = contractEndFrom(s, d);
@@ -131,7 +189,7 @@ function saveContract(){
   if(!e){ showWarning('تنبيه','تعذر حساب النهاية'); return; }
   const versionFrom = $('#ctrVersionEffective').value || s;
   if(versionFrom < s || versionFrom > e){ showWarning('تاريخ السريان','تاريخ سريان النسخة يجب أن يقع داخل مدة العقد'); return; }
-  const data = { providerId:pid, startDate:s, endDate:e, durationYears:dur, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], increaseHistory:workingContractIncreases.map(h=>({...h})), notes:$('#ctrNotes').value.trim() };
+  const data = { providerId:pid, startDate:s, endDate:e, durationYears:dur, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], increaseHistory:workingContractIncreases.map(h=>({...h})), serviceOverrides:Object.fromEntries(workingServiceOverrides.map(o => [o.code, { covered:!!o.covered, discountRate:(o.discountRate===''||o.discountRate==null)?null:Number(o.discountRate), requiresPA:!!o.requiresPA }])), notes:$('#ctrNotes').value.trim() };
   if(editingContractId){
     const c = getContractById(editingContractId); if(!c) return;
     c.rateVersions = Array.isArray(c.rateVersions) ? c.rateVersions : [];

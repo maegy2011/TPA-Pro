@@ -19,6 +19,14 @@ const MODAL_CONTRACT = `
             <input id="ctrServicesSearch" placeholder="بحث في الخدمات..." style="margin-bottom:6px">
             <div id="ctrServicesList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
           </div>
+          <div class="fg full"><label>بنود بأسعار/تغطية خاصة</label><small class="fg-hint" style="display:block;margin-bottom:6px">خصم أو تغطية مختلفة لبند معين داخل هذا العقد — الخصم الفارغ = خصم العقد العام</small>
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <input id="ctrOvSearch" placeholder="بحث بالكود أو الاسم..." style="flex:1">
+              <select id="ctrOvService" style="flex:2"></select>
+              <button type="button" class="btn-apply" id="ctrOvAdd">إضافة</button>
+            </div>
+            <div id="ctrOvList" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:8px">لا بنود خاصة — يُطبق خصم العقد العام</div>
+          </div>
           <div class="fg full"><label>ملاحظات</label><textarea id="ctrNotes"></textarea></div>
           <div class="fg full"><label>السجل التاريخي للخصومات</label><div id="ctrRateHistory" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:8px">لا توجد نسخ تاريخية بعد</div></div>
         </div></div>
