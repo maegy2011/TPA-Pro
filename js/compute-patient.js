@@ -197,8 +197,9 @@ function computePatient(pat, claim, refDate, invoice){
   if(!pat.beneficiaryType) pat.beneficiaryType = claim.type || 'employee';
   const benType = patientBeneficiaryType(pat, claim);
   const paValid = hasValidPriorApproval(claim);
-  if(pat.lines.some(l => (l._beneficiaryTypeAtProcedure || benType) === 'retiree') && !paValid){
-    pat.lines.forEach(l => { if((l._beneficiaryTypeAtProcedure || benType) === 'retiree' && lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('pa-required', { claim, patient: pat, invoice: invoice || null, line: l }) : null; l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; const _billedLine = (Number(l.qty)||0)*(Number(l.billedUnit)||0); if (_billedLine > 0) _addDed({ amount: _billedLine, reason: l._legalDeduction ? l._legalDeduction.title : 'غياب الموافقة المسبقة', reasonCode: 'pa-required', source: 'auto', level: 'line', ref: { lineCode: l.code }, note: '' }); } });
+  // الموافقة المسبقة توقف الصرف للكل (عاملين ومعاشات) حتى توافر موافقة معتمدة على المطالبة.
+  if(!paValid && pat.lines.some(l => lineRequiresPA(l))){
+    pat.lines.forEach(l => { if(lineRequiresPA(l)){ l.paRejected = true; l.approved = 0; l._legalDeduction = (typeof generateLegalDeductionReason === 'function') ? generateLegalDeductionReason('pa-required', { claim, patient: pat, invoice: invoice || null, line: l }) : null; l._legalReason = l._legalDeduction; l.legalDeduction = l._legalDeduction; const _billedLine = (Number(l.qty)||0)*(Number(l.billedUnit)||0); if (_billedLine > 0) _addDed({ amount: _billedLine, reason: l._legalDeduction ? l._legalDeduction.title : 'غياب الموافقة المسبقة', reasonCode: 'pa-required', source: 'auto', level: 'line', ref: { lineCode: l.code }, note: '' }); } });
   }
   const subtotal = pat.lines.reduce((s,l)=>s+(Number(l.approved)||0), 0);
   const pctx = { ...ctx, patient: pat };

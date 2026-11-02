@@ -10,6 +10,7 @@ const VALIDATION_REASONS = {
   'pa-rejected':        { label: 'الموافقة المسبقة مرفوضة',     severity: 'reject',    category: 'pa' },
   'pa-expired':         { label: 'الموافقة المسبقة منتهية',     severity: 'reject',    category: 'pa' },
   'manual-entry':       { label: 'إدخال يدوي غير مدرج',          severity: 'reject',    category: 'coverage' },
+  'admin-exempt-no-note': { label: 'إعفاء إداري بلا سبب مسجل',    severity: 'attention', category: 'coverage' },
 
   'pa-required':        { label: 'تتطلب موافقة مسبقة — لم تُطلب', severity: 'attention', category: 'pa' },
   'pa-pending':         { label: 'موافقة مسبقة قيد الطلب',       severity: 'attention', category: 'pa' },
@@ -149,6 +150,10 @@ function validateLine(line, ctx) {
     } else {
       passed.push('covered');
     }
+  }
+  // الإعفاء الإداري مقبول للحالات الاستثنائية بشرط تسجيل السبب على البند.
+  if (adminExempt && !(String(line.note || '').trim())) {
+    failed.push('admin-exempt-no-note');
   }
 
   if (tariffSvc && !line._manualEntry) {
