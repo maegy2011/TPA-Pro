@@ -130,6 +130,8 @@ function bindContractsControls(){
   $('#contractsBody').addEventListener('click', e => {
     const ed = e.target.closest('[data-edit-contract]'); if(ed) openContractModal(ed.dataset.editContract);
     const rn = e.target.closest('[data-renew-contract]'); if(rn){ renewContractWithDialog(rn.dataset.renewContract); return; }
+    const sp = e.target.closest('[data-suspend-contract]'); if(sp){ suspendContractWithDialog(sp.dataset.suspendContract); return; }
+    const rs = e.target.closest('[data-resume-contract]'); if(rs){ resumeContract(rs.dataset.resumeContract); return; }
     const del = e.target.closest('[data-delete-contract]'); if(del) deleteContractWithDialog(del.dataset.deleteContract);
   });
   $$('[data-close-contract]').forEach(el => el.addEventListener('click', closeContractModal));

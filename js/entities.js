@@ -49,7 +49,7 @@ function appendContractAuditEvent(contract, event){
     at: new Date().toISOString(),
     actor: String(reviewer.name || 'المراجع').slice(0,120),
     actorRole: String(reviewer.role || '').slice(0,120),
-    action: String(event.action || 'contract.updated').slice(0,80),
+    action: String(event.action || 'contract.event').slice(0,80),
     details: event.details && typeof event.details === 'object' ? JSON.parse(JSON.stringify(event.details)) : {}
   };
   contract._auditTrail.push(entry);
@@ -57,6 +57,7 @@ function appendContractAuditEvent(contract, event){
 }
 function effectiveContractStatus(c){
   if(!c) return 'pending';
+  if(c.suspended) return 'suspended';
   if(!c.startDate || !c.endDate) return 'upcoming';
   const now = new Date(), s = new Date(c.startDate), e = new Date(c.endDate);
   if(now < s) return 'upcoming';

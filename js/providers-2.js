@@ -49,6 +49,7 @@ function renderContracts(){
     const p = getProviderById(c.providerId);
     const eff = effectiveContractStatus(c);
     const renewBtn = (eff === 'expiring' || eff === 'expired') ? `<button class="btn-xs" data-renew-contract="${c.id}">تجديد</button>` : '';
+    const suspBtn = eff === 'suspended' ? `<button class="btn-xs" data-resume-contract="${c.id}">استئناف</button>` : (eff !== 'expired' ? `<button class="btn-xs" data-suspend-contract="${c.id}">تعليق</button>` : '');
     return `<tr>
       <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar alt">${escapeHtml((p?p.name:'—').charAt(0))}</div><div><div class="prov-name">${escapeHtml(p?p.name:'—')}</div><div class="prov-city">${escapeHtml(p?p.city:'' )}</div></div></div></td>
       <td data-label="البداية" class="hide-sm mono">${formatDate(c.startDate)}</td>
@@ -56,7 +57,7 @@ function renderContracts(){
       <td data-label="المدة" class="mono">${yearsLabel(c.durationYears || contractDurationYears(c.startDate, c.endDate))}</td>
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
       <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div></td>
-      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">${renewBtn}<button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">${renewBtn}${suspBtn}<button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
     </tr>`;
   }).join('');
 }
@@ -127,14 +128,31 @@ function saveContract(){
     }
     // Keep the master contract's original start date so previous versions remain selectable.
     Object.assign(c,{...data,startDate:c.startDate||s,endDate:e});
-    if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.updated', details:{ startDate:c.startDate, endDate:e, durationYears:dur, discountRate:data.discountRate, excludedServices:data.excludedServices } });
     syncContractToProvider(c); showSuccess('تم','تم حفظ نسخة مالية بتاريخ سريان مستقل مع الاحتفاظ بالتاريخ السابق');
   }
   else { const nid = nextContractNumber(s); const nc = { id:nid, ...data }; if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(nc, { action:'contract.created', details:{ startDate:s, endDate:e, durationYears:dur, discountRate:data.discountRate } }); contracts.push(nc); syncContractToProvider(nc); showSuccess('تم','تمت الإضافة'); }
   closeContractModal(); renderAll();
 }
+function suspendContractWithDialog(id){
+  const c = getContractById(id); if(!c || c.suspended) return;
+  const pname = (getProviderById(c.providerId)||{}).name || 'الجهة';
+  showWarning('تعليق العقد', `تعليق عقد "${pname}"؟ لن تُحتسب مطالباته في المراجعة حتى الاستئناف.`, () => {
+    c.suspended = true;
+    if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.suspended', details:{ startDate:c.startDate, endDate:c.endDate, discountRate:c.discountRate } });
+    syncContractToProvider(c);
+    renderAll(); showSuccess('تم','تم تعليق العقد');
+  });
+}
+function resumeContract(id){
+  const c = getContractById(id); if(!c || !c.suspended) return;
+  c.suspended = false;
+  if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.resumed', details:{ startDate:c.startDate, endDate:c.endDate, discountRate:c.discountRate } });
+  syncContractToProvider(c);
+  renderAll(); showSuccess('تم','تم استئناف العقد');
+}
 function renewContractWithDialog(id){
   const c = getContractById(id); if(!c) return;
+  if(c.suspended){ showWarning('تنبيه','العقد معلق — استأنفه أولًا قبل التجديد'); return; }
   const pname = (getProviderById(c.providerId)||{}).name || 'الجهة';
   const dur = c.durationYears || contractDurationYears(c.startDate, c.endDate) || 1;
   const newEnd = extendDateByYears(c.endDate, dur);

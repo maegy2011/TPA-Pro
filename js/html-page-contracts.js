@@ -14,6 +14,7 @@ const PAGE_CONTRACTS = `
           <button class="chip" data-cfilter="active">نشط</button>
           <button class="chip" data-cfilter="expiring">قريب</button>
           <button class="chip" data-cfilter="expired">منتهي</button>
+          <button class="chip" data-cfilter="suspended">معلق</button>
           <button class="chip" data-cfilter="upcoming">لم يبدأ</button>
         </div>
       </div>
