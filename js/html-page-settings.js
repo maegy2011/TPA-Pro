@@ -59,6 +59,12 @@ const PAGE_SETTINGS = `
           </div>
         </div>
       </div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></svg><div><h2>اختصارات الكيبورد</h2><p>ثلاثية الأزرار — قابلة للتخصيص</p></div></div></div>
+        <div class="panel-body"><div class="info-list" id="shortcutsBox"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn out" id="resetShortcutsBtn" style="flex:0 0 auto;padding:0 20px">استعادة الافتراضي</button></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.8">التركيبة = زرّا تعديل + زر (مثال: Ctrl+Shift+S). التركيبات المحجوزة للمتصفح (مثل Ctrl+Shift+N) مرفوضة تلقائيًا. <kbd>Esc</kbd> لإغلاق النوافذ و<kbd>?</kbd> للمساعدة ثابتة ولا تتعارض.</div>
+        </div>
+      </div>
       <div class="panel" style="margin-top:18px"><div class="panel-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div><div class="k" style="font-weight:700">تسجيل الخروج</div><div style="font-size:11px;color:var(--muted);margin-top:4px">إنهاء الجلسة الحالية</div></div>
         <button class="btn out" id="logoutBtn2">تسجيل الخروج</button>

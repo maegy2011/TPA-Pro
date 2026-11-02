@@ -120,16 +120,7 @@ function initApp(){
       });
     }
 
-    // ⌨️ اختصارات لوحة المفاتيح
-    document.addEventListener('keydown', e => {
-      // ملاحظة: اختصارات المراجعة (Ctrl+S / Ctrl+Enter) في shortcuts.js فقط — مصدر واحد.
-      if((e.ctrlKey || e.metaKey) && e.key === '/'){
-        e.preventDefault();
-        if(currentPage === 'claims') $('#searchInput')?.focus();
-        else if(currentPage === 'search') $('#srchQuery')?.focus();
-        else if(currentPage === 'sessions') $('#sessionsSearch')?.focus();
-      }
-    });
+    // ملاحظة: كل اختصارات الكيبورد في shortcuts.js فقط — مصدر واحد (ثلاثية + قابلة للتخصيص).
 
     loadSessions(); updateSessionsBadge();
     const dataHealth = typeof getDataStorageHealth === 'function' ? getDataStorageHealth() : null;

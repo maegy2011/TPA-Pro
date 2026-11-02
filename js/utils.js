@@ -50,6 +50,7 @@ function loadAppSettings(){
       const p = JSON.parse(raw);
       if(p && p.reviewer) appSettings.reviewer = { ...appSettings.reviewer, ...p.reviewer };
       if(p && p.company) appSettings.company = { ...appSettings.company, ...p.company };
+      if(p && p.shortcuts && typeof p.shortcuts === 'object') appSettings.shortcuts = p.shortcuts;
     }
   } catch(e){}
 }
