@@ -35,6 +35,9 @@ const PAGE_SETTINGS = `
             <button class="btn-sm ghost" id="resetAllDataBtn" style="flex:0 0 auto;color:var(--bad);border-color:#FECACA">مسح</button></div>
         </div></div>
       </div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V-8z"/><path d="M14 2v6h6"/></svg><div><h2>ملفات القرص (بلا سيرفر)</h2><p>كل مطالبة ملف حقيقي + .bak + بصمة</p></div></div></div>
+        <div class="panel-body"><div class="info-list" id="fileStoreBox"></div></div>
+      </div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><div><h2>النسخ الاحتياطي والاستعادة</h2><p>كامل البيانات + الإعدادات + الجلسات</p></div></div></div>
         <div class="panel-body">
           <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:11px 14px;font-size:12px;color:#475569;line-height:1.9;margin-bottom:14px">

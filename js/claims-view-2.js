@@ -178,6 +178,7 @@ function finalizeReview(){
     if(_ok){ if(typeof notifyPersistOk === 'function') notifyPersistOk(); }
     else if(typeof notifyPersistFailed === 'function') notifyPersistFailed(true);
   }
+  try { if(typeof fsWriteClaim === 'function' && typeof FS_STORE !== 'undefined' && FS_STORE.dirHandle){ Promise.resolve(fsWriteClaim(activeClaim)).catch(() => { if(typeof showToast === 'function') showToast('⚠ تعذرت كتابة ملف القرص'); }); } } catch(e){}
   clearSessionDirty();
   closeReview({ discard:true });
   renderAll();

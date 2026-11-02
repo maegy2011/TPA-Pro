@@ -79,6 +79,7 @@ function applyAppSettingsToUI(){
     try { if(typeof renderShortcutSettings === 'function') renderShortcutSettings(); } catch(e){}
     try { if(typeof renderLineTypeSettings === 'function') renderLineTypeSettings(); } catch(e){}
     try { if(typeof registerTaxonomyReasons === 'function') registerTaxonomyReasons(); } catch(e){}
+    try { if(typeof renderFileStore === 'function') renderFileStore(); } catch(e){}
     try { if(typeof renderHelpShortcuts === 'function') renderHelpShortcuts(); } catch(e){}
     if(typeof EXPORT_BRAND !== 'undefined' && EXPORT_BRAND){ try { EXPORT_BRAND.name = appSettings.company.brand; EXPORT_BRAND.sub = appSettings.company.tagline; EXPORT_BRAND.version = appSettings.company.version; } catch(e){} }
   } catch(e){ console.warn('applyAppSettingsToUI', e); }
