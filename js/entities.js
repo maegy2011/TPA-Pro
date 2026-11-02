@@ -2,6 +2,40 @@
 function getProviderById(id){ return providers.find(p=>p.id===id); }
 function getContractById(id){ return contracts.find(c=>c.id===id); }
 function getTariffById(id){ return tariffs.find(t=>t.id===id); }
+
+// Immutable, effective-dated tariff snapshots. Older claim dates resolve to the
+// price list that was in force on that date instead of today's edited prices.
+function shiftTariffIsoDate(date,days){ const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m)return ''; const d=new Date(Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3])+Number(days||0))); return d.toISOString().slice(0,10); }
+function tariffDateMinusOne(date){ return shiftTariffIsoDate(date,-1); }
+function tariffDatePlusOne(date){ return shiftTariffIsoDate(date,1); }
+function getTariffVersionForDate(t, date){
+  if(!t) return null;
+  const target = String(date || new Date().toISOString().slice(0,10)).slice(0,10);
+  const versions = [...(Array.isArray(t.priceVersions)?t.priceVersions:[])];
+  versions.push({effectiveDate:t.effectiveDate||'', expiryDate:t.expiryDate||'', services:t.services||[], basePriceLevel:t.basePriceLevel, _current:true});
+  const matches = versions.filter(v => v.effectiveDate && v.effectiveDate <= target && (!v.expiryDate || target <= v.expiryDate));
+  matches.sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate)));
+  return matches[0] || null;
+}
+function getTariffServicesForDate(t, date){ const v=getTariffVersionForDate(t,date); return v ? (v.services||[]) : (t&&Array.isArray(t.services)?t.services:[]); }
+function isTariffApplicableForDate(t,date){ return !!(t && t.status!=='cancelled' && getTariffVersionForDate(t,date)); }
+function archiveTariffVersion(t, newEffectiveDate, action, changes){
+  if(!t) throw new Error('اللائحة غير موجودة');
+  const next=String(newEffectiveDate||'').slice(0,10), current=String(t.effectiveDate||'').slice(0,10);
+  if(!next) throw new Error('حدد تاريخ السريان');
+  if(current && next < current) throw new Error('تاريخ السريان لا يمكن أن يسبق النسخة الحالية');
+  if(current && next > current){
+    const end=tariffDateMinusOne(next);
+    if(t.expiryDate && t.expiryDate < next) throw new Error('تاريخ السريان الجديد يأتي بعد انتهاء اللائحة');
+    if(!Array.isArray(t.priceVersions)) t.priceVersions=[];
+    t.priceVersions.push({effectiveDate:current,expiryDate:end,services:JSON.parse(JSON.stringify(t.services||[])),basePriceLevel:Number(t.basePriceLevel)||100,archivedAt:new Date().toISOString()});
+  }
+  if(!Array.isArray(t.changeLog)) t.changeLog=[];
+  t.changeLog.push({id:'TCH-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),at:new Date().toISOString(),effectiveDate:next,action:action||'update',actor:(typeof appSettings!=='undefined'&&appSettings.reviewer&&appSettings.reviewer.name)||'المستخدم',changes:JSON.parse(JSON.stringify(changes||[]))});
+  t.effectiveDate=next;
+  return true;
+}
+
 function getBatchById(id){ return batches.find(b=>b.id===id); }
 function getClaimById(id){ return claims.find(c=>c.id===id); }
 function getContractByProvider(pid){ return contracts.find(c=>c.providerId===pid); }

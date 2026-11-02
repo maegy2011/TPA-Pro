@@ -30,7 +30,7 @@ const SHELL_ONBOARDING = `
       <p style="text-align:center;margin:14px 0;font-size:13px;color:var(--muted)">هل لديك بيانات محفوظة (نسخة احتياطية) تريد استيرادها؟</p>
       <div class="onb-actions">
         <button class="btn solid" id="onbImportBtn">استيراد بيانات</button>
-        <button class="btn out" id="onbSkipBtn">لا، ابدأ من جديد</button>
+        <button class="btn out" id="onbSkipBtn">متابعة إلى تسجيل الدخول</button>
       </div>
       <input type="file" id="onbImportFile" accept=".json,application/json" style="display:none">
     </div>

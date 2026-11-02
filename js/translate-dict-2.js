@@ -106,7 +106,7 @@ Object.assign(window.TRANSLATE_DICT = window.TRANSLATE_DICT || {}, {
   'رقم الفاتورة': 'Invoice No.',
   'رقم المطالبة': 'Claim No.',
   'رقم الموافقة': 'Approval No.',
-  'رقم الهوية': 'ID Number',
+  'الرقم القومي': 'ID Number',
   'رقم الوارد': 'Intake No.',
   'زيادات': 'Increases',
   'زيادة': 'Increase',

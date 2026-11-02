@@ -22,26 +22,34 @@ const VALIDATION_REASONS = {
   'contract-discount':  { label: 'خصم العقد',                    severity: 'reduce',    category: 'contract' },
 };
 
-function getContractContext(claim) {
+function getContractContext(claim, effectiveDate) {
   const empty = { provider: null, contract: null, tariff: null, serviceOverrides: {} };
   if (!claim) return empty;
 
-  const provider = (typeof providers !== 'undefined' ? providers : []).find(p => p.name === claim.provider) || null;
+  const provider = (typeof providers !== 'undefined' ? providers : []).find(p => p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId)) || null;
   if (!provider) return { ...empty, provider };
 
-  const contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => c.providerId === provider.id && ['active','expiring','upcoming'].includes(effectiveContractStatus(c))) || null;
+  const claimDate = String(effectiveDate || claim.date || claim.receivedDate || new Date().toISOString().slice(0,10)).slice(0,10);
+  let contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => { const start=String(c.startDate||''); const end=String(c.endDate||''); return c.providerId===provider.id && c.status!=='terminated' && (!start || start<=claimDate) && (!end || claimDate<=end); }) || null;
 
-  let tariff = null;
-  if (contract?.tariffId) {
-    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId && effectiveTariffStatus(t) === 'active') || null;
+  if (contract && Array.isArray(contract.rateVersions) && contract.rateVersions.length) {
+    const version = contract.rateVersions.filter(v => (!v.effectiveFrom || v.effectiveFrom <= claimDate) && (!v.effectiveTo || claimDate <= v.effectiveTo))
+      .sort((a,b)=>String(b.effectiveFrom||'').localeCompare(String(a.effectiveFrom||'')))[0];
+    if (version) contract = { ...contract, ...version, id:contract.id, providerId:contract.providerId, startDate:contract.startDate, endDate:contract.endDate, rateVersionEffectiveDate:version.effectiveFrom };
   }
-  if (!tariff && contract) {
-    tariff = (typeof tariffs !== 'undefined' ? tariffs : []).find(t =>
-      ((t.linkedContractIds || []).includes(contract.id) ||
-       (t.linkedProviderIds || []).includes(provider.id)) &&
-      effectiveTariffStatus(t) === 'active'
+  let tariffBase = null;
+  const applicable = t => (typeof isTariffApplicableForDate === 'function') ? isTariffApplicableForDate(t, claimDate) : effectiveTariffStatus(t) === 'active';
+  if (contract?.tariffId) {
+    tariffBase = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => t.id === contract.tariffId && applicable(t)) || null;
+  }
+  if (!tariffBase) {
+    tariffBase = (typeof tariffs !== 'undefined' ? tariffs : []).find(t =>
+      ((contract && (t.linkedContractIds || []).includes(contract.id)) ||
+       (t.linkedProviderIds || []).includes(provider.id)) && applicable(t)
     ) || null;
   }
+  const resolvedVersion = tariffBase && typeof getTariffVersionForDate==='function' ? getTariffVersionForDate(tariffBase,claimDate) : null;
+  const tariff = tariffBase ? { ...tariffBase, services: (typeof getTariffServicesForDate === 'function') ? getTariffServicesForDate(tariffBase, claimDate) : (tariffBase.services||[]), _resolvedVersionEffectiveDate: resolvedVersion && resolvedVersion.effectiveDate || tariffBase.effectiveDate } : null;
 
   const serviceOverrides = contract?.serviceOverrides || {};
 
@@ -71,7 +79,13 @@ function _validationCacheKey(line, ctx){
     return JSON.stringify({
       code: line.code, qty: line.qty, billedUnit: line.billedUnit, manual: !!line._manualEntry,
       claim: ctx.claim && ctx.claim.id, inv: ctx.invoice && ctx.invoice.id, pat: ctx.patient && ctx.patient.id,
-      contract: ctx.contract && ctx.contract.id, tariff: ctx.tariff && ctx.tariff.id,
+      priorApproval: ctx.claim && ctx.claim.priorApproval ? {
+        required: !!ctx.claim.priorApproval.required,
+        status: ctx.claim.priorApproval.status || '',
+        date: ctx.claim.priorApproval.date || ''
+      } : null,
+      contract: ctx.contract && ctx.contract.id, tariff: ctx.tariff && ctx.tariff.id, tariffVersion: ctx.tariff && ctx.tariff._resolvedVersionEffectiveDate,
+      serviceOverride: (ctx.serviceOverrides || ctx.contract?.serviceOverrides || {})[String(line.code)] || null,
     });
   } catch(e){ return null; }
 }
@@ -217,7 +231,7 @@ function validateLine(line, ctx) {
 }
 
 function validateInvoice(inv, ctx) {
-  const _ck = inv && inv.id ? ('VINV:'+inv.id+':'+(ctx.contract&&ctx.contract.id)) : null;
+  const _ck = inv && inv.id ? ('VINV:'+JSON.stringify({ id: inv.id, contract: ctx.contract&&ctx.contract.id, documents: inv.documents || {} })) : null;
   if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }
   const passed = [];
   const failed = [];
@@ -236,13 +250,24 @@ function validateInvoice(inv, ctx) {
   return _vires;
 }
 
+function getClaimReconciliationTarget(claim) {
+  if (!claim) return { amount: 0, source: 'missing-claim' };
+  const submitted = claim.submittedBilled;
+  if (submitted !== undefined && submitted !== null && submitted !== '' && Number.isFinite(Number(submitted)) && Number(submitted) >= 0) {
+    return { amount: Number(submitted), source: 'submittedBilled' };
+  }
+  return { amount: Number(claim.billed) || 0, source: 'legacy-billed' };
+}
+
 function validateClaim(claim) {
   const failed = [];
   const entered = (claim.invoices || []).reduce((s, inv) =>
     s + (inv.patients || []).reduce((a, p) =>
       a + (p.lines || []).reduce((c, l) => c + (Number(l.qty) || 0) * (Number(l.billedUnit) || 0), 0), 0), 0);
 
-  const target = Number(claim.billed) || 0;
+  // Compare invoice lines with the immutable submitted amount, not the recalculated billed total.
+  const reconciliationTarget = getClaimReconciliationTarget(claim);
+  const target = reconciliationTarget.amount;
   const remaining = target - entered;
 
   if (Math.abs(remaining) > 1) failed.push('invoice-mismatch');
@@ -254,7 +279,7 @@ function validateClaim(claim) {
     }
   })));
 
-  return { failed, entered, target, remaining, pendingExceptions };
+  return { failed, entered, target, remaining, pendingExceptions, targetSource: reconciliationTarget.source };
 }
 
 function isRejectReason(code) {

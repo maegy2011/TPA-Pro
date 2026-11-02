@@ -8,6 +8,9 @@ const PAGE_SERVICES = `
     <select id="servicesTariffFilter" style="padding:8px 10px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
       <option value="all">كل اللوائح</option>
     </select>
+    <select id="servicesValidityFilter" style="padding:8px 10px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
+      <option value="all">كل الإصدارات</option><option value="current">سارية اليوم</option><option value="expired">منتهية</option><option value="future">لم يبدأ سريانها</option>
+    </select>
     <select id="servicesSort" style="padding:8px 10px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
       <option value="name">فرز: الاسم</option>
       <option value="code">فرز: الكود</option>
@@ -22,8 +25,10 @@ const PAGE_SERVICES = `
     </select>
     <button class="btn-xs" id="servicesAdvToggle">بحث متقدم</button>
     <button class="btn-xs" id="servicesAddBtn">+ إضافة خدمة</button>
-    <button class="btn-xs" id="servicesImportBtn">استيراد CSV</button>
-    <input type="file" id="servicesImportFile" accept=".csv,.txt" style="display:none">
+    <label style="font-size:12px;color:var(--muted)">سريان التحديث <input type="date" id="servicesEffectiveDate" style="padding:7px;border:1px solid var(--line);border-radius:7px"></label>
+    <button class="btn-xs" id="servicesImportBtn">استيراد Excel / CSV</button>
+    <button class="btn-xs" id="servicesHistoryBtn">سجل التحديثات</button>
+    <input type="file" id="servicesImportFile" accept=".xlsx,.csv,.txt" style="display:none">
   </div>
   <div id="servicesAdvPanel" style="display:none;margin-bottom:12px;padding:10px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
@@ -41,7 +46,8 @@ const PAGE_SERVICES = `
       <select id="sfTariff"></select>
       <input id="sfCode" placeholder="الكود *">
       <select id="sfCategory"><option>استشارة</option><option>مختبر</option><option>أشعة</option><option>عمليات</option><option>أدوية</option><option>طوارئ</option><option>علاج طبيعي</option><option>أسنان</option><option>أخرى</option></select>
-      <input id="sfName" placeholder="الاسم *">
+      <input id="sfName" placeholder="الاسم بالعربية *">
+      <input id="sfNameEn" placeholder="English name (optional)">
       <input id="sfBasePrice" type="number" min="0" placeholder="الأساسي *">
       <input id="sfCurrentPrice" type="number" min="0" placeholder="الحالي">
     </div>
@@ -52,11 +58,12 @@ const PAGE_SERVICES = `
       <button class="btn-xs" id="sfCancelBtn">إلغاء</button>
     </div>
   </div>
+  <div id="tariffChangeHistory" style="display:none;margin:10px 0"></div>
   <div class="chips" id="servicesFilterChips" style="margin-bottom:10px">
     <button class="chip active" data-sfilter="all">الكل</button>
     <button class="chip" data-sfilter="covered">مغطاة</button>
     <button class="chip" data-sfilter="uncovered">غير مغطاة</button>
   </div>
-  <div class="panel"><div class="table-wrap"><table><thead><tr><th>الكود</th><th>الخدمة</th><th>الفئة</th><th>اللائحة</th><th>الأساسي</th><th>الحالي</th><th>التغطية</th><th></th></tr></thead><tbody id="servicesBody"></tbody></table></div></div>
+  <div class="panel"><div class="table-wrap"><table><thead><tr><th>الكود</th><th>الخدمة</th><th>الفئة</th><th>اللائحة</th><th>من تاريخ</th><th>إلى تاريخ</th><th>نسخ الأسعار</th><th>الأساسي</th><th>الحالي</th><th>التغطية</th><th></th></tr></thead><tbody id="servicesBody"></tbody></table></div></div>
 </section>
 `;

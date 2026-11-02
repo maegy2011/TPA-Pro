@@ -103,15 +103,54 @@ function exportSettings(){
   try { const d = new Date().toISOString().slice(0,10); downloadJSON(getSettingsData(), `TPA_Pro_Settings_${d}.json`); trackBackup(); showSuccess('تم','تم'); }
   catch(err){ showWarning('خطأ', err.message); }
 }
+// Validate imported JSON before any confirmation or state mutation.
+function validateBackupPayload(p){
+  const fail = message => ({ok:false, message});
+  if(!p || typeof p !== 'object' || Array.isArray(p)) return fail('بنية الملف غير صحيحة');
+  if(p.app !== 'TPA Pro') return fail('الملف لا ينتمي إلى TPA Pro');
+  if(!['full-backup','settings','sessions'].includes(p.type)) return fail('نوع النسخة غير مدعوم');
+  let nodes = 0;
+  const inspect = (value, depth) => {
+    if(++nodes > 250000 || depth > 30) throw new Error('الملف كبير أو متداخل بشكل غير مسموح');
+    if(!value || typeof value !== 'object') return;
+    if(Array.isArray(value)) { if(value.length > 100000) throw new Error('عدد عناصر غير مسموح'); value.forEach(v=>inspect(v,depth+1)); return; }
+    for(const key of Object.keys(value)) {
+      if(['__proto__','prototype','constructor'].includes(key)) throw new Error('مفتاح غير آمن في الملف');
+      inspect(value[key],depth+1);
+    }
+  };
+  try { inspect(p,0); } catch(e) { return fail(e.message); }
+  const isArray = (v,max=50000) => Array.isArray(v) && v.length <= max;
+  if(p.type === 'full-backup') {
+    if(!p.data || typeof p.data !== 'object') return fail('بيانات النسخة الكاملة مفقودة');
+    for(const key of ['providers','contracts','tariffs','batches','claims','trash','deductionRules','paProcedures','workSessions']) {
+      if(!isArray(p.data[key])) return fail('قائمة غير صالحة: '+key);
+    }
+    if(typeof inspectDataRelationships === 'function'){
+      const integrity = inspectDataRelationships(p.data, p.data.workSessions);
+      if(!integrity.ok) return fail('تعارض في معرفات النسخة الاحتياطية: '+integrity.issues.filter(x=>x.severity==='error').map(x=>x.code).join(', '));
+    }
+  } else if(p.type === 'sessions') {
+    if(!isArray(p.sessions,10000)) return fail('قائمة الجلسات غير صالحة');
+    if(typeof inspectDataRelationships === 'function'){
+      const integrity = inspectDataRelationships({claims}, p.sessions);
+      if(!integrity.ok) return fail('تعارض في معرفات جلسات المراجعة: '+integrity.issues.filter(x=>x.severity==='error').map(x=>x.code).join(', '));
+    }
+  } else if(p.type === 'settings') {
+    if(!p.settings || typeof p.settings !== 'object' || Array.isArray(p.settings)) return fail('الإعدادات غير صالحة');
+  }
+  return {ok:true};
+}
 function importBackupFile(file){
   if(!file) return;
-  if(file.size > 20 * 1024 * 1024){ showWarning('كبير','الحد 20MB'); return; }
+  if(!Number.isFinite(file.size) || file.size <= 0 || file.size > 20 * 1024 * 1024){ showWarning('ملف غير صالح','يجب أن يكون حجم الملف بين 1 بايت و20MB'); return; }
+  if(!/\.json$/i.test(file.name || '')){ showWarning('ملف غير صالح','يسمح باستيراد ملفات JSON فقط'); return; }
   const r = new FileReader();
   r.onload = e => {
     try {
       const p = JSON.parse(e.target.result);
-      if(!p || typeof p !== 'object'){ showWarning('غير صالح','ليس JSON'); return; }
-      if(p.app !== 'TPA Pro'){ showWarning('غير صالح','ليس من TPA Pro'); return; }
+      const validation = validateBackupPayload(p);
+      if(!validation.ok){ showWarning('نسخة غير صالحة', validation.message); return; }
       if(p.type === 'sessions') confirmSessionsImport(p);
       else if(p.type === 'settings') confirmSettingsImport(p);
       else if(p.type === 'full-backup' || p.data) confirmFullImport(p);

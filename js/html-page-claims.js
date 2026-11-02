@@ -13,6 +13,7 @@ const PAGE_CLAIMS = `
           <button class="chip" data-filter="approved">معتمدة</button>
           <button class="chip" data-filter="rejected">مرفوضة</button>
           <button class="chip" data-filter="pa-required">⚠ تحتاج موافقة</button>
+          <button class="chip" data-filter="archived">أرشيف المطالبات</button>
         </div>
         <div class="export-group">
           <button class="btn-export excel" data-export="claims" data-format="excel"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="m9 13 6 6M15 13l-6 6"/></svg></button>

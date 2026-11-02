@@ -11,6 +11,7 @@ function openInvoiceEditor(idx){
   $('#invModalSub').textContent = inv ? (inv.debitNoteNumber||inv.number||inv.id) : '—';
   const ctype = activeClaim ? (activeClaim.type || 'employee') : 'employee';
   if(document.getElementById('invClaimType')) document.getElementById('invClaimType').value = inv && inv.claimType ? inv.claimType : ctype;
+  if(document.getElementById('invCategory')) document.getElementById('invCategory').value = inv && (inv.category||inv.invoiceCategory) ? (inv.category||inv.invoiceCategory) : (inv && inv.type==='inpatient' ? 'internal' : 'external');
   if(inv){
     $('#invType').value = inv.type; $('#invNumber').value = inv.debitNoteNumber||inv.number||inv.id; $('#invDate').value = inv.debitNoteDate||inv.date||'';
     if(document.getElementById('invLinkedInvoice')) document.getElementById('invLinkedInvoice').value = inv.linkedInvoiceNumber||inv.invoiceNumber||'';
@@ -43,19 +44,20 @@ function saveInvoiceEditor(confirmed){
     showWarning('تنبيه','تاريخ مذكرة الخصم بعد الاستلام. متابعة؟', () => saveInvoiceEditor(true));
     return;
   }
-  const inpData = { admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'' };
+  const invoiceCategory = document.getElementById('invCategory') ? document.getElementById('invCategory').value : (type==='inpatient'?'internal':'external');
+  const inpData = { category: invoiceCategory, invoiceCategory, admissionDate: type==='inpatient'?($('#invAdmission').value||''):'', dischargeDate: type==='inpatient'?($('#invDischarge').value||''):'', roomClass: type==='inpatient'?$('#invRoomClass').value.trim():'' };
   if(rvEditInvoiceIdx >= 0){
     const inv = workingInvoices[rvEditInvoiceIdx];
     inv.type = type; inv.claimType = claimType; inv.debitNoteNumber = num || inv.debitNoteNumber || inv.number || inv.id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked; Object.assign(inv, inpData);
-    if(inv.patients && inv.patients.length) inv.patients.forEach(p => { if(p.beneficiaryType === undefined) p.beneficiaryType = claimType; p.beneficiaryType = claimType; });
+    if(inv.patients && inv.patients.length) inv.patients.forEach(p => { if(p.beneficiaryType === undefined) p.beneficiaryType = claimType; });
     else inv.patients = [mkPatient(newPatientId(inv), pName, pNat, [])];
-    if(inv.patients[0]) { inv.patients[0].name = pName; inv.patients[0].nationalId = pNat; inv.patients[0].beneficiaryType = claimType; }
+    if(inv.patients[0]) { inv.patients[0].name = pName; inv.patients[0].nationalId = pNat; if(!inv.patients[0].beneficiaryType) inv.patients[0].beneficiaryType = claimType; }
     rvActiveInvoiceIdx = rvEditInvoiceIdx;
   } else {
     const id = newInvoiceId();
     const inv = mkInvoice(id, type, date, [mkPatient(id+'-P1', pName, pNat, [])]);
     inv.claimType = claimType; inv.debitNoteNumber = num || id; inv.number = inv.debitNoteNumber; inv.debitNoteDate = date; inv.date = date; inv.linkedInvoiceNumber = linked; inv.invoiceNumber = linked;
-    if(inv.patients[0]) inv.patients[0].beneficiaryType = claimType;
+    if(inv.patients[0]) { inv.patients[0].beneficiaryType = claimType; inv.patients[0].documents = {}; }
     Object.assign(inv, inpData); workingInvoices.push(inv); rvActiveInvoiceIdx = workingInvoices.length-1;
   }
   rvActivePatientIdx = 0; closeInvoiceEditor(); renderReviewInvoices();
@@ -69,16 +71,18 @@ function openPatientEditor(invIdx, patIdx){
   $('#patModalTitle').textContent = p ? 'تعديل المريض' : 'إضافة مريض';
   $('#patModalSub').textContent = inv.id;
   $('#patName').value = p ? p.name : ''; $('#patNationalId').value = p ? p.nationalId : '';
+  if(document.getElementById('patBeneficiaryType')) document.getElementById('patBeneficiaryType').value = p ? (p.beneficiaryType || (inv.claimType || (activeClaim&&activeClaim.type) || 'employee')) : (inv.claimType || (activeClaim&&activeClaim.type) || 'employee');
   $('#patientModal').classList.add('open'); setTimeout(()=>$('#patName').focus(), 120);
 }
 function savePatientEditor(){
   markSessionDirty();
   const inv = workingInvoices[rvEditPatientInvoiceIdx]; if(!inv) return;
   const name = $('#patName').value.trim(), nat = $('#patNationalId').value.trim();
+  const beneficiaryType = document.getElementById('patBeneficiaryType') ? document.getElementById('patBeneficiaryType').value : ((inv.claimType || (activeClaim&&activeClaim.type)) || 'employee');
   if(!name){ showWarning('تنبيه','أدخل اسم المريض'); return; }
   if(!inv.patients) inv.patients = [];
-  if(rvEditPatientIdx >= 0){ inv.patients[rvEditPatientIdx].name = name; inv.patients[rvEditPatientIdx].nationalId = nat; rvActivePatientIdx = rvEditPatientIdx; }
-  else { inv.patients.push(mkPatient(newPatientId(inv), name, nat, [])); rvActivePatientIdx = inv.patients.length-1; }
+  if(rvEditPatientIdx >= 0){ inv.patients[rvEditPatientIdx].name = name; inv.patients[rvEditPatientIdx].nationalId = nat; inv.patients[rvEditPatientIdx].beneficiaryType = beneficiaryType; rvActivePatientIdx = rvEditPatientIdx; }
+  else { const newPat = mkPatient(newPatientId(inv), name, nat, []); newPat.beneficiaryType = beneficiaryType; newPat.documents = {}; inv.patients.push(newPat); rvActivePatientIdx = inv.patients.length-1; }
   closePatientEditor(); renderActiveInvoice(); recalcReview();
 }
 function closePatientEditor(){ if(!$('#patientModal').classList.contains('open')) return; $('#patientModal').classList.remove('open'); rvEditPatientInvoiceIdx = -1; rvEditPatientIdx = -1; }

@@ -23,7 +23,8 @@ const MODAL_LINE = `
             <div class="fg"><label>سعر اللائحة</label><input id="lnTariffUnit" readonly></div>
             <div class="fg"><label>خصم العقد %</label><input id="lnContractDiscount" readonly></div>
             <div class="fg"><label>الكمية *</label><input id="lnQty" type="number" min="1" step="1" value="1"></div>
-            <div class="fg"><label>سعر الفاتورة *</label><input id="lnBilledUnit" type="number" min="0" step="0.01"></div>
+            <div class="fg"><label>إجمالي قيمة البند بالفاتورة *</label><input id="lnBilledTotal" type="number" min="0" step="0.01" placeholder="قيمة البند بالكامل"></div>
+            <div class="fg"><label>سعر الوحدة بالفاتورة</label><input id="lnBilledUnit" type="number" min="0" step="0.01"></div>
           </div>
 
           <div class="ln-source-result" id="lnComputedPreview"></div>

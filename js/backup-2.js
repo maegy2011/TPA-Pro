@@ -33,6 +33,36 @@ function confirmFullImport(parsed){
 }
 function applyFullBackup(parsed, opts){
   opts = opts || {};
+  // Snapshot data and browser storage before any destructive mutation. If any
+  // later step fails, restore both layers on a best-effort basis.
+  const cloneForRollback = value => JSON.parse(JSON.stringify(value));
+  const rollbackState = {};
+  try {
+    rollbackState.providers = cloneForRollback(providers);
+    rollbackState.contracts = cloneForRollback(contracts);
+    rollbackState.tariffs = cloneForRollback(tariffs);
+    rollbackState.batches = cloneForRollback(batches);
+    rollbackState.claims = cloneForRollback(claims);
+    rollbackState.trash = cloneForRollback(trash);
+    rollbackState.deductionRules = cloneForRollback(deductionRules);
+    rollbackState.paProcedures = cloneForRollback(paProcedures);
+    rollbackState.workSessions = cloneForRollback(workSessions);
+    rollbackState.activeSessionId = activeSessionId;
+    rollbackState.sessionsFilter = sessionsFilter;
+    rollbackState.sessionsSearch = sessionsSearch;
+    rollbackState.appSettings = cloneForRollback(appSettings);
+    rollbackState.dataStorageState = _dataStorageState;
+    rollbackState.dataStorageError = _dataStorageError;
+    rollbackState.sessionsStorageState = _sessionsStorageState;
+  } catch(snapshotErr){
+    showWarning('تعذر الاستيراد', 'لم يمكن إنشاء لقطة آمنة للبيانات الحالية؛ أُلغي الاستيراد دون تغييرها.');
+    console.error('Backup rollback snapshot failed', snapshotErr);
+    return;
+  }
+  const storageSnapshot = (() => {
+    try { const out = {}; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); out[k] = localStorage.getItem(k); } return out; }
+    catch(e){ return null; }
+  })();
   try {
     if(parsed.settings){
       if(parsed.settings.reviewer) appSettings.reviewer = { ...appSettings.reviewer, ...parsed.settings.reviewer };
@@ -58,12 +88,16 @@ function applyFullBackup(parsed, opts){
         d.workSessions.forEach(w => { if(!exIds.has(w.claimId) && w.claimSnapshot && w.claimSnapshot.id){ const snap = JSON.parse(JSON.stringify(w.claimSnapshot)); if(!snap.type) snap.type = 'employee'; if(!snap.invoices) snap.invoices = []; if(!snap.priorApproval) snap.priorApproval = {required:false,status:'not-requested',refNumber:'',date:''}; recalcClaim(snap); claims.push(snap); exIds.add(snap.id); recovered++; } });
       }
       workSessions = d.workSessions.map(w => ({ ...JSON.parse(JSON.stringify(w)), status:'paused' }));
+      _sessionsStorageState = 'loaded';
       if(opts.restoreActivePtr && parsed.sessionsMeta?.activeSessionId && workSessions.some(s => s.id === parsed.sessionsMeta.activeSessionId)) activeSessionId = parsed.sessionsMeta.activeSessionId;
       if(parsed.sessionsMeta){ if(parsed.sessionsMeta.sessionsFilter !== undefined) sessionsFilter = parsed.sessionsMeta.sessionsFilter; if(typeof parsed.sessionsMeta.sessionsSearch === 'string') sessionsSearch = parsed.sessionsMeta.sessionsSearch; }
       persistSessions();
       if(recovered > 0) setTimeout(() => showToast(`استُردّت ${recovered}`), 600);
     }
-    persistData(true);
+    _allowCorruptStorageReplace = true;
+    const savedImportedData = persistData(true);
+    _allowCorruptStorageReplace = false;
+    if(savedImportedData === false) throw new Error('تعذر حفظ البيانات المستوردة في التخزين المحلي');
     renderAll();
     if(opts.restoreSess && parsed.session) restoreSessionState(parsed.session);
     else navigateTo('dashboard', {noPush:true, force:true});
@@ -71,7 +105,37 @@ function applyFullBackup(parsed, opts){
     if(parsed.settings) parts.push('الإعدادات');
     if(opts.restoreSessions && Array.isArray(d.workSessions)) parts.push(`${workSessions.length} جلسة`);
     showSuccess('تم', parts.join(' + '));
-  } catch(err){ console.error(err); showWarning('خطأ', err.message); }
+  } catch(err){
+    _allowCorruptStorageReplace = false;
+    console.error('Full backup restore failed; rolling back', err);
+    try {
+      if(typeof _persistTimer !== 'undefined' && _persistTimer){ clearTimeout(_persistTimer); _persistTimer = null; }
+      providers = rollbackState.providers;
+      contracts = rollbackState.contracts;
+      tariffs = rollbackState.tariffs;
+      batches = rollbackState.batches;
+      claims = rollbackState.claims;
+      trash = rollbackState.trash;
+      deductionRules = rollbackState.deductionRules;
+      paProcedures = rollbackState.paProcedures;
+      workSessions = rollbackState.workSessions;
+      activeSessionId = rollbackState.activeSessionId;
+      sessionsFilter = rollbackState.sessionsFilter;
+      sessionsSearch = rollbackState.sessionsSearch;
+      appSettings = rollbackState.appSettings;
+      _dataStorageState = rollbackState.dataStorageState;
+      _dataStorageError = rollbackState.dataStorageError;
+      _sessionsStorageState = rollbackState.sessionsStorageState;
+      if(storageSnapshot){
+        for(let i=localStorage.length-1;i>=0;i--){ const key=localStorage.key(i); if(key !== null) localStorage.removeItem(key); }
+        Object.keys(storageSnapshot).forEach(key => localStorage.setItem(key, storageSnapshot[key]));
+      }
+      if(typeof applyAppSettingsToUI === 'function') applyAppSettingsToUI();
+      if(typeof renderAll === 'function') renderAll();
+      if(typeof renderSessions === 'function') renderSessions();
+    } catch(rollbackErr){ console.error('Full backup rollback failed', rollbackErr); }
+    showWarning('تعذر الاستيراد', 'حدث خطأ أثناء الاستعادة. تمت محاولة إعادة البيانات والإعدادات السابقة؛ راجع سجل المتصفح إذا استمر الخلل.');
+  }
 }
 function confirmSettingsImport(parsed){
   const s = parsed.settings || {};

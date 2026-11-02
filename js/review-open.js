@@ -25,6 +25,11 @@ function _fillReviewPage(c){
 }
 function openReview(id){
   const c = getClaimById(id); if(!c) return;
+  if(c.archived === true || c.archiveStatus === 'read-only'){
+    if(typeof showWarning==='function') showWarning('مطالبة مؤرشفة','هذه المطالبة مؤرشفة ونهائية. يمكن عرضها من سجل المطالبة دون تعديل.');
+    if(typeof openTimeline==='function') openTimeline(id);
+    return;
+  }
   const existing = findSessionByClaim(id);
   const isAlreadyInThisSession = existing && activeSessionId === existing.id
                               && activeClaim && activeClaim.id === existing.claimId;
@@ -42,8 +47,9 @@ function openReview(id){
     if(p.retireeCopayOverride === undefined) p.retireeCopayOverride = null;
     if(p.beneficiaryType === undefined) p.beneficiaryType = c.type || 'employee';
     if(!Array.isArray(p.deductionReasons)) p.deductionReasons = [];
-    if(!p.documents && inv.documents) p.documents = JSON.parse(JSON.stringify(inv.documents));
-    else if(!p.documents) p.documents = { patientId: false, referral: false, medicalReport: false, priorApprovalDoc: false };
+    const _emptyPatientDocs = { patientId: false, referral: false, medicalReport: false, priorApprovalDoc: false };
+    const _looksInheritedFromInvoice = !!(p.documents && inv.documents && JSON.stringify(p.documents) === JSON.stringify(inv.documents));
+    if(!p.documents || _looksInheritedFromInvoice) p.documents = { ..._emptyPatientDocs };
   }));
   if(typeof recalcClaim === 'function') recalcClaim(c);
   workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, c, inv.date, inv); }));

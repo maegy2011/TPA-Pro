@@ -135,6 +135,13 @@ function initApp(){
     });
 
     loadSessions(); updateSessionsBadge();
+    const dataHealth = typeof getDataStorageHealth === 'function' ? getDataStorageHealth() : null;
+    if(dataHealth && (dataHealth.state === 'corrupt' || dataHealth.state === 'unsupported')){
+      setTimeout(() => showWarning('تنبيه سلامة البيانات', `تعذر اعتماد البيانات المحفوظة (${escapeHtml(dataHealth.error || dataHealth.state)}). تم الاحتفاظ بالقيمة الأصلية ومنع الحفظ التلقائي فوقها. استعد نسخة احتياطية سليمة أو صدّر/افحص التخزين قبل المتابعة.`), 250);
+    }
+    if(typeof _sessionsStorageState !== 'undefined' && _sessionsStorageState === 'corrupt'){
+      setTimeout(() => showWarning('تنبيه جلسات المراجعة', 'تعذر قراءة جلسات المراجعة المحفوظة. تم الاحتفاظ بها ومنع استبدالها تلقائيًا.'), 500);
+    }
   }
   renderAll();
   if (typeof checkOverdueClaims === 'function') setTimeout(checkOverdueClaims, 1000);

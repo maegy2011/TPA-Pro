@@ -2,21 +2,21 @@
 function logoutWithReminder(){
   if(hasRecentBackup(3600000) && !(typeof activeClaim !== 'undefined' && activeClaim)){
     openDialog({ type:'info', title:'تسجيل الخروج', message:`آخر نسخة ${getLastBackupAgo()}. خروج؟`, confirmText:'خروج', cancelText:'إلغاء',
-      onConfirm: () => { localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); } });
+      onConfirm: () => { sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); } });
     return;
   }
   openDialog({
     type:'warning', title:'نسخة احتياطية', message:'لم تُنشئ نسخة حديثة.',
-    body: `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12.5px;line-height:1.9;text-align:center"><div><b style="color:var(--navy);font-size:15px">${claims.length}</b> مطالبة · <b style="color:var(--navy);font-size:15px">${providers.length}</b> جهة · <b style="color:var(--navy);font-size:15px">${workSessions.length}</b> جلسة</div><div style="color:var(--muted);font-size:11px;margin-top:4px">آخر: ${getLastBackupAgo() || 'لم'}</div></div><div style="margin-top:14px;text-align:center"><button type="button" class="btn-xs danger" onclick="confirmLogoutWithoutBackup()" style="padding:9px 18px;font-size:12px;font-weight:700">خروج بدون نسخة</button></div>`,
+    body: `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12.5px;line-height:1.9;text-align:center"><div><b style="color:var(--navy);font-size:15px">${claims.length}</b> مطالبة · <b style="color:var(--navy);font-size:15px">${providers.length}</b> جهة · <b style="color:var(--navy);font-size:15px">${workSessions.length}</b> جلسة</div><div style="color:var(--muted);font-size:11px;margin-top:4px">آخر: ${getLastBackupAgo() || 'لم'}</div></div><div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">يمكنك إلغاء العملية أو تصدير نسخة قبل الخروج.</div>`,
     confirmText:'تصدير وخروج', cancelText:'إلغاء',
-    onConfirm: () => { doExportBackup(true); setTimeout(() => { localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); }, 500); }
+    onConfirm: () => { doExportBackup(true); setTimeout(() => { sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); }, 500); }
   });
 }
 function confirmLogoutWithoutBackup(){
   closeDialog();
   setTimeout(() => {
     openDialog({ type:'danger', title:'خروج', message:'متأكد من الخروج بدون نسخة؟', confirmText:'خروج', cancelText:'إلغاء',
-      onConfirm: () => { localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); } });
+      onConfirm: () => { sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); } });
   }, 200);
 }
 function bindSettingsPassword(){

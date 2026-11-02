@@ -2,6 +2,9 @@
 function showOnboardingError(msg){ const e = document.getElementById('onbErr'); if(e){ e.querySelector('span').textContent = msg; e.classList.add('show'); } }
 function clearOnboardingError(){ const e = document.getElementById('onbErr'); if(e){ e.classList.remove('show'); } }
 function bindOnboarding(){
+  const root = document.getElementById('onboarding');
+  if(root && root.dataset.bound === '1') return;
+  if(root) root.dataset.bound = '1';
   const next = document.getElementById('onbNextBtn');
   const langBtn = document.getElementById('onbLangBtn');
   if(langBtn){ langBtn.textContent = currentLang === 'ar' ? 'EN' : 'AR'; langBtn.addEventListener('click', () => { const newLang = currentLang === 'ar' ? 'en' : 'ar'; setLang(newLang); langBtn.textContent = newLang === 'ar' ? 'EN' : 'AR'; if(typeof applyAllTranslations === 'function') applyAllTranslations(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); }); }
@@ -59,11 +62,19 @@ function bindOnboarding(){
     saveAppSettings();
     next.disabled = true; next.textContent = '...';
     (async () => {
-      try { const h = await hashPassword(pwd); localStorage.setItem(PWD_HASH_KEY, h); } catch(e){}
-      try { localStorage.setItem(ONBOARDING_KEY, '1'); localStorage.setItem(AUTH_KEY, '1'); } catch(e){}
-      document.getElementById('onbStep1').style.display = 'none';
-      document.getElementById('onbStep2').style.display = 'block';
-      document.querySelectorAll('.onb-dot').forEach((d,i)=>{ d.classList.toggle('active', i===1); });
+      try {
+        const h = await hashPassword(pwd);
+        localStorage.setItem(PWD_HASH_KEY, h);
+        if(localStorage.getItem(PWD_HASH_KEY) !== h) throw new Error('تعذر حفظ كلمة المرور');
+        localStorage.setItem(ONBOARDING_KEY, '1');
+        sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY);
+        document.getElementById('onbStep1').style.display = 'none';
+        document.getElementById('onbStep2').style.display = 'block';
+        document.querySelectorAll('.onb-dot').forEach((d,i)=>{ d.classList.toggle('active', i===1); });
+      } catch(e) {
+        showOnboardingError(e && e.message ? e.message : 'تعذر إعداد كلمة المرور بأمان. تحقق من التخزين واتصال آمن ثم أعد المحاولة.');
+        next.disabled = false; next.textContent = 'متابعة';
+      }
     })();
   });
   const impBtn = document.getElementById('onbImportBtn');
@@ -76,9 +87,11 @@ function bindOnboarding(){
   }); }
   const skip = document.getElementById('onbSkipBtn');
   if(skip) skip.addEventListener('click', () => {
-    localStorage.setItem(ONBOARDING_KEY, '1');
-    localStorage.setItem(AUTH_KEY, '1');
-    location.reload();
+    // Password and onboarding flag were saved in step 1; continue to authentication without a reload.
+    try { localStorage.setItem(ONBOARDING_KEY, '1'); sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); } catch(e) { showOnboardingError('تعذر إكمال الإعداد بسبب مشكلة في التخزين.'); return; }
+    const screen = document.getElementById('onboarding'); if(screen) screen.classList.remove('active');
+    if(typeof go === 'function') go('lock');
+    setTimeout(() => document.getElementById('pwd')?.focus(), 80);
   });
 }
 // Patch importBackupFile success: after import, complete onboarding
@@ -87,7 +100,7 @@ if(typeof applyFullBackup === 'function'){
   const _origApply = applyFullBackup;
   applyFullBackup = function(parsed, opts){
     const r = _origApply(parsed, opts);
-    try { localStorage.setItem(ONBOARDING_KEY, '1'); localStorage.setItem(AUTH_KEY, '1'); } catch(e){}
+    try { localStorage.setItem(ONBOARDING_KEY, '1'); sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); } catch(e){}
     setTimeout(() => { try { location.reload(); } catch(e){} }, 800);
     return r;
   };

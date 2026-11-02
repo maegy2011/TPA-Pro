@@ -11,10 +11,10 @@ const INVOICE_TYPES = {
   outpatient:{label:'عيادة خارجية / كشف'}, lab:{label:'تحاليل مخبرية'},
   rad:{label:'أشعة'}, dental:{label:'أسنان'}, optics:{label:'عيون'}, inpatient:{label:'إقامة داخلية'}
 };
-function isExternalInvoice(inv){ return !inv || inv.type !== 'inpatient'; }
+function isExternalInvoice(inv){ if(!inv) return true; if(inv.category === 'internal' || inv.invoiceCategory === 'internal') return false; if(inv.category === 'external' || inv.invoiceCategory === 'external') return true; return inv.type !== 'inpatient'; }
 function invoiceCategoryLabel(inv){ return isExternalInvoice(inv) ? 'خارجية' : 'داخلية'; }
 const DOC_ITEMS = [
-  {key:'patientId', label:'صورة هوية المريض'},
+  {key:'patientId', label:'صورة الرقم القومي للمريض'},
   {key:'referral', label:'خطاب التحويل'},
   {key:'medicalReport', label:'التقرير الطبي'},
   {key:'priorApprovalDoc', label:'الموافقة المسبقة'}

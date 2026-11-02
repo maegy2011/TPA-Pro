@@ -21,16 +21,32 @@ function afterLoading(){
     setTimeout(() => { try { if(typeof bindOnboarding === 'function') bindOnboarding(); } catch(e){} const el = document.getElementById('onbReviewerName'); if(el) el.focus(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); }, 350);
     return;
   }
-  if(localStorage.getItem(AUTH_KEY) === '1'){ go('app'); initApp(); setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 100); }
+  // Remove legacy persistent auth tokens; authentication is scoped to this tab session.
+  try { localStorage.removeItem(AUTH_KEY); } catch(e){}
+  if(sessionStorage.getItem(AUTH_KEY) === '1'){ go('app'); initApp(); setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 100); }
   else { go('lock'); setTimeout(()=>$('#pwd').focus(), 350); }
 }
 $('#eyeBtn').addEventListener('click', () => { const i = $('#pwd'); i.type = i.type === 'password' ? 'text' : 'password'; });
+let _loginInProgress = false;
 $('#lockForm').addEventListener('submit', async e => {
   e.preventDefault();
+  if(_loginInProgress) return;
   const v = $('#pwd').value.trim(), err = $('#lockErr'), card = $('#lockCard');
-  const ok = await verifyPassword(v);
-  if(ok){ err.classList.remove('show'); localStorage.setItem(AUTH_KEY,'1'); $('#pwd').value = ''; go('app'); initApp(); }
-  else { err.classList.add('show'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); $('#pwd').select(); }
+  const wait = getAuthenticationLockoutMs();
+  if(wait > 0){ err.textContent = `محاولات كثيرة. حاول بعد ${Math.ceil(wait/1000)} ثانية.`; err.classList.add('show'); return; }
+  _loginInProgress = true;
+  const submit = $('#lockForm').querySelector('[type="submit"]');
+  if(submit) submit.disabled = true;
+  try {
+    const ok = await verifyPassword(v);
+    if(ok){
+      resetAuthenticationFailures(); err.classList.remove('show'); sessionStorage.setItem(AUTH_KEY,'1'); $('#pwd').value = ''; go('app'); initApp();
+    } else {
+      const remaining = recordAuthenticationFailure();
+      err.textContent = remaining > 0 ? `كلمة المرور غير صحيحة. تم إيقاف المحاولات مؤقتًا ${Math.ceil(remaining/1000)} ثانية.` : 'كلمة المرور غير صحيحة';
+      err.classList.add('show'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); $('#pwd').select();
+    }
+  } finally { _loginInProgress = false; if(submit) submit.disabled = false; }
 });
 $('#pwd').addEventListener('input', () => $('#lockErr').classList.remove('show'));
 setTimeout(() => { if(typeof applyAllTranslations === 'function') applyAllTranslations(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); go('loading'); startLoading(); }, 2400);

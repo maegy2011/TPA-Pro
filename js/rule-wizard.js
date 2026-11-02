@@ -16,7 +16,8 @@ function wizRenderTiers(){
     wizState.tiers[i][f] = e.target.value === '' ? (f==='to' ? null : 0) : Number(e.target.value);
   }));
   box.querySelectorAll('[data-tier-del]').forEach(btn => btn.addEventListener('click', e => {
-    wizState.tiers.splice(Number(e.target.dataset.tierDel), 1); wizRenderTiers();
+    const idx=Number(e.currentTarget.dataset.tierDel);
+    showDelete('حذف شريحة', 'سيتم حذف شريحة النسبة المحددة.', () => { wizState.tiers.splice(idx, 1); wizRenderTiers(); });
   }));
 }
 function wizRenderPeriodPresets(){ $('#wizPeriodPresets').innerHTML = WIZ_PERIOD_PRESETS.map((p,i)=>`<button type="button" data-wiz-period="${i}">${p.label}</button>`).join(''); }

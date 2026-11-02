@@ -2,8 +2,19 @@
 let activeClaim = null;
 let workingInvoices = [];
 let _sessionDirty = false;
-function markSessionDirty(){ _sessionDirty = true; try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = ''; } catch(e){} }
-function clearSessionDirty(){ _sessionDirty = false; try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = 'none'; } catch(e){} }
+let _reviewAutoSaveTimer = null;
+function markSessionDirty(){
+  _sessionDirty = true;
+  try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = ''; } catch(e){}
+  // Snapshot the working copy, not the live claim, so interrupted reviews can be resumed safely.
+  if(_reviewAutoSaveTimer) clearTimeout(_reviewAutoSaveTimer);
+  _reviewAutoSaveTimer = setTimeout(()=>{
+    _reviewAutoSaveTimer = null;
+    try { if(activeClaim && typeof upsertCurrentSession==='function'){ upsertCurrentSession(); } }
+    catch(e){ console.error('Review autosave failed',e); }
+  },500);
+}
+function clearSessionDirty(){ _sessionDirty = false; if(_reviewAutoSaveTimer){clearTimeout(_reviewAutoSaveTimer);_reviewAutoSaveTimer=null;} try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = 'none'; } catch(e){} }
 let rvActiveInvoiceIdx = 0;
 let rvActivePatientIdx = 0;
 let rvEditInvoiceIdx = -1;

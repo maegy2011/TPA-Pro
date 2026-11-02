@@ -15,7 +15,7 @@ function bindReviewModal(){
     if(!activeClaim) return;
     activeClaim.type = btn.dataset.claimType;
     $$('.rv-type-btn').forEach(b => b.classList.toggle('active', b === btn));
-    workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { p.beneficiaryType = btn.dataset.claimType; }));
+    workingInvoices.forEach(inv => { inv.claimType = btn.dataset.claimType; });
     markSessionDirty(); renderActiveInvoice(); recalcReview();
   }));
 
@@ -26,6 +26,16 @@ function bindReviewModal(){
     rvActiveInvoiceIdx = Number(tab.dataset.invIdx); rvActivePatientIdx = 0; renderReviewInvoices();
     if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0);
   });
+  const pageInvoiceTabs = document.getElementById('rvPageInvoiceTabs');
+  if(pageInvoiceTabs && !pageInvoiceTabs.dataset.bound){
+    pageInvoiceTabs.dataset.bound = '1';
+    pageInvoiceTabs.addEventListener('click', e => {
+      if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
+      const tab = e.target.closest('[data-inv-idx]'); if(!tab) return;
+      rvActiveInvoiceIdx = Number(tab.dataset.invIdx); rvActivePatientIdx = 0; renderReviewInvoices();
+      if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0);
+    });
+  }
 
   // لوحة الفاتورة
   function _invoicePanelClick(e){
@@ -37,7 +47,7 @@ function bindReviewModal(){
     if(e.target.closest('[data-edit-invoice]')){ openInvoiceEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-delete-invoice]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return; showDelete('حذف الفاتورة', `سيتم حذف "${inv.number||inv.id}".`, () => { markSessionDirty(); workingInvoices.splice(rvActiveInvoiceIdx,1); rvActiveInvoiceIdx = Math.max(0, rvActiveInvoiceIdx-1); rvActivePatientIdx = 0; renderReviewInvoices(); }); return; }
     if(e.target.closest('[data-edit-patient]')){ openPatientEditor(rvActiveInvoiceIdx, rvActivePatientIdx); return; }
-    const patTab = e.target.closest('[data-pat-idx]'); if(patTab){ rvActivePatientIdx = Number(patTab.dataset.patIdx); renderActiveInvoice(); if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0); return; }
+    const patTab = e.target.closest('[data-pat-idx]'); if(patTab){ rvActivePatientIdx = Number(patTab.dataset.patIdx); renderActiveInvoice(); if(typeof renderExceptions==='function') renderExceptions(); if(typeof renderFinalSummary==='function') renderFinalSummary(); if(typeof updateCurrentReviewProgressPoint === 'function' && activeClaim) updateCurrentReviewProgressPoint(activeClaim.id, rvActiveInvoiceIdx, rvActivePatientIdx, 0); return; }
     const editL = e.target.closest('[data-edit-line]'); if(editL){ openLineEditor(rvActivePatientIdx, Number(editL.dataset.editLine)); return; }
     const delL = e.target.closest('[data-del-line]'); if(delL){ const inv = workingInvoices[rvActiveInvoiceIdx]; const pat = inv&&inv.patients?inv.patients[rvActivePatientIdx]:null; if(!pat) return; const idx = Number(delL.dataset.delLine); showDelete('حذف البند','سيتم حذف هذا البند.', () => { markSessionDirty(); pat.lines.splice(idx,1); renderActiveInvoice(); recalcReview(); }); return; }
 
@@ -76,6 +86,9 @@ function bindReviewModal(){
   const _ipp = document.getElementById('rvPageInvoicePanel');
   if(_ipp && !_ipp.dataset.bound){ _ipp.dataset.bound='1'; _ipp.addEventListener('click', _invoicePanelClick); }
   function _invoicePanelChange(e){
+    const internalCheck = e.target.closest('[data-internal-review]');
+    if(internalCheck){ const inv=workingInvoices[rvActiveInvoiceIdx]; if(!inv)return; if(!inv.internalReview)inv.internalReview={}; inv.internalReview[internalCheck.dataset.internalReview]=internalCheck.checked; markSessionDirty(); return; }
+    if(e.target.matches('[data-internal-review-note]')){ const inv=workingInvoices[rvActiveInvoiceIdx]; if(!inv)return; if(!inv.internalReview)inv.internalReview={}; inv.internalReview.note=e.target.value; markSessionDirty(); return; }
     const doc = e.target.closest('[data-doc]'); if(doc){
       const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
       if(!inv.documents) inv.documents = {};
@@ -274,7 +287,11 @@ function bindReviewModal(){
       const billed = activeClaim ? (Number(activeClaim.billed)||0) : 0;
       let entered = 0;
       (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { entered += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
-      const mismatch = Math.abs(billed - entered) > 1;
+      // Keep reconciliation tied to the source-submitted amount after recalculation.
+      const targetInfo = typeof getClaimReconciliationTarget === 'function'
+        ? getClaimReconciliationTarget(activeClaim)
+        : { amount: billed, source: 'legacy-billed' };
+      const mismatch = Math.abs(targetInfo.amount - entered) > 1;
       const missingDocsInv = (workingInvoices||[]).reduce((s,inv)=>s+DOC_ITEMS.filter(d=>!inv.documents||!inv.documents[d.key]).length,0);
       const missingDocsPat = (workingInvoices||[]).reduce((s,inv)=>s+(inv.patients||[]).reduce((a,p)=>a+DOC_ITEMS.filter(d=>!(p.documents&&p.documents[d.key])).length,0),0);
       const missingDocs = missingDocsInv + missingDocsPat;
@@ -296,7 +313,7 @@ function bindReviewModal(){
         const overrideReason = prompt('سبب التجاوز (إلزامي):');
         if (!overrideReason || !overrideReason.trim()) { showWarning('تنبيه','سبب التجاوز إلزامي'); return; }
         if (!activeClaim._overrideChecklist) activeClaim._overrideChecklist = [];
-        activeClaim._overrideChecklist.push({ by: 'reviewer', at: new Date().toISOString(), reason: overrideReason.trim(), missing: missing.slice() });
+        activeClaim._overrideChecklist.push({ by: (appSettings && appSettings.reviewer && appSettings.reviewer.name) || 'المراجع', at: new Date().toISOString(), reason: overrideReason.trim(), missing: missing.slice() });
       }
 
       // signature dialog
@@ -307,7 +324,7 @@ function bindReviewModal(){
 
       // apply decision to claim
       activeClaim._signedOff = true;
-      activeClaim._reviewedBy = 'reviewer';
+      activeClaim._reviewedBy = (appSettings && appSettings.reviewer && appSettings.reviewer.name) || 'المراجع';
       activeClaim._reviewedAt = new Date().toISOString();
       activeClaim._locked = true;
       activeClaim._decision = decision;

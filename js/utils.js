@@ -2,15 +2,41 @@
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const escapeHtml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-const PASSWORD = 'TPA2025';
+// Neutralize spreadsheet formula triggers when exporting untrusted text to CSV.
+function safeCsvCell(value){
+  let text = String(value == null ? '' : value);
+  if (/^[\s\u0000-\u001F]*[=+\-@]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
+}
 const AUTH_KEY = 'tpa_pro_auth';
 const APP_SETTINGS_KEY = 'tpa_pro_settings';
 const DATA_STORE_KEY = 'tpa_pro_data_store';
 const SESSIONS_KEY = 'tpa_pro_sessions';
 const LAST_BACKUP_KEY = 'tpa_last_backup';
 const PWD_HASH_KEY = 'tpa_pwd_hash';
+// Per-tab throttling slows repeated password guesses. This is a local-app safeguard,
+// not a substitute for server-side account lockout or multi-user authorization.
+const AUTH_FAILURE_LIMIT = 5;
+const AUTH_BASE_LOCK_MS = 30000;
+let _authFailures = 0;
+let _authLockedUntil = 0;
+function getAuthenticationLockoutMs(now){
+  const current = Number.isFinite(now) ? now : Date.now();
+  return Math.max(0, _authLockedUntil - current);
+}
+function recordAuthenticationFailure(now){
+  const current = Number.isFinite(now) ? now : Date.now();
+  if(current < _authLockedUntil) return getAuthenticationLockoutMs(current);
+  _authFailures++;
+  if(_authFailures >= AUTH_FAILURE_LIMIT){
+    const tier = Math.min(4, Math.floor((_authFailures - AUTH_FAILURE_LIMIT) / AUTH_FAILURE_LIMIT));
+    _authLockedUntil = current + AUTH_BASE_LOCK_MS * Math.pow(2, tier);
+  }
+  return getAuthenticationLockoutMs(current);
+}
+function resetAuthenticationFailures(){ _authFailures = 0; _authLockedUntil = 0; }
 const ONBOARDING_KEY = 'tpa_onboarding_done';
-const DATA_VERSION = 1;
+const DATA_VERSION = 2;
 const fmt = n => Number(n || 0).toLocaleString('en-US');
 const fmtC = n => fmt(n) + ' ج.م';
 let appSettings = {
@@ -30,25 +56,74 @@ function loadAppSettings(){
 function saveAppSettings(){
   try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings)); } catch(e){}
 }
+/** Append a structured, application-level audit event to a claim. This is traceability, not tamper-proof security. */
+function appendClaimAuditEvent(claim, event){
+  if(!claim || !event || typeof event !== 'object') return null;
+  if(!Array.isArray(claim._auditTrail)) claim._auditTrail = [];
+  const reviewer = (typeof appSettings !== 'undefined' && appSettings.reviewer) ? appSettings.reviewer : {};
+  const entry = {
+    id: 'AUD-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8),
+    at: new Date().toISOString(),
+    actor: String(reviewer.name || 'المراجع').slice(0,120),
+    actorRole: String(reviewer.role || '').slice(0,120),
+    action: String(event.action || 'claim.updated').slice(0,80),
+    details: event.details && typeof event.details === 'object' ? JSON.parse(JSON.stringify(event.details)) : {}
+  };
+  claim._auditTrail.push(entry);
+  return entry;
+}
 loadAppSettings();
-async function hashPassword(pwd){
-  try {
-    if(window.crypto && crypto.subtle){
-      const buf = new TextEncoder().encode(pwd + '::tpa_salt_2025');
-      const hash = await crypto.subtle.digest('SHA-256', buf);
-      return 'sha256_' + Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
-    }
-  } catch(e){}
+const PASSWORD_KDF_ITERATIONS = 310000;
+const PASSWORD_HASH_PREFIX = 'pbkdf2_sha256$';
+function bytesToHex(bytes){ return Array.from(new Uint8Array(bytes)).map(b => b.toString(16).padStart(2,'0')).join(''); }
+function hexToBytes(hex){
+  if(typeof hex !== 'string' || !/^(?:[0-9a-f]{2})+$/i.test(hex)) return null;
+  const out = new Uint8Array(hex.length / 2);
+  for(let i=0;i<out.length;i++) out[i] = parseInt(hex.slice(i*2,i*2+2),16);
+  return out;
+}
+function legacyPasswordHash(pwd){
+  const buf = new TextEncoder().encode(pwd + '::tpa_salt_2025');
+  return crypto.subtle.digest('SHA-256', buf).then(hash => 'sha256_' + bytesToHex(hash));
+}
+function legacySimplePasswordHash(pwd){
   let h = 0;
-  for(let i = 0; i < pwd.length; i++){ h = ((h << 5) - h + pwd.charCodeAt(i)) | 0; }
+  for(let i=0;i<pwd.length;i++) h = ((h << 5) - h + pwd.charCodeAt(i)) | 0;
   return 'simple_' + Math.abs(h).toString(16);
+}
+async function hashPassword(pwd){
+  if(typeof pwd !== 'string' || !pwd) throw new Error('كلمة المرور غير صالحة');
+  if(!window.crypto || !crypto.subtle || !crypto.getRandomValues) throw new Error('يلزم تشغيل التطبيق في سياق آمن يدعم التشفير لإنشاء كلمة مرور آمنة');
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt, iterations:PASSWORD_KDF_ITERATIONS}, material, 256);
+  return PASSWORD_HASH_PREFIX + PASSWORD_KDF_ITERATIONS + '$' + bytesToHex(salt) + '$' + bytesToHex(bits);
 }
 async function verifyPassword(pwd){
   try {
+    if(typeof pwd !== 'string') return false;
     const stored = localStorage.getItem(PWD_HASH_KEY);
-    if(!stored) return pwd === PASSWORD;
-    const hash = await hashPassword(pwd);
-    return hash === stored;
+    if(!stored) return false;
+    if(stored.startsWith(PASSWORD_HASH_PREFIX)){
+      if(!window.crypto || !crypto.subtle) return false;
+      const parts = stored.split('$');
+      if(parts.length !== 4 || parts[0] !== 'pbkdf2_sha256') return false;
+      const iterations = Number(parts[1]), salt = hexToBytes(parts[2]), expected = hexToBytes(parts[3]);
+      if(!Number.isInteger(iterations) || iterations < 100000 || iterations > 1000000 || !salt || salt.length !== 16 || !expected || expected.length !== 32) return false;
+      const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveBits']);
+      const actual = new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt, iterations}, material, 256));
+      let diff = 0; for(let i=0;i<actual.length;i++) diff |= actual[i] ^ expected[i];
+      return diff === 0;
+    }
+    // Legacy formats are accepted only to complete a successful login, then upgraded immediately.
+    let valid = false;
+    if(stored.startsWith('sha256_') && window.crypto && crypto.subtle) valid = (await legacyPasswordHash(pwd)) === stored;
+    else if(stored.startsWith('simple_')) valid = legacySimplePasswordHash(pwd) === stored;
+    if(valid){
+      const upgraded = await hashPassword(pwd);
+      localStorage.setItem(PWD_HASH_KEY, upgraded);
+    }
+    return valid;
   } catch(e){ return false; }
 }
 async function changePassword(oldPwd, newPwd){
@@ -143,3 +218,7 @@ function roundToNearest(v, step){ const s = parseNumber(step)||1; return Math.ro
 function isMultipleOf(v, step){ const s = parseNumber(step)||1; if(s === 0) return false; const m = Math.abs(parseNumber(v) % s); return m < 0.001 || Math.abs(m-s) < 0.001; }
 function pctOf(v, base){ const b = parseNumber(base); if(b === 0) return null; return (parseNumber(v)/b)*100; }
 function pctDiff(a, b){ const bv = parseNumber(b); if(bv === 0) return null; return Math.abs((parseNumber(a)-bv)/bv*100); }
+
+// Provider contact validation accepts ordinary international phone notation and standard email addresses.
+function isValidProviderEmail(value){ const v=String(value||'').trim(); return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function isValidProviderPhone(value){ const v=String(value||'').trim(); return !v || /^\+?[0-9\s-]{7,}$/.test(v); }

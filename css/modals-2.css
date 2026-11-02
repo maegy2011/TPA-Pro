@@ -159,3 +159,15 @@
 .rv-patients-footer{display:flex;gap:18px;flex-wrap:wrap;padding:12px 14px;background:linear-gradient(180deg,#EFF6F6,#E8F3F3);border:1px solid #CCE8E7;border-radius:12px;margin-top:12px;font-size:13px;font-weight:700;color:#1e3a5f}
 .rv-patients-footer b{font-variant-numeric:tabular-nums}
 .rv-patients-accordion{display:flex;flex-direction:column;gap:8px}
+
+/* Phase 23: compact horizontal patient totals and internal invoice checklist */
+.rv-patient-calc{display:flex!important;flex-wrap:nowrap;align-items:stretch;justify-content:space-between;gap:clamp(4px,1vw,12px);padding:9px clamp(6px,1.4vw,14px);min-width:0}
+.rv-pcalc-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;text-align:center}
+.rv-pcalc-item span{font-size:clamp(8px,1.05vw,10.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-pcalc-item b{font-size:clamp(9px,1.45vw,14px);white-space:nowrap;letter-spacing:-.25px;overflow:visible;font-variant-numeric:tabular-nums}
+.rv-internal-review{margin:12px 0;padding:11px 13px;border:1px solid var(--line,#dbe3ea);border-radius:12px;background:var(--surface,#fff)}
+.rv-internal-review>summary{cursor:pointer;font-weight:800;color:var(--navy);padding:3px 0}
+.rv-internal-check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:12px}
+.rv-internal-check-grid label{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;border:1px solid var(--line,#e2e8f0);border-radius:8px;font-size:12px;line-height:1.5}
+.rv-internal-check-grid input{flex:0 0 auto;margin-top:2px}
+@media(max-width:420px){.rv-patient-calc{gap:3px;padding:7px 4px}.rv-pcalc-item b{font-size:clamp(8px,2.5vw,11px)}}

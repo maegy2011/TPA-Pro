@@ -1,6 +1,6 @@
 // modals-build.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function buildModals(){
-  $('#modalsContainer').innerHTML = MODAL_REVIEW + MODAL_INVOICE + MODAL_PATIENT + MODAL_LINE + MODAL_PROVIDER + MODAL_CONTRACT + MODAL_TARIFF + MODAL_BATCH + MODAL_DR + MODAL_PAPROC + MODAL_DRWIZARD;
+  $('#modalsContainer').innerHTML = MODAL_REVIEW + MODAL_INVOICE + MODAL_PATIENT + MODAL_LINE + MODAL_PROVIDER + MODAL_CONTRACT + MODAL_TARIFF + MODAL_TARIFF_IMPORT + MODAL_BATCH + MODAL_DR + MODAL_PAPROC + MODAL_DRWIZARD;
   // Accessibility: expose modal dialogs to assistive tech
   $$('#modalsContainer .modal').forEach((m, i) => {
     m.setAttribute('role', 'dialog');

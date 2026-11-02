@@ -8,6 +8,50 @@ const DIALOG_ICONS = {
   danger: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
   delete: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>'
 };
+// Render only a small HTML subset in dialog details. Imported text is never
+// allowed to introduce scripts, event handlers, URLs, forms, or executable nodes.
+function sanitizeDialogBody(markup){
+  const template = document.createElement('template');
+  template.innerHTML = String(markup || '');
+  const allowedTags = new Set(['DIV','SPAN','B','STRONG','P','BR','LABEL','INPUT']);
+  const allowedAttrs = new Set(['class','style','type','id','name','value','checked','disabled','for']);
+  const clean = node => {
+    Array.from(node.childNodes).forEach(child => {
+      if(child.nodeType === Node.ELEMENT_NODE){
+        if(!allowedTags.has(child.tagName)){
+          child.replaceWith(document.createTextNode(child.textContent || ''));
+          return;
+        }
+        Array.from(child.attributes).forEach(attr => {
+          const name = attr.name.toLowerCase();
+          if(!allowedAttrs.has(name)) child.removeAttribute(attr.name);
+          else if(name === 'style'){
+            const safe = attr.value.split(';').filter(rule => {
+              const lower = rule.toLowerCase();
+              return !/(url\s*\(|expression\s*\(|@import|behavior\s*:|-moz-binding)/i.test(lower);
+            }).join(';');
+            if(safe) child.setAttribute('style', safe); else child.removeAttribute('style');
+          }
+        });
+        if(child.tagName === 'INPUT'){
+          const type = (child.getAttribute('type') || 'text').toLowerCase();
+          if(!['checkbox','radio'].includes(type)) child.replaceWith(document.createTextNode(''));
+        }
+        clean(child);
+      } else if(child.nodeType !== Node.TEXT_NODE){ child.remove(); }
+    });
+  };
+  clean(template.content);
+  return template.content;
+}
+function setDialogButtonLabel(button, label, countdown){
+  button.textContent = String(label || 'حسنًا');
+  if(countdown !== undefined){
+    const span = document.createElement('span');
+    span.className = 'countdown-num'; span.textContent = ` (${countdown})`;
+    button.appendChild(span);
+  }
+}
 function openDialog(opts){
   if(dialogState.interval){ clearInterval(dialogState.interval); dialogState.interval = null; }
   const type = opts.type || 'info';
@@ -17,7 +61,7 @@ function openDialog(opts){
   $('#dialogTitle').textContent = opts.title || '';
   $('#dialogMessage').innerHTML = escapeHtml(opts.message || '');
   (el => { if (el) el.style.display = opts.message ? 'block' : 'none'; })($('#dialogMessage'));
-  $('#dialogBody').innerHTML = opts.body || '';
+  const dialogBody = $('#dialogBody'); dialogBody.replaceChildren(sanitizeDialogBody(opts.body || '')); 
   (el => { if (el) el.style.display = opts.body ? 'block' : 'none'; })($('#dialogBody'));
   const actions = $('#dialogActions'); actions.innerHTML = '';
   if(opts.requireCountdown){
@@ -25,15 +69,15 @@ function openDialog(opts){
     const cBtn = document.createElement('button');
     cBtn.className = 'dialog-btn primary ' + (iconType === 'delete' || type === 'danger' ? 'danger' : (type === 'warning' ? 'warning' : 'info'));
     cBtn.disabled = true;
-    cBtn.innerHTML = `<span>${opts.confirmText||'حذف'}</span> <span class="countdown-num">(${rem})</span>`;
+    setDialogButtonLabel(cBtn, opts.confirmText || 'حذف', rem);
     const xBtn = document.createElement('button');
     xBtn.className = 'dialog-btn secondary'; xBtn.textContent = opts.cancelText || 'إلغاء';
     xBtn.addEventListener('click', () => { closeDialog(); if(opts.onCancel) opts.onCancel(); });
     actions.appendChild(cBtn); actions.appendChild(xBtn);
     dialogState.interval = setInterval(() => {
       rem--;
-      if(rem > 0) cBtn.innerHTML = `<span>${opts.confirmText||'حذف'}</span> <span class="countdown-num">(${rem})</span>`;
-      else { clearInterval(dialogState.interval); dialogState.interval = null; cBtn.disabled = false; cBtn.innerHTML = `<span>${opts.confirmText||'حذف'}</span>`; }
+      if(rem > 0) setDialogButtonLabel(cBtn, opts.confirmText || 'حذف', rem);
+      else { clearInterval(dialogState.interval); dialogState.interval = null; cBtn.disabled = false; setDialogButtonLabel(cBtn, opts.confirmText || 'حذف'); }
     }, 1000);
     cBtn.addEventListener('click', () => { if(cBtn.disabled) return; clearInterval(dialogState.interval); dialogState.interval = null; closeDialog(); if(opts.onConfirm) opts.onConfirm(); });
   } else {
@@ -45,7 +89,7 @@ function openDialog(opts){
     }
     const cBtn = document.createElement('button');
     cBtn.className = 'dialog-btn primary ' + (iconType === 'delete' || type === 'danger' ? 'danger' : (type === 'warning' ? 'warning' : (type === 'info' ? 'info' : '')));
-    cBtn.innerHTML = opts.confirmText || 'حسنًا';
+    cBtn.textContent = String(opts.confirmText || 'حسنًا');
     cBtn.addEventListener('click', () => { closeDialog(); if(opts.onConfirm) opts.onConfirm(); });
     actions.appendChild(cBtn);
   }

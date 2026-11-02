@@ -26,7 +26,6 @@ const MODAL_PROVIDER = `
           </div>
           <div class="rv-section-title">خيارات</div>
           <div class="form-grid">
-            <div class="fg full"><label><input type="checkbox" id="pvAutoContract"> إنشاء عقد تلقائياً لهذه الجهة</label><div class="hint">سيتم إنشاء عقد مع لائحة افتراضية</div></div>
             <div class="fg full"><label>ملاحظات</label><textarea id="pvNotes" rows="3"></textarea></div>
           </div>
         </div>

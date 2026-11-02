@@ -118,7 +118,7 @@ function exportSessionSummary(){
   if(!workSessions || !workSessions.length){ showWarning('لا جلسات','لا توجد جلسات للتصدير'); return; }
   const rows = [['ID','Claim','Status','LastActive']];
   workSessions.forEach(s => rows.push([s.id, s.claimId, s.status, s.lastActiveAt]));
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = rows.map(r => r.map(safeCsvCell).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'sessions-summary.csv'; a.click(); URL.revokeObjectURL(url);

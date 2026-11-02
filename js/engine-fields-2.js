@@ -33,7 +33,8 @@ function compareValues(actual, op, exp, ctx){
     case 'is_not_empty': return actual !== undefined && actual !== null && String(actual).trim() !== '';
     case 'is_true': return actual === true || actual === 'true';
     case 'is_false': return actual === false || actual === 'false';
-    default: return true;
+    // عامل مقارنة غير معروف: افشل بشكل مغلق بدل تمرير القاعدة.
+    default: return false;
   }
 }
 function getScopeItems(scope, ctx){
@@ -47,7 +48,7 @@ function evaluateCondition(cond, ctx){
   if(!cond) return true;
   const mode = cond.mode || 'expr';
   const scope = cond.scope || 'self';
-  if(mode === 'expr'){ if(!cond.field || !cond.op) return true; return compareValues(resolveFieldPath(cond.field, ctx), cond.op, cond.value, ctx); }
+  if(mode === 'expr'){ if(!cond.field || !cond.op) return false; return compareValues(resolveFieldPath(cond.field, ctx), cond.op, cond.value, ctx); }
   if(mode === 'duplicate' || mode === 'unique'){
     const f = cond.field || 'line.code';
     const items = getScopeItems(scope, ctx);
@@ -56,9 +57,9 @@ function evaluateCondition(cond, ctx){
     return mode === 'duplicate' ? cnt > 1 : cnt === 1;
   }
   const items = getScopeItems(scope, ctx);
-  if(mode === 'any'){ if(!cond.subField || !cond.subOp) return true; return items.some(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
-  if(mode === 'all'){ if(!cond.subField || !cond.subOp) return true; if(!items.length) return false; return items.every(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
-  if(mode === 'count'){ if(!cond.subField || !cond.subOp) return true; const n = items.filter(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)).length; return compareValues(n, cond.compareOp||'gt', cond.compareValue||0, ctx); }
+  if(mode === 'any'){ if(!cond.subField || !cond.subOp) return false; return items.some(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
+  if(mode === 'all'){ if(!cond.subField || !cond.subOp) return false; if(!items.length) return false; return items.every(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)); }
+  if(mode === 'count'){ if(!cond.subField || !cond.subOp) return false; const n = items.filter(it => compareValues(resolveFieldPath(cond.subField, it), cond.subOp, cond.subValue, it)).length; return compareValues(n, cond.compareOp||'gt', cond.compareValue||0, ctx); }
   if(mode === 'frequency'){
     // count occurrences of same field value within windowDays in the given scope
     const f = cond.field || 'line.code';
@@ -80,7 +81,7 @@ function evaluateCondition(cond, ctx){
   if(mode === 'bundle'){
     // true if all component codes are present in the scope
     const comps = Array.isArray(cond.components) ? cond.components : String(cond.components||'').split(',').map(x=>x.trim()).filter(Boolean);
-    if(!comps.length) return true;
+    if(!comps.length) return false;
     const items = getScopeItems(scope, ctx);
     const codes = items.map(it => String(resolveFieldPath(cond.field || 'line.code', it)));
     return comps.every(c => codes.includes(String(c)));
@@ -89,7 +90,7 @@ function evaluateCondition(cond, ctx){
     // verify claim diagnosis is compatible with the service (allowed list)
     const allowed = String(cond.value || '').split(',').map(x=>x.trim()).filter(Boolean);
     const dx = resolveFieldPath(cond.field || 'claim.diagnosis', ctx);
-    if(!allowed.length) return true;
+    if(!allowed.length) return false;
     return allowed.includes(String(dx));
   }
   if(['sum','avg','max','min'].includes(mode)){
@@ -101,7 +102,7 @@ function evaluateCondition(cond, ctx){
     else if(mode === 'min') res = vals.length ? Math.min(...vals) : 0;
     return compareValues(Math.round(res), cond.compareOp||'gt', cond.compareValue||0, ctx);
   }
-  return true;
+  return false;
 }
 function evaluateConditionTree(node, ctx){
   if(!node || !Array.isArray(node.rules)) return true;

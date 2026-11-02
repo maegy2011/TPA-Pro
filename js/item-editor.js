@@ -5,9 +5,11 @@ function getApplicableTariffs(providerName){
   if(provider){
     const cids = contracts.filter(c => c.providerId === provider.id).map(c => c.id);
     list = tariffs.filter(t => (t.linkedProviderIds||[]).includes(provider.id) || (t.linkedContractIds||[]).some(cid => cids.includes(cid)));
-    if(!list.length){ list = tariffs.filter(t => effectiveTariffStatus(t) === 'active'); fallback = true; }
-  } else { list = tariffs.filter(t => effectiveTariffStatus(t) === 'active'); fallback = true; }
+    if(!list.length){ list = [...tariffs]; fallback = true; }
+  } else { list = [...tariffs]; fallback = true; }
   const order = { active:0, pending:1, expired:2, cancelled:3 };
+  const claimDate = (typeof activeClaim!=='undefined' && activeClaim && (activeClaim.date||activeClaim.receivedDate)) || new Date().toISOString().slice(0,10);
+  list = list.filter(t => (typeof isTariffApplicableForDate==='function') ? isTariffApplicableForDate(t, claimDate) : effectiveTariffStatus(t)==='active');
   list.sort((a,b) => (order[effectiveTariffStatus(a)]||9) - (order[effectiveTariffStatus(b)]||9));
   Object.defineProperty(list, '_fallback', { value: fallback, enumerable: false });
   return list;
@@ -16,8 +18,9 @@ function searchTariffServices(query, appl){
   const q = (query||'').trim().toLowerCase();
   if(!q) return [];
   const out = [];
-  appl.forEach(t => (t.services||[]).forEach(s => {
-    if(!s.code.toLowerCase().includes(q) && !s.name.toLowerCase().includes(q) && !s.category.toLowerCase().includes(q)) return;
+  const claimDate = (typeof activeClaim!=='undefined' && activeClaim && (activeClaim.date||activeClaim.receivedDate)) || new Date().toISOString().slice(0,10);
+  appl.forEach(t => ((typeof getTariffServicesForDate==='function') ? getTariffServicesForDate(t,claimDate) : (t.services||[])).forEach(s => {
+    if(!s.code.toLowerCase().includes(q) && !s.name.toLowerCase().includes(q) && !(s.nameEn||'').toLowerCase().includes(q) && !s.category.toLowerCase().includes(q)) return;
     out.push({ ...s, tariffId:t.id, tariffName:t.name, tariffType:t.type });
   }));
   out.sort((a,b) => { const ae = a.code.toLowerCase()===q?0:1, be = b.code.toLowerCase()===q?0:1; if(ae!==be) return ae-be; return a.name.localeCompare(b.name); });
@@ -49,6 +52,7 @@ function applyServiceToLine(svc) {
   $('#lnCategory').value = svc.category || 'أخرى';
   $('#lnTariffUnit').value = svc.currentPrice;
   $('#lnBilledUnit').value = svc.currentPrice;
+  $('#lnBilledTotal').value = (Math.max(1, Number($('#lnQty').value)||1) * Number(svc.currentPrice||0)).toFixed(2);
   $('#lnContractDiscount').value = covered ? contractRate : '—';
 
   lnSelectedTariffId = svc.tariffId || ctx.contract?.tariffId || ctx.tariff?.id || '';
@@ -72,7 +76,7 @@ function bindLineAutocomplete(){
     if(!val || val.length < 1){ suggest.innerHTML = ''; return; }
     const results = searchTariffServices(val, lnApplicableTariffs);
     if(!results.length){ suggest.innerHTML = '<div class="ln-sug-empty">لا نتائج</div>'; return; }
-    suggest.innerHTML = `<div class="ln-suggest-list">${results.map((s,i)=>`<div class="ln-sug-item" data-sug-idx="${i}"><span class="s-code">${escapeHtml(s.code)}</span><div class="s-info"><div class="s-name">${escapeHtml(s.name)}${s.requiresPriorApproval?' ⚠':''}</div><div class="s-cat">${escapeHtml(s.category)} · ${escapeHtml(s.tariffName)}</div></div><div class="s-price">${fmt(s.currentPrice)}<small>ج.م</small></div></div>`).join('')}</div>`;
+    suggest.innerHTML = `<div class="ln-suggest-list">${results.map((s,i)=>`<div class="ln-sug-item" data-sug-idx="${i}"><span class="s-code">${escapeHtml(s.code)}</span><div class="s-info"><div class="s-name">${escapeHtml(s.name)}${s.requiresPriorApproval?' ⚠':''}</div>${s.nameEn?`<div class="s-cat" style="direction:ltr;text-align:right">${escapeHtml(s.nameEn)}</div>`:''}<div class="s-cat">${escapeHtml(s.category)} · ${escapeHtml(s.tariffName)}</div></div><div class="s-price">${fmt(s.currentPrice)}<small>ج.م</small></div></div>`).join('')}</div>`;
     suggest.querySelectorAll('[data-sug-idx]').forEach(el => el.addEventListener('click', () => { const s = results[Number(el.dataset.sugIdx)]; if(s) applyServiceToLine(s); }));
   };
   const deb = val => { clearTimeout(lnDebounceTimer); lnDebounceTimer = setTimeout(()=>run(val), 160); };
@@ -117,6 +121,7 @@ function openLineEditor(patIdx, lineIdx) {
       applyServiceToLine(svc);
       $('#lnQty').value = l.qty;
       if (l.billedUnit !== null && l.billedUnit !== undefined) $('#lnBilledUnit').value = l.billedUnit;
+      $('#lnBilledTotal').value = (Number(l.qty||1) * Number(l.billedUnit||0)).toFixed(2);
     } else {
       sel.value = '__manual__';
       $('#lnCode').value = l.code || '';
@@ -127,6 +132,7 @@ function openLineEditor(patIdx, lineIdx) {
       toggleManualFields(true);
       $('#lnQty').value = l.qty;
       $('#lnBilledUnit').value = l.billedUnit;
+      $('#lnBilledTotal').value = (Number(l.qty||1) * Number(l.billedUnit||0)).toFixed(2);
     }
   } else {
     sel.value = '';
@@ -137,6 +143,7 @@ function openLineEditor(patIdx, lineIdx) {
     $('#lnContractDiscount').value = '';
     $('#lnQty').value = 1;
     $('#lnBilledUnit').value = '';
+    $('#lnBilledTotal').value = '';
     toggleManualFields(false);
   }
 
@@ -164,7 +171,10 @@ function saveLineEditor() {
   const name = $('#lnName').value.trim();
   const cat = $('#lnCategory').value.trim() || 'أخرى';
   const qty = Math.max(1, Number($('#lnQty').value) || 1);
-  const bu = Number($('#lnBilledUnit').value) || 0;
+  const totalInput = document.getElementById('lnBilledTotal');
+  const qtyInput = document.getElementById('lnQty');
+  const totalBilled = Number(totalInput && totalInput.value) || 0;
+  const bu = totalBilled > 0 && Number(qtyInput.value) > 0 ? totalBilled / Number(qtyInput.value) : (Number($('#lnBilledUnit').value) || 0);
   const tuRaw = $('#lnTariffUnit').value.trim();
   const tu = (tuRaw === '' || tuRaw === '—') ? null : Number(tuRaw);
 
@@ -247,12 +257,23 @@ function saveLineEditor() {
 }
 function closeLineEditor(){ if(!$('#lineModal').classList.contains('open')) return; $('#lineModal').classList.remove('open'); rvEditLineIdx = -1; }
 
+function syncLineBilledAmount(source){
+  const qty = Math.max(1, Number($('#lnQty').value)||1);
+  const unit = document.getElementById('lnBilledUnit');
+  const total = document.getElementById('lnBilledTotal');
+  if(!unit || !total) return;
+  if(source === 'total'){ const amount = Math.max(0, Number(total.value)||0); unit.value = (amount/qty).toFixed(2); }
+  else { total.value = (qty * Math.max(0, Number(unit.value)||0)).toFixed(2); }
+  updateComputedPreview();
+}
+
 function updateComputedPreview() {
   const box = $('#lnComputedPreview');
   if (!box) return;
 
   const qty = Math.max(0, Number($('#lnQty').value) || 0);
-  const billed = qty * (Number($('#lnBilledUnit').value) || 0);
+  const totalEl = document.getElementById('lnBilledTotal');
+  const billed = totalEl && totalEl.value !== '' ? (Number(totalEl.value)||0) : qty * (Number($('#lnBilledUnit').value) || 0);
   const isManual = $('#lnServiceSelect').value === '__manual__';
 
   if (!qty || !billed) {
@@ -362,11 +383,13 @@ function bindLineSmartForm() {
 
   if (qty && !qty.dataset.bound) {
     qty.dataset.bound = '1';
-    qty.addEventListener('input', updateComputedPreview);
+    qty.addEventListener('input', () => syncLineBilledAmount('unit'));
   }
   if (bu && !bu.dataset.bound) {
     bu.dataset.bound = '1';
-    bu.addEventListener('input', updateComputedPreview);
+    bu.addEventListener('input', () => syncLineBilledAmount('unit'));
+    const total = document.getElementById('lnBilledTotal');
+    if(total && !total.dataset.bound){ total.dataset.bound='1'; total.addEventListener('input', () => syncLineBilledAmount('total')); }
   }
 }
 function updatePAWarning(){

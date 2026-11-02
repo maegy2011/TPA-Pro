@@ -6,7 +6,11 @@ function applyMaxLabsRule(pat){
   (pat.lines||[]).forEach((l,i) => { if(REVIEW_RULES.labCategories.includes(l.category)) idxs.push(i); });
   if(idxs.length <= max){ showWarning('لا حاجة', `عدد التحاليل ${idxs.length} ≤ ${max}.`); return; }
   const excess = idxs.length - max;
-  const sorted = idxs.slice().sort((a,b) => (pat.lines[b].qty*pat.lines[b].billedUnit)-(pat.lines[a].qty*pat.lines[a].billedUnit));
+  // الاحتفاظ بأعلى التحاليل تكلفة وخصم الأقل تكلفة عند تجاوز الحد.
+  const sorted = idxs.slice().sort((a,b) =>
+    ((Number(pat.lines[a].qty)||0)*(Number(pat.lines[a].billedUnit)||0)) -
+    ((Number(pat.lines[b].qty)||0)*(Number(pat.lines[b].billedUnit)||0))
+  );
   sorted.slice(0, excess).forEach(i => {
     const l = pat.lines[i];
     l.approved = 0;
@@ -31,8 +35,11 @@ function saveReview(){
 function finalizeReview(){
   if(!activeClaim) return;
   if (typeof collectExceptions === 'function') {
-    const excs = collectExceptions();
-    if (excs.length > 0) { showWarning('استثناءات معلّقة', `بقي ${excs.length} استثناء. عالجها أو تجاوز الفحوصات.`); return; }
+    let pendingCount = 0;
+    (workingInvoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
+      if(l._decision === 'needs-attention' || l._decision === 'pa-pending') pendingCount++;
+    })));
+    if (pendingCount > 0) { showWarning('استثناءات معلّقة', `بقي ${pendingCount} استثناء في المطالبة. انتقل إلى كل مريض وعالج استثناءاته قبل الحفظ.`); return; }
   }
   const cid = activeClaim.id;
   activeClaim.invoices = JSON.parse(JSON.stringify(workingInvoices));
@@ -49,8 +56,23 @@ function finalizeReview(){
   if(activeClaim.approved <= 0) activeClaim.status = 'rejected';
   else if(activeClaim.approved >= activeClaim.billed) activeClaim.status = 'approved';
   else activeClaim.status = 'partial';
+  if (typeof appendClaimAuditEvent === 'function') {
+    appendClaimAuditEvent(activeClaim, {
+      action: activeClaim._signedOff ? 'review.signed-off' : 'review.saved',
+      details: {
+        decision: activeClaim._decision || activeClaim.status,
+        status: activeClaim.status,
+        submittedBilled: Number.isFinite(Number(activeClaim.submittedBilled)) ? Number(activeClaim.submittedBilled) : null,
+        billed: Number(activeClaim.billed) || 0,
+        approved: Number(activeClaim.approved) || 0,
+        overrideCount: Array.isArray(activeClaim._overrideChecklist) ? activeClaim._overrideChecklist.length : 0,
+        reason: String(activeClaim.reason || '').slice(0,500)
+      }
+    });
+  }
   workSessions = workSessions.filter(x => x.claimId !== activeClaim.id);
   persistSessions();
+  if (typeof persistData === 'function') persistData(true);
   clearSessionDirty();
   closeReview({ discard:true });
   renderAll();

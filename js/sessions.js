@@ -1,5 +1,6 @@
 // sessions.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let workSessions = [];
+let _sessionsStorageState = 'uninitialized';
 let activeSessionId = null;
 let sessionsFilter = 'all';
 let sessionsSearch = '';
@@ -11,11 +12,30 @@ function genSessionId(){ return 'SES-'+Date.now().toString(36).toUpperCase()+'-'
 function loadSessions(){
   try {
     const raw = localStorage.getItem(SESSIONS_KEY);
-    if(raw){ const p = JSON.parse(raw); if(Array.isArray(p)) workSessions = p.map(s => ({ ...s, status:'paused' })); }
-  } catch(e){}
+    if(raw === null){ _sessionsStorageState = 'empty'; return; }
+    const parsed = JSON.parse(raw);
+    if(!Array.isArray(parsed) || !parsed.every(s => s && typeof s === 'object' && !Array.isArray(s))) throw new Error('بنية جلسات المراجعة غير صالحة');
+    workSessions = parsed.map(s => ({ ...s, status:'paused' }));
+    _sessionsStorageState = 'loaded';
+  } catch(e){
+    _sessionsStorageState = 'corrupt';
+    console.error('loadSessions rejected stored sessions; original value preserved', e);
+  }
 }
-function persistSessions(){ try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(workSessions)); } catch(e){} }
+function persistSessions(){
+  if(_sessionsStorageState === 'corrupt') { console.error('persistSessions blocked: corrupted session storage requires recovery'); return false; }
+  try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(workSessions)); _sessionsStorageState = 'loaded'; return true; }
+  catch(e){ console.error('persistSessions failed', e); return false; }
+}
 function findSessionByClaim(claimId){ return workSessions.find(s => s.claimId === claimId); }
+// Compare the live claim with the immutable baseline captured when this review session began.
+// Older sessions without a baseline remain resumable but cannot be conflict-checked.
+function getSessionConflictState(session, liveClaim){
+  if(!session || !session.baseClaimSnapshot || !liveClaim) return 'unknown';
+  try {
+    return JSON.stringify(session.baseClaimSnapshot) === JSON.stringify(liveClaim) ? 'current' : 'conflict';
+  } catch(e){ return 'unknown'; }
+}
 function getSessionClaimInfo(s){
   const live = getClaimById(s.claimId);
   const snap = s.claimSnapshot || {};
@@ -32,13 +52,15 @@ function captureCurrentSessionState(){
     id:(ex&&ex.id)||activeSessionId||genSessionId(),
     claimId:activeClaim.id,
     claimSnapshot:JSON.parse(JSON.stringify(activeClaim)),
+    baseClaimSnapshot:(ex && ex.baseClaimSnapshot) ? JSON.parse(JSON.stringify(ex.baseClaimSnapshot)) : JSON.parse(JSON.stringify(getClaimById(activeClaim.id) || activeClaim)),
+    sessionSchemaVersion:2,
     workingInvoices:JSON.parse(JSON.stringify(workingInvoices||[])),
     rvActiveInvoiceIdx:rvActiveInvoiceIdx||0,
     rvActivePatientIdx:rvActivePatientIdx||0,
     reviewFormState:{ reason:($('#rvReason')&&$('#rvReason').value)||'', notes:($('#rvNotes')&&$('#rvNotes').value)||'', paStatus:($('#paStatus')&&$('#paStatus').value)||'not-requested', paRefNumber:($('#paRefNumber')&&$('#paRefNumber').value)||'', paDate:($('#paDate')&&$('#paDate').value)||'', claimType:activeClaim.type||'employee' },
     createdAt:(ex&&ex.createdAt)||new Date().toISOString(),
     lastActiveAt:new Date().toISOString(),
-    status:'paused',
+    status:(activeSessionId ? 'active' : 'paused'),
     name:(ex&&ex.name)||null,
     elapsedSeconds: (ex && typeof ex.elapsedSeconds === 'number') ? ex.elapsedSeconds : 0,
     lastSavedPoint: (ex && ex.lastSavedPoint) ? JSON.parse(JSON.stringify(ex.lastSavedPoint)) : { invoiceIdx: rvActiveInvoiceIdx||0, patientIdx: rvActivePatientIdx||0, lineIdx: 0 }
@@ -65,8 +87,13 @@ function renderSessionSwitcher(){
   sel.innerHTML = '<option value="">⇄ تبديل...</option>' + others.map(s => { const info = getSessionClaimInfo(s); return `<option value="${escapeHtml(s.id)}">${escapeHtml(s.claimId)} — ${escapeHtml(info.patient.substring(0,22))}</option>`; }).join('');
 }
 function resumeSession(sessionId){
-  const s = workSessions.find(x => x.id === sessionId); if(!s){ showWarning('خطأ','غير موجودة'); return; }
+  const s = workSessions.find(x => x.id === sessionId); if(!s){ showWarning('خطأ','غير موجودة'); return false; }
   let live = getClaimById(s.claimId);
+  const conflictState = live ? getSessionConflictState(s, live) : 'missing';
+  if(conflictState === 'conflict'){
+    showWarning('تعارض في بيانات المطالبة', 'تغيرت المطالبة بعد إنشاء جلسة المراجعة. أوقفنا الاستئناف حتى لا تستبدل الجلسة تعديلات أحدث. احتفظ بنسخة احتياطية وافحص المطالبة والجلسة قبل المتابعة.');
+    return false;
+  }
   if(!live){
     live = JSON.parse(JSON.stringify(s.claimSnapshot || {}));
     if(!live.id || !live.patient){ showWarning('خطأ','لا يمكن'); return; }
@@ -99,6 +126,7 @@ function resumeSession(sessionId){
   clearSessionDirty();
   try { navigateTo('review', {noPush:false}); } catch(e){ if($('#reviewModal')) { $('#reviewModal').classList.add('open'); document.body.style.overflow = 'hidden'; } }
   updateSessionsBadge(); renderSessions();
+  return true;
 }
 function formatTimeAgo(iso){
   if(!iso) return '—';
@@ -123,7 +151,7 @@ function renderSessionCard(s){
     <div class="sc-head"><div class="sc-claim"><div class="sc-claim-id">${escapeHtml(s.claimId)}</div><div class="sc-patient">${escapeHtml(info.patient)}</div><div class="sc-provider">${escapeHtml(info.provider)}</div></div><span class="sc-status-pill ${pc}">${pt}</span></div>
     <div class="sc-stats"><div><span>فواتير</span><b>${inv}</b></div><div><span>مرضى</span><b>${pat}</b></div><div><span>بنود</span><b>${lines}</b></div></div>
     <div class="sc-money"><span>مطالب: <b>${fmt(billed)}</b></span><span style="color:var(--ok)">معتمد: <b>${fmt(appr)}</b></span><span style="color:var(--bad)">استقطاع: <b>${rate.toFixed(1)}%</b></span></div>
-    <div class="sc-foot"><div class="sc-time">🕐 ${formatTimeAgo(s.lastActiveAt)}</div><div class="sc-actions"><button class="btn-xs" data-resume-session="${s.id}">${info.stale?'⚠ حذف':'استئناف'}</button><button class="btn-xs danger" data-delete-session="${s.id}">×</button></div></div>
+    <div class="sc-foot"><div class="sc-time">🕐 ${formatTimeAgo(s.lastActiveAt)}</div><div class="sc-actions"><button class="btn-xs" data-resume-session="${escapeHtml(s.id)}">${info.stale?'⚠ حذف':'استئناف'}</button><button class="btn-xs danger" data-delete-session="${escapeHtml(s.id)}">×</button></div></div>
   </div>`;
 }
 function renderSessions(){

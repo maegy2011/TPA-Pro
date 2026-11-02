@@ -26,7 +26,8 @@ function checkRequires(rule, appliedIds){
   if(mode === 'any') return rule.requires.ruleIds.some(id => appliedIds.has(id));
   if(mode === 'all') return rule.requires.ruleIds.every(id => appliedIds.has(id));
   if(mode === 'none') return !rule.requires.ruleIds.some(id => appliedIds.has(id));
-  return true;
+  // Fail closed: an unknown dependency mode must never silently bypass prerequisites.
+  return false;
 }
 function ruleMatchesContext(rule, ctx, refDate){
   if(rule.enabled === false || rule.active === false) return false;

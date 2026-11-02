@@ -80,6 +80,7 @@ function openServiceModal(i, tariffId){
   }
   const t = tariffs.find(x=>x.id===editingServiceTariffId);
   const svc = (i !== null && t && t.services && t.services[i]) ? t.services[i] : null;
+  const svcEff=$('#svcEffectiveDate'); if(svcEff){ svcEff.value=tariffDatePlusOne(t&&t.effectiveDate||new Date().toISOString().slice(0,10)); }
   if(svc){ $('#svcModalTitle').textContent = 'تعديل'; $('#svcModalSub').textContent = svc.code+' — '+svc.name; $('#svcCode').value = svc.code; $('#svcCategory').value = svc.category; $('#svcName').value = svc.name; $('#svcBasePrice').value = svc.basePrice; $('#svcCurrentPrice').value = svc.currentPrice; $('#svcCovered').checked = !!svc.covered; $('#svcRequiresPriorApproval').checked = !!svc.requiresPriorApproval; }
   else { $('#svcModalTitle').textContent = 'إضافة'; $('#svcModalSub').textContent = '—'; $('#svcCode').value = ''; $('#svcCategory').value = 'استشارة'; $('#svcName').value = ''; $('#svcBasePrice').value = ''; $('#svcCurrentPrice').value = ''; $('#svcCovered').checked = true; $('#svcRequiresPriorApproval').checked = false; }
   $('#serviceModal').classList.add('open');
@@ -95,9 +96,15 @@ function saveService(){
   if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
   if(bp <= 0){ showWarning('تنبيه','أدخل سعراً'); return; }
   const data = { code, name, category:cat, basePrice:bp, currentPrice:cp||bp, covered:$('#svcCovered').checked, requiresPriorApproval:$('#svcRequiresPriorApproval').checked };
-  if(editingServiceIndex !== null && t.services[editingServiceIndex]){ t.services[editingServiceIndex] = data; showSuccess('تم','تم'); }
-  else { if(t.services.some(s => s.code === code)){ showWarning('تنبيه','الكود مستخدم'); return; } t.services.push(data); showSuccess('تم','تم'); }
-  closeServiceModal(); renderServices(); renderTariffs();
+  const eff=$('#svcEffectiveDate')?.value||''; if(!eff){showWarning('تنبيه','حدد تاريخ السريان');return;}
+  if(t.effectiveDate&&eff<=t.effectiveDate){showWarning('تاريخ السريان','يجب أن يكون بعد تاريخ سريان النسخة الحالية');return;}
+  const before=editingServiceIndex!==null&&t.services[editingServiceIndex]?{...t.services[editingServiceIndex]}:null;
+  if(t.services.some((s,i)=>s.code===code && i!==editingServiceIndex)){showWarning('تنبيه','الكود مستخدم');return;}
+  const snap={services:JSON.parse(JSON.stringify(t.services)),priceVersions:JSON.parse(JSON.stringify(t.priceVersions||[])),changeLog:JSON.parse(JSON.stringify(t.changeLog||[])),effectiveDate:t.effectiveDate};
+  archiveTariffVersion(t,eff,before?'service-update':'service-add',[{code,action:before?'update':'add',before,after:{...data}}]);
+  if(before)t.services[editingServiceIndex]=data;else t.services.push(data);
+  if(typeof persistData==='function'&&persistData(true)===false){t.services=snap.services;t.priceVersions=snap.priceVersions;t.changeLog=snap.changeLog;t.effectiveDate=snap.effectiveDate;showWarning('خطأ','تعذر الحفظ وتم التراجع');return;}
+  closeServiceModal(); renderServices(); renderTariffs(); renderTariffChangeHistory(); showSuccess('تم','تم الحفظ مع حفظ تاريخ الأسعار');
 }
 function renderIncreaseHistory(){ const box = $('#tfHistoryList'); if(!workingIncreaseHistory.length){ box.innerHTML = '<p style="font-size:12px;color:var(--muted);text-align:center;padding:12px;background:#F8FAFC;border-radius:9px">لا سجل</p>'; return; } box.innerHTML = workingIncreaseHistory.map(h => `<div class="history-item"><div><div class="hi-date">${escapeHtml(h.date)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(h.approvedBy)}</div></div><div style="text-align:left"><div class="hi-rate">+${escapeHtml(h.rate)}%</div></div></div>`).join(''); }
 function applyAnnualIncrease(){
@@ -139,7 +146,20 @@ function saveTariff(){
   const lp = [];
   const lc = $$('#linkContractsList input:checked').map(i => i.value);
   const data = { name, type:$('#tfType').value, description:$('#tfDescription').value.trim(), effectiveDate:eff, expiryDate:$('#tfExpiry').value||'', status:$('#tfStatus').value||'active', basePriceLevel:Number($('#tfPriceLevel').value)||100, annualIncreaseEnabled:false, annualIncreaseRate:Number($('#tfIncreaseRate').value)||0, lastIncreaseDate:$('#tfLastIncrease').value||'', lastIncreaseApprovedBy:$('#tfApprovedBy').value.trim(), adjustmentType:'none', adjustmentRate:0, linkedProviderIds:lp, linkedContractIds:lc, linkedServiceNames:workingLinkedServices, increaseHistory:workingIncreaseHistory, services:workingServices.map(s=>({...s})) };
-  if(editingTariffId){ const t = getTariffById(editingTariffId); if(!t) return; Object.assign(t, data); showSuccess('تم','تم التحديث'); }
-  else { const nid = nextTariffNumber(eff); tariffs.push({ id:nid, ...data }); showSuccess('تم','تمت الإضافة'); }
+  if(editingTariffId){
+    const t=getTariffById(editingTariffId); if(!t)return;
+    const oldServices=JSON.stringify(t.services||[]), newServices=JSON.stringify(data.services||[]);
+    const dateChanged=String(t.effectiveDate||'')!==String(eff||'');
+    if(oldServices!==newServices || dateChanged){
+      if(t.effectiveDate && eff<=t.effectiveDate){showWarning('تاريخ السريان','عند تغيير الأسعار أو تاريخ سريان النسخة يجب أن يكون التاريخ الجديد بعد النسخة الحالية');return;}
+      const before=JSON.parse(oldServices), after=JSON.parse(newServices), oldBy=new Map(before.map(x=>[String(x.code),x])), newBy=new Map(after.map(x=>[String(x.code),x]));
+      const changes=[]; for(const [code,svc] of oldBy){const n=newBy.get(code);if(!n)changes.push({code,action:'delete',before:svc,after:null});else if(JSON.stringify(svc)!==JSON.stringify(n))changes.push({code,action:'update',before:svc,after:n});}
+      for(const [code,svc] of newBy)if(!oldBy.has(code))changes.push({code,action:'add',before:null,after:svc});
+      archiveTariffVersion(t,eff,'tariff-edit',changes);
+    } else if(!Array.isArray(t.changeLog)) t.changeLog=[];
+    Object.assign(t,data); if(oldServices===newServices && !dateChanged){t.changeLog.push({at:new Date().toISOString(),effectiveDate:eff,action:'tariff-metadata-edit',actor:(appSettings.reviewer&&appSettings.reviewer.name)||'المستخدم',changes:[]});}
+    showSuccess('تم','تم التحديث مع الاحتفاظ بتاريخ الأسعار');
+  }
+  else { const nid = nextTariffNumber(eff); tariffs.push({ id:nid, ...data, priceVersions:[], changeLog:[{at:new Date().toISOString(),effectiveDate:eff,action:'create',actor:(appSettings.reviewer&&appSettings.reviewer.name)||'المستخدم',changes:(data.services||[]).map(x=>({code:x.code,action:'add',before:null,after:x}))}] }); showSuccess('تم','تمت الإضافة'); }
   closeTariffModal(); renderAll();
 }

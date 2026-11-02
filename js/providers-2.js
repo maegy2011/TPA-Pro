@@ -54,7 +54,7 @@ function renderContracts(){
       <td data-label="البداية" class="hide-sm mono">${formatDate(c.startDate)}</td>
       <td data-label="النهاية" class="hide-sm mono">${formatDate(c.endDate)}</td>
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
-      <td data-label="الخصم" class="mono">${c.discountRate}%</td>
+      <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div></td>
       <td data-label="الحالة"><span class="badge ${cs.cls}">${cs.label}</span></td>
       <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
     </tr>`;
@@ -76,17 +76,19 @@ function openContractModal(id){
   if(isEdit){
     $('#ctrNumber').value = c.id; $('#ctrStatus').value = c.status||'active';
     $('#ctrStart').value = c.startDate; $('#ctrEnd').value = c.endDate;
-    $('#ctrDiscount').value = c.discountRate; $('#ctrPayment').value = c.paymentTerms||'30 يوم';
+    $('#ctrDiscount').value = c.discountRate; $('#ctrVersionEffective').value = daysFromNow(0); $('#ctrPayment').value = c.paymentTerms||'30 يوم';
     selectedContractServices = isEdit ? (c.coveredServices ? String(c.coveredServices).split('، ').map(x=>x.trim()).filter(Boolean) : []) : ['جميع الخدمات'];
     $('#ctrNotes').value = c.notes||''; (el => { if (el) el.style.display = 'block'; })($('#deleteContract'));
   } else {
     const today = daysFromNow(0);
     selectedContractServices = ['جميع الخدمات'];
     $('#ctrStatus').value = 'active'; $('#ctrStart').value = today; $('#ctrEnd').value = daysFromNow(365);
-    $('#ctrDiscount').value = 10; $('#ctrPayment').value = '30 يوم';
+    $('#ctrDiscount').value = 10; $('#ctrVersionEffective').value = today; $('#ctrPayment').value = '30 يوم';
     $('#ctrNotes').value = ''; $('#ctrNumber').value = nextContractNumber(today);
     (el => { if (el) el.style.display = 'none'; })($('#deleteContract'));
   }
+  const hist = $('#ctrRateHistory');
+  if(hist){ const versions=(c&&Array.isArray(c.rateVersions)?c.rateVersions:[]).slice().sort((a,b)=>String(a.effectiveFrom||'').localeCompare(String(b.effectiveFrom||''))); hist.innerHTML=versions.length?versions.map(v=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)"><span>${escapeHtml(v.effectiveFrom||'—')} إلى ${escapeHtml(v.effectiveTo||'مفتوح')}</span><b>${Number(v.discountRate)||0}%</b></div>`).join(''):'لا توجد نسخ تاريخية بعد'; }
   const ss = $('#ctrServicesSearch'); if(ss) ss.value = '';
   renderContractServicesOptions('');
   if(!isEdit) $('#ctrStart').onchange = function(){ $('#ctrNumber').value = nextContractNumber(this.value); };
@@ -99,8 +101,29 @@ function saveContract(){
   const s = $('#ctrStart').value, e = $('#ctrEnd').value;
   if(!s || !e){ showWarning('تنبيه','أدخل التواريخ'); return; }
   if(new Date(e) <= new Date(s)){ showWarning('تنبيه','النهاية بعد البداية'); return; }
+  const versionFrom = $('#ctrVersionEffective').value || s;
+  if(versionFrom < s || versionFrom > e){ showWarning('تاريخ السريان','تاريخ سريان النسخة يجب أن يقع داخل مدة العقد'); return; }
   const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), paymentTerms:$('#ctrPayment').value, coveredServices:selectedContractServices.join('، '), autoRenew:true, status:$('#ctrStatus').value||'active', notes:$('#ctrNotes').value.trim() };
-  if(editingContractId){ const c = getContractById(editingContractId); if(!c) return; Object.assign(c, data); syncContractToProvider(c); showSuccess('تم','تم التحديث'); }
+  if(editingContractId){
+    const c = getContractById(editingContractId); if(!c) return;
+    c.rateVersions = Array.isArray(c.rateVersions) ? c.rateVersions : [];
+    const current = c.rateVersions.find(v=>v.effectiveFrom===versionFrom);
+    if(current){ Object.assign(current,{effectiveTo:e,discountRate:data.discountRate,coveredServices:data.coveredServices}); }
+    else {
+      const previous = c.rateVersions.filter(v=>v.effectiveTo==='' || v.effectiveTo>=versionFrom).sort((a,b)=>String(b.effectiveFrom).localeCompare(String(a.effectiveFrom)))[0];
+      if(previous && previous.effectiveFrom < versionFrom){
+        const d=new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
+        previous.effectiveTo=d.toISOString().slice(0,10);
+      } else if(!previous && c.startDate < versionFrom){
+        const d=new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
+        c.rateVersions.push({effectiveFrom:c.startDate,effectiveTo:d.toISOString().slice(0,10),discountRate:c.discountRate,coveredServices:c.coveredServices||''});
+      }
+      c.rateVersions.push({effectiveFrom:versionFrom,effectiveTo:e,discountRate:data.discountRate,coveredServices:data.coveredServices});
+    }
+    // Keep the master contract's original start date so previous versions remain selectable.
+    Object.assign(c,{...data,startDate:c.startDate||s,endDate:e});
+    syncContractToProvider(c); showSuccess('تم','تم حفظ نسخة مالية بتاريخ سريان مستقل مع الاحتفاظ بالتاريخ السابق');
+  }
   else { const nid = nextContractNumber(s); contracts.push({ id:nid, ...data }); syncContractToProvider({ id:nid, ...data }); showSuccess('تم','تمت الإضافة'); }
   closeContractModal(); renderAll();
 }
@@ -122,6 +145,9 @@ function bindTariffsControls(){
     chip.classList.add('active'); tariffFilter = chip.dataset.tfilter; renderTariffs();
   });
   $('#addTariffBtn').addEventListener('click', () => openTariffModal());
+  const importTariffBtn=$('#importTariffExcelBtn'); if(importTariffBtn&&!importTariffBtn.dataset.bound){importTariffBtn.dataset.bound='1';importTariffBtn.addEventListener('click',openTariffImportModal);}
+  $$('[data-close-tariff-import]').forEach(el=>el.addEventListener('click',()=>$('#tariffImportModal').classList.remove('open')));
+  const confirmImport=$('#confirmTariffImport'); if(confirmImport&&!confirmImport.dataset.bound){confirmImport.dataset.bound='1';confirmImport.addEventListener('click',confirmTariffImport);}
   $('#tariffsBody').addEventListener('click', e => {
     const ed = e.target.closest('[data-edit-tariff]'); if(ed) openTariffModal(ed.dataset.editTariff);
     const del = e.target.closest('[data-delete-tariff]'); if(del) deleteTariffWithDialog(del.dataset.deleteTariff);

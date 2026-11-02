@@ -46,9 +46,9 @@ function renderTimeline(){
   if(claim.priorApproval && claim.priorApproval.required){ const ps = PA_STATUS[claim.priorApproval.status] || PA_STATUS['not-requested']; paBadge = `<span class="badge ${ps.cls}">${ps.label}</span>`; }
   const daysSince = daysBetween(claim.receivedDate, daysFromNow(0));
   $('#tlSummary').innerHTML = `
-    <div class="tl-summary-item"><span>الوارد</span><b style="color:var(--teal)">${claim.receivedNumber||'—'}</b></div>
-    <div class="tl-summary-item"><span>تاريخ الوارد</span><b>${claim.receivedDate||'—'}</b></div>
-    <div class="tl-summary-item"><span>تاريخ المطالبة</span><b>${claim.date}</b></div>
+    <div class="tl-summary-item"><span>الوارد</span><b style="color:var(--teal)">${escapeHtml(claim.receivedNumber||'—')}</b></div>
+    <div class="tl-summary-item"><span>تاريخ الوارد</span><b>${escapeHtml(claim.receivedDate||'—')}</b></div>
+    <div class="tl-summary-item"><span>تاريخ المطالبة</span><b>${escapeHtml(claim.date||'—')}</b></div>
     <div class="tl-summary-item"><span>الحالة</span><b><span class="badge ${st.cls}">${st.label}</span></b></div>
     <div class="tl-summary-item"><span>الموافقة</span><b>${paBadge}</b></div>
     <div class="tl-summary-item"><span>منذ الاستلام</span><b>${daysSince>=0?daysSince+' يوم':'—'}</b></div>
@@ -56,10 +56,10 @@ function renderTimeline(){
   const events = buildClaimTimeline(claim);
   $('#tlCount').textContent = `${events.length} حدث`;
   $('#timelineList').innerHTML = events.map((ev,i) => `
-    <div class="tl-event ${ev.type}" style="animation-delay:${i*60}ms">
-      <div class="tl-dot ${ev.type}">${timelineIcon(ev.icon)}</div>
+    <div class="tl-event ${escapeHtml(ev.type)}" style="animation-delay:${i*60}ms">
+      <div class="tl-dot ${escapeHtml(ev.type)}">${timelineIcon(ev.icon)}</div>
       <div class="tl-card">
-        <div class="tl-date">${timelineIcon('calendar')} ${ev.date}</div>
+        <div class="tl-date">${timelineIcon('calendar')} ${escapeHtml(ev.date||'—')}</div>
         <div class="tl-title">${escapeHtml(ev.title)}</div>
         <div class="tl-desc">${escapeHtml(ev.description||'')}</div>
         ${ev.refNumber?`<div class="tl-ref">مرجع: ${escapeHtml(ev.refNumber)}</div>`:''}

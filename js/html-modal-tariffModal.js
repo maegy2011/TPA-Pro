@@ -46,3 +46,23 @@ const MODAL_TARIFF = `
       </div>
     </div>
 `;
+
+const MODAL_TARIFF_IMPORT = `
+<div class="modal" id="tariffImportModal">
+  <div class="modal-bg" data-close-tariff-import></div>
+  <div class="modal-panel" style="max-width:560px">
+    <div class="modal-head"><div><h3>استيراد لائحة من Excel</h3><p>إنشاء لائحة جديدة أو تحديث لائحة موجودة بتاريخ سريان</p></div><button class="close-btn" data-close-tariff-import>×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg full"><label>طريقة الاستيراد</label><select id="tariffImportTarget"><option value="new">إنشاء لائحة جديدة من الملف</option></select></div>
+        <div class="fg full" id="tariffImportNewFields"><label>اسم اللائحة *</label><input id="tariffImportName" placeholder="مثال: لائحة أسعار 2027"></div>
+        <div class="fg"><label>نوع اللائحة</label><select id="tariffImportType"><option value="general">عامة</option><option value="private">خاصة</option><option value="supplementary">مكملة</option></select></div>
+        <div class="fg"><label>تاريخ السريان *</label><input id="tariffImportEffective" type="date"></div>
+        <div class="fg full"><label>ملف Excel *</label><input id="tariffImportFile" type="file" accept=".xlsx,.csv,.txt"></div>
+      </div>
+      <p class="hint">يدعم اكتشاف صف العناوين وربط أعمدة السعر واسم الخدمة بالعربية والإنجليزية والمجموعة والكود تلقائيًا. ستظهر معاينة قابلة للتعديل قبل الحفظ. يمكن توليد الأكواد تلقائيًا عند غيابها. تتم قراءة الورقة الأولى؛ يدعم XLSX وCSV ولا يدعم XLS القديم.</p>
+      <div id="tariffImportMappingPanel" style="display:none"></div>
+    </div>
+    <div class="modal-foot"><button class="btn solid" id="confirmTariffImport">بدء الاستيراد</button><button class="btn out" data-close-tariff-import>إلغاء</button></div>
+  </div>
+</div>`;

@@ -15,10 +15,11 @@ function closeSidebar(){
   document.body.classList.remove('sidebar-open');
   _unlockBodyScroll();
 }
+// Let the browser display its native install UI. Intercepting beforeinstallprompt
+// without promptly calling prompt() produces a misleading console banner warning.
 let deferredInstallPrompt = null;
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; updateInstallBtn(); });
-function updateInstallBtn(){ const b = document.getElementById('installAppBtn'); if(b) b.style.display = deferredInstallPrompt ? 'inline-flex' : 'none'; }
-function installApp(){ if(!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; updateInstallBtn(); }); }
+function updateInstallBtn(){ const b = document.getElementById('installAppBtn'); if(b) b.style.display = 'none'; }
+function installApp(){ return false; }
 window.installApp = installApp;
 function toggleSidebar(){
   if(window.innerWidth <= 900){ openSidebar(); return; }

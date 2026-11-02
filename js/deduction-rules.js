@@ -26,7 +26,7 @@ function bindDeductionRulesControls(){
   $('#addPaProcBtn').addEventListener('click', () => openPaProcModal());
   $('#paProcBody').addEventListener('click', e => {
     const ed = e.target.closest('[data-edit-paproc]'); if(ed) openPaProcModal(ed.dataset.editPaproc);
-    const del = e.target.closest('[data-del-paproc]'); if(del){ paProcedures = paProcedures.filter(x => x.code !== del.dataset.delPaproc); renderPaProcedures(); showSuccess('تم','تم'); }
+    const del = e.target.closest('[data-del-paproc]'); if(del){ const code=del.dataset.delPaproc; const proc=paProcedures.find(x=>x.code===code); if(!proc)return; showDelete('حذف إجراء موافقة مسبقة', `سيتم حذف الإجراء ${proc.name||code}.`, () => { paProcedures = paProcedures.filter(x => x.code !== code); renderPaProcedures(); showSuccess('تم','تم'); }); }
   });
   $$('[data-close-paproc]').forEach(el => el.addEventListener('click', () => $('#paProcModal').classList.remove('open')));
   $('#savePaProcBtn').addEventListener('click', savePaProc);

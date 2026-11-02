@@ -1,8 +1,12 @@
 // render-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function renderClaims(){
-  const _prevSel = new Set($$('#claimsBody .claim-cb:checked').map(cb => cb.dataset.id));
+  const _prevSel = new Set($$('#claimsBody .claim-cb:checked:not(:disabled)').map(cb => cb.dataset.id));
   const list = claims.filter(c => {
-    if(currentFilter === 'pa-required'){ if(!(c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved')) return false; }
+    const archived = c.archived === true || c.archiveStatus === 'read-only';
+    if(currentFilter === 'archived'){ if(!archived) return false; }
+    else if(archived) return false;
+    if(currentFilter === 'archived') { /* archived filter already applied */ }
+    else if(currentFilter === 'pa-required'){ if(!(c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved')) return false; }
     else if(currentFilter !== 'all' && c.status !== currentFilter) return false;
     if(currentSearch){
       const q = currentSearch;
@@ -28,15 +32,15 @@ function renderClaims(){
       else paBadge = ' <span class="badge pa-req sm">⚠</span>';
     }
     return `<tr>
-      <td style="width:36px"><input type="checkbox" class="claim-cb" data-id="${c.id}"></td>
-      <td data-label="رقم / وارد"><span class="clm-id">${c.id}</span><div style="font-size:10.5px;color:var(--teal);font-weight:700;margin-top:2px">وارد: ${escapeHtml(c.receivedNumber||'—')}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${(c.invoices||[]).length} فاتورة</div></td>
+      <td style="width:36px"><input type="checkbox" class="claim-cb" data-id="${escapeHtml(c.id)}" ${c.archived||c.archiveStatus==='read-only'?'disabled title="مؤرشفة"':''}></td>
+      <td data-label="رقم / وارد"><span class="clm-id">${escapeHtml(c.id)}</span><div style="font-size:10.5px;color:var(--teal);font-weight:700;margin-top:2px">وارد: ${escapeHtml(c.receivedNumber||'—')}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${(c.invoices||[]).length} فاتورة</div></td>
       <td data-label="المريض">${escapeHtml(c.patient)}${paBadge}</td>
       <td data-label="الجهة" class="hide-sm">${escapeHtml(c.provider)}</td>
-      <td data-label="التواريخ" class="hide-sm" style="font-size:11.5px;line-height:1.6"><div style="color:var(--teal);font-weight:800">وارد: ${c.receivedDate||'—'}</div><div style="color:var(--muted);font-weight:600">مطالبة: ${c.date}</div></td>
+      <td data-label="التواريخ" class="hide-sm" style="font-size:11.5px;line-height:1.6"><div style="color:var(--teal);font-weight:800">وارد: ${escapeHtml(c.receivedDate||'—')}</div><div style="color:var(--muted);font-weight:600">مطالبة: ${escapeHtml(c.date||'—')}</div></td>
       <td data-label="المطالب" class="mono">${fmt(c.billed)}</td>
       <td data-label="المعتمد" class="mono big">${fmt(c.approved)}</td>
-      <td data-label="الحالة"><span class="badge ${st.cls}">${st.label}</span></td>
-      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs view" data-view="${c.id}">👁</button><button class="btn-xs" data-review="${c.id}">مراجعة</button><button class="btn-xs" data-add-memo="${c.id}" title="إضافة مذكرة خصم">+مذكرة</button><button class="btn-xs tl" data-timeline="${c.id}">📅</button><button class="btn-xs danger" data-delete-claim="${c.id}">×</button></div></td>
+      <td data-label="الحالة"><span class="badge ${c.archived||c.archiveStatus==='read-only'?'muted':st.cls}">${c.archived||c.archiveStatus==='read-only'?'مؤرشفة · للعرض فقط':st.label}</span></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs view" data-view="${escapeHtml(c.id)}">👁</button>${c.archived||c.archiveStatus==='read-only'?'<span class="badge muted">مقفلة</span>':`<button class="btn-xs" data-review="${escapeHtml(c.id)}">مراجعة</button><button class="btn-xs" data-add-memo="${escapeHtml(c.id)}" title="إضافة مذكرة خصم">+مذكرة</button><button class="btn-xs danger" data-delete-claim="${escapeHtml(c.id)}">×</button>`}<button class="btn-xs tl" data-timeline="${escapeHtml(c.id)}">📅</button></div></td>
     </tr>`;
   }).join('');
   $$('#claimsBody .claim-cb').forEach(cb => { if(_prevSel.has(cb.dataset.id)) cb.checked = true; });
@@ -76,7 +80,7 @@ function renderView(){
       }).join('');
       return `<div class="view-invoice">
         <div class="view-invoice-head">
-          <div><b>${t.label}</b> <span style="color:var(--muted);font-size:11.5px">· ${inv.number||inv.id} · ${inv.date||''}</span></div>
+          <div><b>${escapeHtml(t.label||'غير محدد')}</b> <span style="color:var(--muted);font-size:11.5px">· ${escapeHtml(inv.number||inv.id||'—')} · ${escapeHtml(inv.date||'')}</span></div>
           <div style="display:flex;gap:10px;font-size:12px;font-weight:700">
             <span style="color:var(--muted)">مطالب: ${fmtC(tot.billed)}</span>
             <span style="color:var(--ok)">معتمد: ${fmtC(tot.approved)}</span>
@@ -92,17 +96,17 @@ function renderView(){
         <div class="view-actions">
           <button class="btn-export pdf" data-export="viewClaim" data-format="pdf"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="M8 13h4M8 17h8"/></svg></button>
           <button class="btn-export print" data-export="viewClaim" data-format="print"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button>
-          <button class="btn-sm" data-view-action="review" data-id="${c.id}">مراجعة</button>
-          <button class="btn-xs danger" data-view-action="delete-claim" data-id="${c.id}">حذف</button>
+          ${c.archived||c.archiveStatus==='read-only'?'<span class="badge muted">مؤرشفة · للعرض فقط</span>':`<button class="btn-sm" data-view-action="review" data-id="${escapeHtml(c.id)}">مراجعة</button>
+          <button class="btn-xs danger" data-view-action="delete-claim" data-id="${escapeHtml(c.id)}">حذف</button>`}
         </div>
       </div>
       <div class="view-grid">
         <div class="view-card"><div class="view-card-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15"/></svg><h4>بيانات</h4></div>
           <div class="view-card-body">
-            <div class="view-row"><span class="k">رقم</span><span class="v mono">${c.id}</span></div>
-            <div class="view-row"><span class="k">وارد</span><span class="v mono" style="color:var(--teal)">${c.receivedNumber||'—'}</span></div>
-            <div class="view-row"><span class="k">وارد في</span><span class="v mono">${c.receivedDate||'—'}</span></div>
-            <div class="view-row"><span class="k">تاريخ</span><span class="v mono">${c.date}</span></div>
+            <div class="view-row"><span class="k">رقم</span><span class="v mono">${escapeHtml(c.id)}</span></div>
+            <div class="view-row"><span class="k">وارد</span><span class="v mono" style="color:var(--teal)">${escapeHtml(c.receivedNumber||'—')}</span></div>
+            <div class="view-row"><span class="k">وارد في</span><span class="v mono">${escapeHtml(c.receivedDate||'—')}</span></div>
+            <div class="view-row"><span class="k">تاريخ</span><span class="v mono">${escapeHtml(c.date||'—')}</span></div>
             <div class="view-row"><span class="k">الجهة</span><span class="v">${escapeHtml(c.provider)}</span></div>
             <div class="view-row"><span class="k">نوع</span><span class="v">${c.type==='retiree'?'متقاعد':'عامل'}</span></div>
             <div class="view-row"><span class="k">الحالة</span><span class="v"><span class="badge ${st.cls}">${st.label}</span></span></div>
