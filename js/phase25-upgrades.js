@@ -80,9 +80,29 @@
   window.learnDeductionRule = learnDeductionRule;
   window.applyDeductionRulesManual = applyDeductionRulesManual;
 
-  // Auto-number patients whenever review invoices render
-  const _origRender = window.renderReviewInvoices;
-  // no-op hook; numbering handled in openReview/renderActiveInvoice
+  // Generic select-all for any checkbox list
+  function installSelectAll(root){
+    root.querySelectorAll('*').forEach(container => {
+      const cbs = Array.from(container.querySelectorAll(':scope > input[type=checkbox], :scope > label input[type=checkbox]'));
+      // only containers that directly contain 2+ checkboxes
+      const direct = Array.from(container.children).filter(el => el.matches && (el.matches('input[type=checkbox]') || el.querySelector && el.querySelector('input[type=checkbox]')));
+      if (direct.length < 2) return;
+      if (container.querySelector('.tpa-select-all')) return;
+      // skip if already has a select-all
+      const sa = document.createElement('label');
+      sa.className = 'tpa-select-all check-row';
+      sa.style.cssText = 'display:block;margin:2px 0;font-weight:700';
+      sa.innerHTML = '<input type="checkbox"> تحديد الكل';
+      container.insertBefore(sa, container.firstChild);
+      const saCb = sa.querySelector('input');
+      saCb.addEventListener('change', () => {
+        container.querySelectorAll('input[type=checkbox]').forEach(cb => { if (cb !== saCb) { cb.checked = saCb.checked; cb.dispatchEvent(new Event('change', {bubbles:true})); } });
+      });
+    });
+  }
+  const _obs = new MutationObserver(() => { try { installSelectAll(document.body); } catch(e){} });
+  _obs.observe(document.body, { childList:true, subtree:true });
+  try { installSelectAll(document.body); } catch(e){}
 })();
 document.addEventListener('DOMContentLoaded', function(){
   try { if(typeof tpaAddRetirementSettings === 'function') tpaAddRetirementSettings(); } catch(e){}
