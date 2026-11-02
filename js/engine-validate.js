@@ -36,6 +36,11 @@ const VALIDATION_REASONS = {
   'link-implant-nosurgery': { label: 'مزروع بلا إجراء جراحي — القرار للمراجع', severity: 'attention', category: 'linkage' },
   'consumables-share': { label: 'تجاوز حصة المستهلكات (25%) — القرار للمراجع', severity: 'attention', category: 'supplies' },
   'stay-overlap':      { label: 'ازدواج أيام (عناية + غرفة) — القرار للمراجع', severity: 'attention', category: 'stay' },
+  'nursing-exceed':   { label: 'تجاوز أيام التمريض لأيام الإقامة — القرار للمراجع', severity: 'attention', category: 'stay' },
+  'or-exceed':        { label: 'غرف عمليات أكثر من الإجراءات — القرار للمراجع', severity: 'attention', category: 'linkage' },
+  'physio-exceed':    { label: 'جلسات علاج طبيعي تتجاوز أيام الإقامة — القرار للمراجع', severity: 'attention', category: 'linkage' },
+  'checklist-admission': { label: 'مبرر الدخول غير معلَّم في التدقيق — القرار للمراجع', severity: 'attention', category: 'checklist' },
+  'checklist-discharge': { label: 'ملخص الخروج غير معلَّم في التدقيق — القرار للمراجع', severity: 'attention', category: 'checklist' },
   'contract-discount':  { label: 'خصم العقد',                    severity: 'reduce',    category: 'contract' },
 };
 

@@ -104,6 +104,31 @@ function validateInpatientInvoice(inv){
     if(_isConsumable(ll)) consBilled += b;
   }));
   const overlap = stayDays !== null && stayQty > 0 && icuQty > 0 && (stayQty + icuQty > stayDays + 0.01);
+  let nursQty = 0, orQty = 0, physioQty = 0, surgN = 0;
+  (inv.patients||[]).forEach(pp => (pp.lines||[]).forEach(ll => {
+    const b = (Number(ll.qty)||0)*(Number(ll.billedUnit)||0); if(b <= 0) return;
+    const q = Number(ll.qty)||0;
+    if(_isNursing(ll)) nursQty += q;
+    if(_isOr(ll)) orQty += q;
+    if(_isPhysio(ll)) physioQty += q;
+    if(_isSurgProc(ll)) surgN += 1;
+  }));
+  const nursOver = stayDays !== null && nursQty > stayDays + 0.01;
+  const orOver = surgN > 0 && orQty > surgN;
+  const physioOver = stayDays !== null && physioQty > stayDays + 0.01;
+  const _stayLines = [];
+  (inv.patients||[]).forEach(pp => (pp.lines||[]).forEach(ll => {
+    const b = (Number(ll.qty)||0)*(Number(ll.billedUnit)||0); if(b <= 0) return;
+    const t = _lineText(ll).toLowerCase();
+    if(STAY_LINE_KW.some(k => t.includes(k))) _stayLines.push(ll);
+  }));
+  const _docTarget = _stayLines.length ? _stayLines : (inv.patients||[]).flatMap(pp => (pp.lines||[])).filter(ll => ((Number(ll.qty)||0)*(Number(ll.billedUnit)||0)) > 0).slice(0,1);
+  const hasBilled = _docTarget.length > 0;
+  Object.keys(DOC_CHECKS).forEach(key => {
+    const code = DOC_CHECKS[key];
+    if(hasBilled && chk[key] !== true) _docTarget.forEach(ll => flagLineAskReviewer(ll, code));
+    else _docTarget.forEach(ll => unflagLineAskReviewer(ll, code));
+  });
   const consOver = invBilled > 0 && consBilled > invBilled * CONSUMABLES_MAX_SHARE + 0.01;
   (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
     const billed = (Number(l.qty)||0) * (Number(l.billedUnit)||0);
@@ -115,6 +140,12 @@ function validateInpatientInvoice(inv){
       l._stayExpected = stayDays; l._stayBilled = Math.round((stayQty + icuQty) * 100) / 100;
       flagLineAskReviewer(l, 'stay-overlap');
     } else { unflagLineAskReviewer(l, 'stay-overlap'); }
+    if(nursOver && billed > 0 && _isNursing(l)) flagLineAskReviewer(l, 'nursing-exceed');
+    else unflagLineAskReviewer(l, 'nursing-exceed');
+    if(orOver && billed > 0 && _isOr(l)) flagLineAskReviewer(l, 'or-exceed');
+    else unflagLineAskReviewer(l, 'or-exceed');
+    if(physioOver && billed > 0 && _isPhysio(l)) flagLineAskReviewer(l, 'physio-exceed');
+    else unflagLineAskReviewer(l, 'physio-exceed');
     if(consOver && billed > 0 && _isConsumable(l)){
       l._consShare = Math.round(consBilled / invBilled * 1000) / 10;
       flagLineAskReviewer(l, 'consumables-share');
@@ -126,6 +157,13 @@ const FEE_KW = ['أتعاب','اتعاب','fee'];
 const IMPLANT_KW = ['دعامة','دعامات','مسمار','مسامير','مفصل','مفاصل','شبكة','صمام','شريحة','شرائح','مثبت','طرف صناعي','implant','stent'];
 const CONSUM_KW = ['شاش','خيط','خيوط','محلول','محاليل','قسطرة','أنبوب','أنبوبة','قفاز','سرنجة','ضماد','مستهلك','مستهلكات','مستلزم','غيار','بلاستر','كانيولا','consumable'];
 const ICU_KW = ['عناية','icu'];
+const NURS_KW = ['تمريض','nursing'];
+const OR_KW = ['غرفة عمليات','غرفه عمليات','تجهيز غرفة','استخدام غرفة'];
+const PHYSIO_KW = ['طبيعي','تأهيل','physio'];
+const DOC_CHECKS = { admission:'checklist-admission', discharge:'checklist-discharge' };
+function _isNursing(l){ const t = _lineText(l).toLowerCase(); return NURS_KW.some(k => t.includes(k)); }
+function _isOr(l){ const t = _lineText(l).toLowerCase(); return OR_KW.some(k => t.includes(k)); }
+function _isPhysio(l){ const t = _lineText(l).toLowerCase(); return PHYSIO_KW.some(k => t.includes(k)); }
 const CONSUMABLES_MAX_SHARE = 0.25;
 function _isImplant(l){ const t = _lineText(l).toLowerCase(); return IMPLANT_KW.some(k => t.includes(k)); }
 function _isConsumable(l){ const t = _lineText(l).toLowerCase(); return !_isImplant(l) && CONSUM_KW.some(k => t.includes(k)); }
