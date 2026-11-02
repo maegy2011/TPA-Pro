@@ -144,6 +144,7 @@ function _validationCacheKey(line, ctx){
   try {
     return JSON.stringify({
       code: line.code, qty: line.qty, billedUnit: line.billedUnit, manual: !!line._manualEntry,
+      tariffId: line.tariffId || '', procDate: line.procedureDate || line.serviceDate || line.date || '', note: line.note || '', adminExempt: !!line._adminExempt,
       claim: ctx.claim && ctx.claim.id, inv: ctx.invoice && ctx.invoice.id, pat: ctx.patient && ctx.patient.id,
       priorApproval: ctx.claim && ctx.claim.priorApproval ? {
         required: !!ctx.claim.priorApproval.required,

@@ -15,6 +15,7 @@ function flagLineAskReviewer(l, code){
   if(!l || !code) return;
   if(!Array.isArray(l._checksFailed)) l._checksFailed = [];
   if(!l._checksFailed.includes(code)) l._checksFailed.push(code);
+  if(l._decidedBy === 'reviewer' && l._overrideMode === 'manual') return; // أجاب المراجع صراحة — يُحترم قراره ولا يُعاد تعليقه
   if(l._decision !== 'auto-rejected'){
     if(l._conflictForced !== true){ l._conflictForced = true; l._preConflictDecision = l._decision; }
     l._decision = 'needs-attention';

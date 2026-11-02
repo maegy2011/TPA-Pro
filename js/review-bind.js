@@ -209,6 +209,9 @@ function bindReviewModal(){
       const noteInput = excBox.querySelector(`[data-exc-note="${key}"]`);
       const note = noteInput ? noteInput.value.trim() : '';
       const act = btn.dataset.excAct;
+      const _conflictCodes = ['cap-conflict','copay-conflict','rule-overlap','rule-cycle','rule-requires-missing'];
+      const _hasConflictQ = (ln._checksFailed||[]).some(r => _conflictCodes.includes(r));
+      if(_hasConflictQ && (act === 'approve' || act === 'reduce' || act === 'reject') && !note){ showWarning('تنبيه','هذا البند معلق بسؤال (تعارض) — سجّل سبب الحسم في الملاحظة'); return; }
       markSessionDirty();
       if (act === 'approve') {
         ln._decision = 'manual-approved';
@@ -255,6 +258,14 @@ function bindReviewModal(){
         ln._decidedAt = new Date().toISOString();
         ln._decisionReason = (ln._checksFailed||[])[0] || '';
         ln._decisionNote = note;
+      }
+      // قرار المراجع الصريح يحسم سؤال التعارض — تُرفع الأعلام عن هذا البند ويُسجَّل قراره.
+      if(act === 'approve' || act === 'reduce' || act === 'reject'){
+        ['cap-conflict','copay-conflict','rule-overlap','rule-cycle','rule-requires-missing'].forEach(c => {
+          if((ln._checksFailed||[]).includes(c)){ ln._checksFailed = ln._checksFailed.filter(x => x !== c); }
+        });
+        const _stillQ = (ln._checksFailed||[]).some(r => ['cap-conflict','copay-conflict','rule-overlap','rule-cycle','rule-requires-missing'].includes(r));
+        if(!_stillQ) ln._conflictForced = false;
       }
       // recalc
       workingInvoices.forEach(inv2 => (inv2.patients||[]).forEach(p => computePatient(p, activeClaim, inv2.date, inv2)));
