@@ -30,7 +30,7 @@ function getContractContext(claim, effectiveDate) {
   if (!provider) return { ...empty, provider };
 
   const claimDate = String(effectiveDate || claim.date || claim.receivedDate || new Date().toISOString().slice(0,10)).slice(0,10);
-  let contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => { const start=String(c.startDate||''); const end=String(c.endDate||''); return c.providerId===provider.id && c.status!=='terminated' && (!start || start<=claimDate) && (!end || claimDate<=end); }) || null;
+  let contract = (typeof contracts !== 'undefined' ? contracts : []).find(c => { const start=String(c.startDate||''); const end=String(c.endDate||''); return c.providerId===provider.id && (!start || start<=claimDate) && (!end || claimDate<=end); }) || null;
 
   if (contract && Array.isArray(contract.rateVersions) && contract.rateVersions.length) {
     const version = contract.rateVersions.filter(v => (!v.effectiveFrom || v.effectiveFrom <= claimDate) && (!v.effectiveTo || claimDate <= v.effectiveTo))
@@ -69,6 +69,12 @@ function isServiceCovered(ctx, code) {
   if (ov && ov.covered === false) return false;
   const svc = (ctx?.tariff?.services || []).find(s => String(s.code) === String(code));
   if (svc && svc.covered === false) return false;
+  const excl = ctx?.contract?.excludedServices;
+  const list = Array.isArray(excl) ? excl : (excl ? String(excl).split('، ').map(x=>x.trim()).filter(Boolean) : []);
+  if (list.length) {
+    if (svc && svc.name && list.includes(svc.name)) return false;
+    if (list.includes(String(code))) return false;
+  }
   return true;
 }
 

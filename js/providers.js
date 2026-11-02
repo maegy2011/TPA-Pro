@@ -49,7 +49,7 @@ function renderProviders(){
       <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar">${escapeHtml(p.name.charAt(0))}</div><div><div class="prov-name">${escapeHtml(p.name)}</div><div class="prov-city">${escapeHtml(p.city)}</div></div></div></td>
       <td data-label="النوع"><span class="badge ${TYPE_CLASS[p.type]||'info'}">${p.type}</span></td>
       <td data-label="التواصل" class="hide-sm">${escapeHtml(p.contact||'—')}</td>
-      <td data-label="العقد"><span class="badge ${cs.cls}">${cs.label}</span>${c?`<div class="ctr-link" data-open-contract="${c.id}">${c.id}</div>`:''}</td>
+      <td data-label="العقد"><span class="badge ${cs.cls}">${cs.label}</span>${c?`<div class="ctr-link" data-open-contract="${c.id}">خصم ${c.discountRate}%</div>`:''}</td>
       <td data-label="المطالبات"><div class="mono">${st.claims} مطالبة</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtC(st.approved)}</div></td>
       <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-provider="${p.id}">تعديل</button><button class="btn-xs danger" data-delete-provider="${p.id}">×</button></div></td>
     </tr>`;

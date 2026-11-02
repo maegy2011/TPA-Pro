@@ -1,5 +1,5 @@
 // providers-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
-let selectedContractServices = [];
+let selectedExcludedServices = [];
 function getAllServiceNames(){
   const set = new Set();
   (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s && s.name) set.add(s.name); }));
@@ -10,11 +10,11 @@ function renderContractServicesOptions(q){
   const box = $('#ctrServicesList'); if(!box) return;
   const term = (q||'').trim().toLowerCase();
   const list = getAllServiceNames().filter(s => !term || s.toLowerCase().includes(term));
-  box.innerHTML = list.map(s => `<label style="display:block;margin:2px 0"><input type="checkbox" value="${escapeHtml(s)}" ${selectedContractServices.includes(s)?'checked':''}> ${escapeHtml(s)}</label>`).join('');
+  box.innerHTML = list.map(s => `<label style="display:block;margin:2px 0"><input type="checkbox" value="${escapeHtml(s)}" ${selectedExcludedServices.includes(s)?'checked':''}> ${escapeHtml(s)}</label>`).join('');
   box.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', () => {
-      if(cb.checked){ if(!selectedContractServices.includes(cb.value)) selectedContractServices.push(cb.value); }
-      else selectedContractServices = selectedContractServices.filter(x => x !== cb.value);
+      if(cb.checked){ if(!selectedExcludedServices.includes(cb.value)) selectedExcludedServices.push(cb.value); }
+      else selectedExcludedServices = selectedExcludedServices.filter(x => x !== cb.value);
     });
   });
 }
@@ -40,22 +40,19 @@ function renderContracts(){
   } else al.classList.remove('show');
   const list = contracts.filter(c => {
     if(contractStatusFilter !== 'all' && effectiveContractStatus(c) !== contractStatusFilter) return false;
-    if(contractSearch){ const q = contractSearch, p = getProviderById(c.providerId); return c.id.toLowerCase().includes(q) || (p && p.name.toLowerCase().includes(q)); }
+    if(contractSearch){ const q = contractSearch, p = getProviderById(c.providerId); return (p && p.name.toLowerCase().includes(q)); }
     return true;
   });
   const body = $('#contractsBody');
-  if(!list.length){ body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--muted)">لا عقود</td></tr>'; return; }
+  if(!list.length){ body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--muted)">لا عقود</td></tr>'; return; }
   body.innerHTML = list.map(c => {
-    const eff = effectiveContractStatus(c), cs = CONTRACT_STATUS[eff] || CONTRACT_STATUS.active;
     const p = getProviderById(c.providerId);
     return `<tr>
-      <td data-label="رقم"><span class="clm-id">${escapeHtml(c.id)}</span></td>
       <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar alt">${escapeHtml((p?p.name:'—').charAt(0))}</div><div><div class="prov-name">${escapeHtml(p?p.name:'—')}</div><div class="prov-city">${escapeHtml(p?p.city:'' )}</div></div></div></td>
       <td data-label="البداية" class="hide-sm mono">${formatDate(c.startDate)}</td>
       <td data-label="النهاية" class="hide-sm mono">${formatDate(c.endDate)}</td>
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
       <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div></td>
-      <td data-label="الحالة"><span class="badge ${cs.cls}">${cs.label}</span></td>
       <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
     </tr>`;
   }).join('');
@@ -72,27 +69,24 @@ function openContractModal(id){
     $('#ctrProvider').innerHTML = avail.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');
   }
   $('#ctrModalTitle').textContent = isEdit ? 'تعديل العقد' : 'إضافة عقد';
-  $('#ctrModalSub').textContent = isEdit ? c.id : 'بيانات جديدة';
+  $('#ctrModalSub').textContent = isEdit ? ((getProviderById(c.providerId)||{}).name||'—') : 'بيانات جديدة';
   if(isEdit){
-    $('#ctrNumber').value = c.id; $('#ctrStatus').value = c.status||'active';
     $('#ctrStart').value = c.startDate; $('#ctrEnd').value = c.endDate;
-    $('#ctrDiscount').value = c.discountRate; $('#ctrVersionEffective').value = daysFromNow(0); $('#ctrPayment').value = c.paymentTerms||'30 يوم';
-    selectedContractServices = isEdit ? (c.coveredServices ? String(c.coveredServices).split('، ').map(x=>x.trim()).filter(Boolean) : []) : ['جميع الخدمات'];
+    $('#ctrDiscount').value = c.discountRate; $('#ctrVersionEffective').value = daysFromNow(0);
+    selectedExcludedServices = Array.isArray(c.excludedServices) ? [...c.excludedServices] : (c.coveredServices ? String(c.coveredServices).split('، ').map(x=>x.trim()).filter(Boolean) : []);
     $('#ctrNotes').value = c.notes||''; (el => { if (el) el.style.display = 'block'; })($('#deleteContract'));
   } else {
     const today = daysFromNow(0);
-    selectedContractServices = ['جميع الخدمات'];
-    $('#ctrStatus').value = 'active'; $('#ctrStart').value = today; $('#ctrEnd').value = daysFromNow(365);
-    $('#ctrDiscount').value = 10; $('#ctrVersionEffective').value = today; $('#ctrPayment').value = '30 يوم';
-    $('#ctrNotes').value = ''; $('#ctrNumber').value = nextContractNumber(today);
+    selectedExcludedServices = [];
+    $('#ctrStart').value = today; $('#ctrEnd').value = daysFromNow(365);
+    $('#ctrDiscount').value = 10; $('#ctrVersionEffective').value = today;
+    $('#ctrNotes').value = '';
     (el => { if (el) el.style.display = 'none'; })($('#deleteContract'));
   }
   const hist = $('#ctrRateHistory');
   if(hist){ const versions=(c&&Array.isArray(c.rateVersions)?c.rateVersions:[]).slice().sort((a,b)=>String(a.effectiveFrom||'').localeCompare(String(b.effectiveFrom||''))); hist.innerHTML=versions.length?versions.map(v=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)"><span>${escapeHtml(v.effectiveFrom||'—')} إلى ${escapeHtml(v.effectiveTo||'مفتوح')}</span><b>${Number(v.discountRate)||0}%</b></div>`).join(''):'لا توجد نسخ تاريخية بعد'; }
   const ss = $('#ctrServicesSearch'); if(ss) ss.value = '';
   renderContractServicesOptions('');
-  if(!isEdit) $('#ctrStart').onchange = function(){ $('#ctrNumber').value = nextContractNumber(this.value); };
-  else $('#ctrStart').onchange = null;
   $('#contractModal').classList.add('open'); document.body.style.overflow = 'hidden';
 }
 function closeContractModal(){ if(!$('#contractModal').classList.contains('open')) return; $('#contractModal').classList.remove('open'); _unlockBodyScroll(); editingContractId = null; }
@@ -103,12 +97,12 @@ function saveContract(){
   if(new Date(e) <= new Date(s)){ showWarning('تنبيه','النهاية بعد البداية'); return; }
   const versionFrom = $('#ctrVersionEffective').value || s;
   if(versionFrom < s || versionFrom > e){ showWarning('تاريخ السريان','تاريخ سريان النسخة يجب أن يقع داخل مدة العقد'); return; }
-  const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), paymentTerms:$('#ctrPayment').value, coveredServices:selectedContractServices.join('، '), autoRenew:true, status:$('#ctrStatus').value||'active', notes:$('#ctrNotes').value.trim() };
+  const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], notes:$('#ctrNotes').value.trim() };
   if(editingContractId){
     const c = getContractById(editingContractId); if(!c) return;
     c.rateVersions = Array.isArray(c.rateVersions) ? c.rateVersions : [];
     const current = c.rateVersions.find(v=>v.effectiveFrom===versionFrom);
-    if(current){ Object.assign(current,{effectiveTo:e,discountRate:data.discountRate,coveredServices:data.coveredServices}); }
+    if(current){ Object.assign(current,{effectiveTo:e,discountRate:data.discountRate,excludedServices:data.excludedServices}); }
     else {
       const previous = c.rateVersions.filter(v=>v.effectiveTo==='' || v.effectiveTo>=versionFrom).sort((a,b)=>String(b.effectiveFrom).localeCompare(String(a.effectiveFrom)))[0];
       if(previous && previous.effectiveFrom < versionFrom){
@@ -116,9 +110,9 @@ function saveContract(){
         previous.effectiveTo=d.toISOString().slice(0,10);
       } else if(!previous && c.startDate < versionFrom){
         const d=new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
-        c.rateVersions.push({effectiveFrom:c.startDate,effectiveTo:d.toISOString().slice(0,10),discountRate:c.discountRate,coveredServices:c.coveredServices||''});
+        c.rateVersions.push({effectiveFrom:c.startDate,effectiveTo:d.toISOString().slice(0,10),discountRate:c.discountRate,excludedServices:Array.isArray(c.excludedServices)?[...c.excludedServices]:(c.coveredServices||'')});
       }
-      c.rateVersions.push({effectiveFrom:versionFrom,effectiveTo:e,discountRate:data.discountRate,coveredServices:data.coveredServices});
+      c.rateVersions.push({effectiveFrom:versionFrom,effectiveTo:e,discountRate:data.discountRate,excludedServices:data.excludedServices});
     }
     // Keep the master contract's original start date so previous versions remain selectable.
     Object.assign(c,{...data,startDate:c.startDate||s,endDate:e});
@@ -129,8 +123,9 @@ function saveContract(){
 }
 function deleteContractWithDialog(id){
   const c = getContractById(id); if(!c) return;
-  showDelete('حذف العقد', `سيتم نقل ${c.id}.`, () => {
-    addToTrash('contract','عقد', c.id, c);
+  const pname = (getProviderById(c.providerId)||{}).name || 'العقد';
+  showDelete('حذف العقد', `سيتم نقل عقد "${pname}".`, () => {
+    addToTrash('contract','عقد', pname, c);
     contracts = contracts.filter(x => x.id !== id);
     tariffs.forEach(t => { t.linkedContractIds = (t.linkedContractIds||[]).filter(cid => cid !== id); });
     if($('#contractModal').classList.contains('open')) closeContractModal();

@@ -7,14 +7,11 @@ const MODAL_CONTRACT = `
         <div class="modal-head"><div><h3 id="ctrModalTitle">إضافة عقد</h3><p id="ctrModalSub">—</p></div><button class="close-btn" data-close-contract><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
         <div class="modal-body"><div class="form-grid">
           <div class="fg full"><label>الجهة *</label><select id="ctrProvider"></select></div>
-          <div class="fg"><label>رقم العقد</label><input id="ctrNumber" readonly></div>
-          <div class="fg"><label>الحالة</label><select id="ctrStatus"><option value="active">مفعل</option><option value="under-review">تحت الفحص</option><option value="pending">معلق</option><option value="terminated">مفسوخ</option></select></div>
           <div class="fg"><label>البداية *</label><input id="ctrStart" type="date"></div>
           <div class="fg"><label>النهاية *</label><input id="ctrEnd" type="date"></div>
           <div class="fg"><label>الخصم %</label><input id="ctrDiscount" type="number" min="0" max="100"></div>
           <div class="fg"><label>سريان النسخة المالية من</label><input id="ctrVersionEffective" type="date"><small class="fg-hint">يُستخدم لتغيير الخصم والخدمات دون محو القيم التاريخية</small></div>
-          <div class="fg"><label>الدفع</label><select id="ctrPayment"><option>30 يوم</option><option>45 يوم</option><option>60 يوم</option><option>90 يوم</option><option>الدفع الفوري</option></select></div>
-          <div class="fg full"><label>الخدمات</label>
+          <div class="fg full"><label>خدمات غير متعاقد عليها</label><small class="fg-hint" style="display:block;margin-bottom:6px">بنود اللائحة العامة المستثناة من هذا العقد — تُخصم تلقائيًا في المراجعة</small>
             <input id="ctrServicesSearch" placeholder="بحث في الخدمات..." style="margin-bottom:6px">
             <div id="ctrServicesList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
           </div>

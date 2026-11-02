@@ -6,7 +6,7 @@ function _fillReviewPage(c){
   const ctxBar = document.getElementById('rvPageContextBar');
   if (ctxBar) {
     const ctx = getContractContext(c);
-    ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · عقد ${ctx.contract?ctx.contract.id:'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
+    ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · خصم ${ctx.contract?(ctx.contract.discountRate+'%'):'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
   }
   set('rvPageId', c.id); set('rvPageDate', c.date); set('rvPageReceivedNumber', c.receivedNumber||'—');
   set('rvPageReceivedDate', c.receivedDate||'—'); set('rvPagePatient', c.patient); set('rvPageProvider', c.provider);
@@ -63,7 +63,7 @@ function openReview(id){
     const ctxBar = document.getElementById('rvContextBar');
     if (ctxBar) {
       const ctx = getContractContext(c);
-      ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · عقد ${ctx.contract?ctx.contract.id:'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
+      ctxBar.textContent = `مراجعة ${c.id} · ${c.provider} · خصم ${ctx.contract?(ctx.contract.discountRate+'%'):'—'} · لائحة ${ctx.tariff?ctx.tariff.name:'—'} · إجمالي ${fmt(c.billed||0)}`;
     }
     const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v == null ? '' : v; };
     set('rvId', c.id); set('rvDate', c.date); set('rvReceivedNumber', c.receivedNumber||'—');
