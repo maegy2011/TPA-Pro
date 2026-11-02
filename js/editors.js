@@ -67,6 +67,7 @@ function saveInvoiceEditor(confirmed){
     Object.assign(inv, inpData); workingInvoices.push(inv); rvActiveInvoiceIdx = workingInvoices.length-1;
   }
   rvActivePatientIdx = 0; closeInvoiceEditor(); renderReviewInvoices();
+  if(typeof showSuccess === 'function') showSuccess('تم','تم حفظ مذكرة الخصم');
 }
 function closeInvoiceEditor(){ if(!$('#invoiceModal').classList.contains('open')) return; $('#invoiceModal').classList.remove('open'); rvEditInvoiceIdx = -1; }
 function openPatientEditor(invIdx, patIdx){
@@ -105,5 +106,6 @@ function savePatientEditor(){
   if(rvEditPatientIdx >= 0){ inv.patients[rvEditPatientIdx].name = name; inv.patients[rvEditPatientIdx].nationalId = nat; inv.patients[rvEditPatientIdx].beneficiaryType = beneficiaryType; rvActivePatientIdx = rvEditPatientIdx; }
   else { const newPat = mkPatient(newPatientId(inv), name, nat, []); newPat.beneficiaryType = beneficiaryType; newPat.documents = {}; inv.patients.push(newPat); rvActivePatientIdx = inv.patients.length-1; }
   closePatientEditor(); renderActiveInvoice(); recalcReview();
+  if(typeof showSuccess === 'function') showSuccess('تم','تم حفظ المريض');
 }
 function closePatientEditor(){ if(!$('#patientModal').classList.contains('open')) return; $('#patientModal').classList.remove('open'); rvEditPatientInvoiceIdx = -1; rvEditPatientIdx = -1; }

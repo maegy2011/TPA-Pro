@@ -267,6 +267,7 @@ function saveLineEditor() {
   closeLineEditor();
   renderActiveInvoice();
   recalcReview();
+  if(typeof showSuccess === 'function') showSuccess('تم','تم حفظ البند');
 
   if (validation.decision === 'auto-rejected') {
     showToast(`⛔ رُفض البند — ${data.note}`);
