@@ -123,6 +123,7 @@ function initApp(){
     // ملاحظة: كل اختصارات الكيبورد في shortcuts.js فقط — مصدر واحد (ثلاثية + قابلة للتخصيص).
 
     loadSessions(); updateSessionsBadge();
+    try { if(typeof fsBoot === 'function') fsBoot(); } catch(e){}
     const dataHealth = typeof getDataStorageHealth === 'function' ? getDataStorageHealth() : null;
     if(dataHealth && (dataHealth.state === 'corrupt' || dataHealth.state === 'unsupported')){
       setTimeout(() => showWarning('تنبيه سلامة البيانات', `تعذر اعتماد البيانات المحفوظة (${escapeHtml(dataHealth.error || dataHealth.state)}). تم الاحتفاظ بالقيمة الأصلية ومنع الحفظ التلقائي فوقها. استعد نسخة احتياطية سليمة أو صدّر/افحص التخزين قبل المتابعة.`), 250);

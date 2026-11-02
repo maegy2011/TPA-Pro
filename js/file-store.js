@@ -146,6 +146,103 @@ async function fsArchiveDay(){
   }
   if(typeof showSuccess==='function') showSuccess('أرشفة اليوم', `نُسخت ${n} مطالبة إلى أرشيف/${day}`);
 }
+/* ---------- ملفات البيانات (المصدر الكامل — بلا بيانات قديمة) ---------- */
+const FS_DATA_FILES = ['providers','contracts','tariffs','batches','trash','deductionRules','paProcedures'];
+async function _fsDataDir(create){
+  if(!FS_STORE.dirHandle) throw new Error('no-dir');
+  const p = await FS_STORE.dirHandle.requestPermission({ mode: 'readwrite' });
+  if(p !== 'granted') throw new Error('permission');
+  return FS_STORE.dirHandle.getDirectoryHandle('بيانات', { create: !!create });
+}
+async function fsWriteData(name, obj){
+  if(!FS_STORE.dirHandle) return false;
+  const dir = await _fsDataDir(true);
+  const fh = await dir.getFileHandle(name + '.json', { create: true });
+  const w = await fh.createWritable();
+  await w.write(JSON.stringify({ app: 'TPA-Pro', version: 1, savedAt: new Date().toISOString(), data: obj }));
+  await w.close();
+  return true;
+}
+async function fsReadData(name){
+  const dir = await _fsDataDir(false).catch(() => null);
+  if(!dir) return { exists: false };
+  try {
+    const fh = await dir.getFileHandle(name + '.json');
+    const env = JSON.parse(await (await fh.getFile()).text());
+    return { exists: true, data: env.data };
+  } catch(e){ return { exists: false }; }
+}
+let _fsWriteAllTimer = null;
+function fsWriteAllData(){
+  if(!FS_STORE.dirHandle) return;
+  if(_fsWriteAllTimer) clearTimeout(_fsWriteAllTimer);
+  _fsWriteAllTimer = setTimeout(async () => {
+    _fsWriteAllTimer = null;
+    try {
+      for(const k of FS_DATA_FILES){
+        const v = (typeof globalThis !== 'undefined' && globalThis[k] !== undefined) ? globalThis[k] : eval('typeof ' + k + '!=="undefined" ? ' + k + ' : undefined');
+        if(v !== undefined) await fsWriteData(k, v);
+      }
+      if(typeof appSettings !== 'undefined') await fsWriteData('settings', appSettings);
+      if(typeof workSessions !== 'undefined') await fsWriteData('جلسات', workSessions);
+    } catch(e){ if(typeof showToast === 'function') showToast('⚠ تعذرت كتابة ملفات القرص'); }
+  }, 800);
+}
+async function fsLoadAll(){
+  const warnings = [];
+  for(const k of FS_DATA_FILES){
+    const r = await fsReadData(k);
+    if(r.exists && Array.isArray(r.data)){
+      try { eval(k + ' = r.data'); } catch(e){}
+    }
+  }
+  const s = await fsReadData('settings');
+  if(s.exists && s.data && typeof s.data === 'object'){
+    try { if(typeof appSettings !== 'undefined'){ appSettings = { ...appSettings, ...s.data }; if(typeof saveAppSettings === 'function') saveAppSettings(); } } catch(e){}
+  }
+  const sess = await fsReadData('جلسات');
+  if(sess.exists && Array.isArray(sess.data)){
+    try { workSessions = sess.data.map(x => ({ ...x, status: 'paused' })); if(typeof persistSessions === 'function') persistSessions(); } catch(e){}
+  }
+  const dir = await _fsClaimsDir(false).catch(() => null);
+  const loaded = [];
+  if(dir){
+    for await (const e of dir.values()){
+      if(e.kind !== 'file' || !e.name.endsWith('.json') || e.name.endsWith('.bak')) continue;
+      try {
+        const env = JSON.parse(await (await e.getFile()).text());
+        if(!env || !env.claim || !env.claim.id) continue;
+        const v = fsVerifyEnvelope(env);
+        if(v.warn) warnings.push(env.claim.id + ': بصمة مختلفة (مُغيَّر خارجيًا)');
+        loaded.push(env.claim);
+      } catch(err){}
+    }
+  }
+  try { claims = loaded; if(typeof persistData === 'function') persistData(true); } catch(e){}
+  return { warnings, count: loaded.length };
+}
+async function fsBoot(){
+  try { await fsRestoreSilent(); } catch(e){}
+  if(!FS_STORE.dirHandle){
+    setTimeout(() => {
+      if(typeof showWarning === 'function') showWarning('اربط مجلد القرص', 'التخزين على القرص هو المصدر الوحيد — اختر مجلد العمل للبدء.', () => { fsConnect().then(() => fsBootReload()); });
+    }, 600);
+    return;
+  }
+  await fsBootReload();
+}
+async function fsBootReload(){
+  if(!FS_STORE.dirHandle) return;
+  try {
+    const r = await fsLoadAll();
+    if(typeof applyAppSettingsToUI === 'function') applyAppSettingsToUI();
+    if(typeof renderAll === 'function') renderAll();
+    if(typeof updateSessionsBadge === 'function') updateSessionsBadge();
+    if(typeof updateBackupStats === 'function') updateBackupStats();
+    if(typeof showSuccess === 'function') showSuccess('مجلد القرص', `حُمّلت ${r.count} مطالبة من القرص${r.warnings.length ? ' — تنبيهات: ' + r.warnings.join('، ') : ''}`);
+    else if(r.warnings.length && typeof showWarning === 'function') showWarning('تنبيه بصمات', r.warnings.join('<br>'));
+  } catch(e){ if(typeof showWarning === 'function') showWarning('تعذر التحميل', 'أعد منح الإذن للمجلد.'); }
+}
 /* ---------- واجهة الإعدادات ---------- */
 function renderFileStore(){
   const box = document.getElementById('fileStoreBox'); if(!box) return;

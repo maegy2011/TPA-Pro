@@ -20,6 +20,7 @@ function persistData(immediate){
         data: { providers, contracts, tariffs, batches, claims, trash, deductionRules, paProcedures } };
       localStorage.setItem(DATA_STORE_KEY, JSON.stringify(payload));
       _dataStorageState = 'loaded'; _dataStorageError = null;
+      try { if(typeof fsWriteAllData === 'function') fsWriteAllData(); } catch(e){}
       return true;
     } catch(e){ console.error('persistData failed', e); return false; }
   };

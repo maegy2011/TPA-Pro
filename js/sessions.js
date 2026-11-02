@@ -24,7 +24,9 @@ function loadSessions(){
 }
 function persistSessions(){
   if(_sessionsStorageState === 'corrupt') { console.error('persistSessions blocked: corrupted session storage requires recovery'); return false; }
-  try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(workSessions)); _sessionsStorageState = 'loaded'; return true; }
+  try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(workSessions)); _sessionsStorageState = 'loaded';
+    try { if(typeof fsWriteData === 'function' && FS_STORE.dirHandle) fsWriteData('جلسات', workSessions); } catch(e){}
+    return true; }
   catch(e){ console.error('persistSessions failed', e); return false; }
 }
 function findSessionByClaim(claimId){ return workSessions.find(s => s.claimId === claimId); }

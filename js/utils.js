@@ -57,6 +57,7 @@ function loadAppSettings(){
 }
 function saveAppSettings(){
   try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings)); } catch(e){}
+  try { if(typeof fsWriteData === 'function' && FS_STORE.dirHandle) fsWriteData('settings', appSettings); } catch(e){}
 }
 /** Append a structured, application-level audit event to a claim. This is traceability, not tamper-proof security. */
 function appendClaimAuditEvent(claim, event){
