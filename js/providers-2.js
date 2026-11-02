@@ -127,9 +127,10 @@ function saveContract(){
     }
     // Keep the master contract's original start date so previous versions remain selectable.
     Object.assign(c,{...data,startDate:c.startDate||s,endDate:e});
+    if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.updated', details:{ startDate:c.startDate, endDate:e, durationYears:dur, discountRate:data.discountRate, excludedServices:data.excludedServices } });
     syncContractToProvider(c); showSuccess('تم','تم حفظ نسخة مالية بتاريخ سريان مستقل مع الاحتفاظ بالتاريخ السابق');
   }
-  else { const nid = nextContractNumber(s); contracts.push({ id:nid, ...data }); syncContractToProvider({ id:nid, ...data }); showSuccess('تم','تمت الإضافة'); }
+  else { const nid = nextContractNumber(s); const nc = { id:nid, ...data }; if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(nc, { action:'contract.created', details:{ startDate:s, endDate:e, durationYears:dur, discountRate:data.discountRate } }); contracts.push(nc); syncContractToProvider(nc); showSuccess('تم','تمت الإضافة'); }
   closeContractModal(); renderAll();
 }
 function renewContractWithDialog(id){
@@ -141,6 +142,7 @@ function renewContractWithDialog(id){
     const oldEnd = c.endDate;
     c.endDate = newEnd;
     (c.rateVersions||[]).forEach(v => { if(v.effectiveTo === oldEnd) v.effectiveTo = newEnd; });
+    if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.renewed', details:{ oldEnd, newEnd, durationYears:dur, discountRate:c.discountRate } });
     syncContractToProvider(c);
     renderAll(); showSuccess('تم', `تم التجديد حتى ${formatDate(newEnd)}`);
   });

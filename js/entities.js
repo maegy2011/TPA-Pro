@@ -39,6 +39,22 @@ function archiveTariffVersion(t, newEffectiveDate, action, changes){
 function getBatchById(id){ return batches.find(b=>b.id===id); }
 function getClaimById(id){ return claims.find(c=>c.id===id); }
 function getContractByProvider(pid){ return contracts.find(c=>c.providerId===pid); }
+/** Contract-level audit trail — same pattern as appendClaimAuditEvent: operational traceability, not tamper-proof. */
+function appendContractAuditEvent(contract, event){
+  if(!contract || !event || typeof event !== 'object') return null;
+  if(!Array.isArray(contract._auditTrail)) contract._auditTrail = [];
+  const reviewer = (typeof appSettings !== 'undefined' && appSettings.reviewer) ? appSettings.reviewer : {};
+  const entry = {
+    id: 'AUD-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8),
+    at: new Date().toISOString(),
+    actor: String(reviewer.name || 'المراجع').slice(0,120),
+    actorRole: String(reviewer.role || '').slice(0,120),
+    action: String(event.action || 'contract.updated').slice(0,80),
+    details: event.details && typeof event.details === 'object' ? JSON.parse(JSON.stringify(event.details)) : {}
+  };
+  contract._auditTrail.push(entry);
+  return entry;
+}
 function effectiveContractStatus(c){
   if(!c) return 'pending';
   if(!c.startDate || !c.endDate) return 'upcoming';
