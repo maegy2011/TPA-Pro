@@ -1,4 +1,4 @@
-// intake.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
+// inbox.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let intakeMonthFilter = 'all', intakeStatusFilter = 'all', intakeSearch = '', editingBatchId = null;
 let workingBatchClaim = null;
 function renderProviderOptions(filter){
@@ -34,12 +34,14 @@ function bindIntakeControls(){
 function renderIntake(){
   const total = batches.length;
   const tc = batches.reduce((s,b)=>s+(b.claimsCount||0),0);
+  const tv = batches.reduce((s,b)=>s+(b.totalBilled||0),0);
   const nc = batches.filter(b=>b.status==='new').length;
   const ic = batches.filter(b=>b.status==='istifa').length;
   $('#intakeKpi').innerHTML = `
     <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الدفعات</div><div class="kpi-val">${total} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('inbox')}</div></div><div class="kpi-foot">${nc} جديدة · ${ic} استيفا</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">المطالبات</div><div class="kpi-val">${fmt(tc)} <small>مطالبة</small></div></div><div class="kpi-ico">${kpiIcon('file')}</div></div><div class="kpi-foot">${total} دفعة</div></div>
-    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">استيفا</div><div class="kpi-val">${ic} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">بانتظار الاستكمال</div></div>`;
+    <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">القيمة</div><div class="kpi-val">${fmt(tv)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">مجموع الوارد</div></div>
+    <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">استيفا</div><div class="kpi-val">${ic} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">بانتظار الاستكمال</div></div>`;
   const months = [...new Set(batches.map(b=>b.month))].sort().reverse();
   const mHtml = ['<button class="month-chip '+(intakeMonthFilter==='all'?'active':'')+'" data-month="all">الكل <span class="mc-count">'+total+'</span></button>']
     .concat(months.map(m => { const cnt = batches.filter(b=>b.month===m).length; return `<button class="month-chip ${intakeMonthFilter===m?'active':''}" data-month="${m}">${formatMonth(String(m).split(',')[0])} <span class="mc-count">${cnt}</span></button>`; }));
@@ -51,7 +53,7 @@ function renderIntake(){
     return true;
   }).sort((a,b) => (b.receivedDate||'').localeCompare(a.receivedDate||''));
   const body = $('#batchesBody');
-  if(!list.length){ body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--muted)">لا دفعات</td></tr>'; return; }
+  if(!list.length){ body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--muted)">لا دفعات</td></tr>'; return; }
   body.innerHTML = list.map(b => {
     const p = getProviderById(b.providerId);
     const pName = p ? p.name : '—';
@@ -62,6 +64,7 @@ function renderIntake(){
       <td data-label="فترة المطالبة"><span class="mono">${escapeHtml(String(b.month))}</span></td>
       <td data-label="الاستلام" class="hide-sm mono">${formatDate(b.receivedDate)}</td>
       <td data-label="المطالبات" class="mono">${fmt(b.claimsCount)}</td>
+      <td data-label="القيمة" class="mono big">${fmt(b.totalBilled||0)}</td>
       <td data-label="الحالة"><span class="badge ${bs.cls}">${bs.label}</span></td>
       <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-batch="${b.id}">تعديل</button><button class="btn-xs danger" data-delete-batch="${b.id}">×</button></div></td>
     </tr>`;
@@ -70,7 +73,7 @@ function renderIntake(){
 function openBatchModal(id){
   editingBatchId = id || null; const isEdit = !!id;
   const b = isEdit ? getBatchById(id) : null; if(isEdit && !b) return;
-  $('#btModalTitle').textContent = isEdit ? 'تعديل الدفعة' : 'استلام مطالبة';
+  $('#btModalTitle').textContent = isEdit ? 'تعديل الدفعة' : 'تسجيل وارد';
   $('#btModalSub').textContent = isEdit ? (b.receivedNumber||b.id) : 'بيانات جديدة';
   renderProviderOptions('');
   $('#btProviderSearch').value = '';
@@ -83,6 +86,7 @@ function openBatchModal(id){
     $('#btNumber').value = b.receivedNumber||'';
     $('#btNotes').value = b.notes||'';
     $('#btClaimReceivedDate').value = b.claimReceivedDate||'';
+    $('#btBilled').value = b.totalBilled||0;
     (el => { if (el) el.style.display = 'block'; })($('#deleteBatch'));
   } else {
     const today = daysFromNow(0);
@@ -92,6 +96,7 @@ function openBatchModal(id){
     $('#btNumber').value = nextReceivedNumber();
     $('#btNotes').value = '';
     $('#btClaimReceivedDate').value = today;
+    $('#btBilled').value = '';
     (el => { if (el) el.style.display = 'none'; })($('#deleteBatch'));
   }
   $('#btMonth').onchange = () => { if(!isEdit) $('#btNumber').value = nextReceivedNumber(); };
@@ -106,9 +111,11 @@ function saveBatch(another){
   const receivedDate = claimReceivedDate;
   const status = $('#btStatus').value;
   const claimDate = receivedDate;
+  const billed = Number($('#btBilled').value);
   const notes = $('#btNotes').value.trim();
   if(!providerId){ showWarning('تنبيه','اختر الجهة'); return; }
   if(!month){ showWarning('تنبيه','أدخل فترة المطالبة'); return; }
+  if(!billed || billed <= 0){ showWarning('تنبيه','أدخل القيمة الإجمالية'); return; }
   const p = getProviderById(providerId);
   const receivedNumber = $('#btNumber').value;
   const batchId = editingBatchId || ('BTH-'+month.split(',')[0]+'-'+receivedNumber);
@@ -116,12 +123,12 @@ function saveBatch(another){
     const b = getBatchById(editingBatchId);
     if(b){ b.providerId = providerId; b.month = month; b.periodType = periodType; b.receivedDate = receivedDate; b.status = status; b.notes = notes; b.claimDate = claimDate; b.claimReceivedDate = claimReceivedDate; b.claimsCount = 1; }
   } else {
-    batches.push({ id: batchId, receivedNumber, providerId, month, periodType, receivedDate, status, notes, patient: '', claimDate, claimReceivedDate, claimsCount:1 });
-    // create a claim with status 'new' — amounts computed during review from lines
+    batches.push({ id: batchId, receivedNumber, providerId, month, periodType, receivedDate, status, notes, patient: '', claimDate, claimReceivedDate, claimsCount:1, totalBilled:billed });
+    // create a claim with the intake total — amounts recomputed during review from lines
     const claimId = generateClaimId();
-    claims.push({ id: claimId, patient: '', provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed:0 });
+    claims.push({ id: claimId, patient: '', provider: p?p.name:'', type:'employee', date: claimDate, receivedDate: claimReceivedDate||receivedDate, receivedNumber, status: status==='new'?'new':status, reason:'', notes, priorApproval:{required:false,status:'not-requested',refNumber:'',date:''}, batchId, invoices: [] , billed });
     // set billed on claim
-    const c = claims[claims.length-1]; c.billed = 0; c.approved = 0; c.eligible = 0;
+    const c = claims[claims.length-1]; c.billed = billed; c.approved = 0; c.eligible = billed;
   }
   persistData(true); renderIntake(); updateBackupStats();
   if(another){ openBatchModal(null); }

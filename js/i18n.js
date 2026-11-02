@@ -74,7 +74,7 @@ const I18N = {
   'dash.searchPlaceholder': 'بحث...', 'dash.deductionRate': 'نسبة الاستقطاع',
   'dash.totalDiffs': 'إجمالي الفروقات', 'dash.claimsCount': 'من المطالبات',
   'dash.deductionReasons': 'أسباب الاستقطاع', 'dash.amountDistribution': 'توزيع المبالغ',
-  'dash.noResults': 'لا نتائج', 'dash.noClaims': 'لا مطالبات بعد. ابدأ باستلام مطالبة وارد.',
+  'dash.noResults': 'لا نتائج', 'dash.noClaims': 'لا مطالبات بعد. ابدأ بتسجيل وارد.',
   'dash.claimNum': 'رقم / وارد', 'dash.patient': 'المريض', 'dash.billed': 'المطالب به',
   'dash.approved': 'المعتمد', 'dash.status': 'الحالة',
   // Claims

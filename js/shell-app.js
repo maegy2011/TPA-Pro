@@ -26,7 +26,7 @@ const SHELL_APP = `
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.dashboard">لوحة التحكم</span><span class="nav-sub" data-i18n="nav.dashboard.sub">ملخص الأداء</span></span>
           </button>
-          <button class="nav-item" data-page="intake">
+          <button class="nav-item" data-page="inbox">
             <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
             <span class="nav-info"><span class="nav-label" data-i18n="nav.intake">الوارد</span><span class="nav-sub" data-i18n="nav.intake.sub">الدفعات الشهرية</span></span>
           </button>

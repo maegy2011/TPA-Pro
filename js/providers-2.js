@@ -188,6 +188,7 @@ function renewContractWithDialog(id){
 }
 function deleteContractWithDialog(id){
   const c = getContractById(id); if(!c) return;
+  if(typeof contractHasClaims === 'function' && contractHasClaims(id)){ showWarning('لا يمكن','العقد مرتبط بمطالبات — إيقاف التعاقد لا يسقط حق الجهة في مستحقاتها'); return; }
   const pname = (getProviderById(c.providerId)||{}).name || 'العقد';
   showDelete('حذف العقد', `سيتم نقل عقد "${pname}".`, () => {
     addToTrash('contract','عقد', pname, c);

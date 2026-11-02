@@ -1,12 +1,12 @@
-// html-page-intake.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
-const PAGE_INTAKE = `
-<section class="page" id="page-intake">
+// html-page-inbox.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
+const PAGE_INBOX = `
+<section class="page" id="page-inbox">
       <div class="page-header">
-        <div><h1 data-i18n="intake.title">استلام المطالبات</h1><p class="page-sub" data-i18n="intake.subtitle">إدارة دفعات المطالبات</p></div>
+        <div><h1 data-i18n="intake.title">الوارد</h1><p class="page-sub" data-i18n="intake.subtitle">إدارة الدفعات الواردة</p></div>
         <div class="toolbar">
         <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input type="text" id="intakeSearch" placeholder="بحث..." data-i18n-placeholder="common.search"></div>
-        <button class="btn-add" id="addBatchBtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> استلام مطالبة</button>
+        <button class="btn-add" id="addBatchBtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> تسجيل وارد</button>
       </div>
       </div>
       <div class="grid-kpi" id="intakeKpi"></div>

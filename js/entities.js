@@ -119,6 +119,13 @@ function getProviderStats(name){
   return { claims:l.length, billed:b, approved:a, deduction:d, rate:r };
 }
 function providerHasClaims(name){ return claims.some(c => c.provider === name); }
+function contractHasClaims(id){
+  const c = getContractById(id); if(!c) return false;
+  if((typeof batches !== 'undefined' ? batches : []).some(b => b.providerId === c.providerId)) return true;
+  const p = getProviderById(c.providerId);
+  if(p && (typeof claims !== 'undefined' ? claims : []).some(cl => cl.provider === p.name)) return true;
+  return false;
+}
 function renameProviderClaims(oldName, newName){
   claims.forEach(c => { if(c.provider === oldName) c.provider = newName; });
   workSessions.forEach(s => { if(s.claimSnapshot && s.claimSnapshot.provider === oldName) s.claimSnapshot.provider = newName; });
