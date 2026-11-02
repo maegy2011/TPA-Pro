@@ -46,7 +46,13 @@ function computePatient(pat, claim, refDate, invoice){
       const baseTariff = tariffs.find(t=>t.id===l.tariffId);
       if (baseTariff && typeof isTariffApplicableForDate==='function' && isTariffApplicableForDate(baseTariff,procedureDate)) {
         const version = typeof getTariffVersionForDate==='function' ? getTariffVersionForDate(baseTariff,procedureDate) : null;
-        lineTariff = { ...baseTariff, services: typeof getTariffServicesForDate==='function' ? getTariffServicesForDate(baseTariff,procedureDate) : (baseTariff.services||[]), _resolvedVersionEffectiveDate:version&&version.effectiveDate||baseTariff.effectiveDate };
+        let ovSvcs = version ? (version.services||[]) : (baseTariff.services||[]);
+        const _of = (typeof getContractIncreaseFactor==='function' && lineCtx.contract) ? getContractIncreaseFactor(lineCtx.contract, procedureDate) : 1;
+        if(_of !== 1 && Array.isArray(ovSvcs)) ovSvcs = ovSvcs.map(s => ({...s, currentPrice:(s.currentPrice===null||s.currentPrice===undefined)?s.currentPrice:(Math.round(Number(s.currentPrice)*_of*100)/100)}));
+        // توحيد: اللائحة المختارة يدويًا تُدمج فوق سياق اللوائح وتغلب عند تعارض نفس الكود، مع معامل الزيادة.
+        const base = (lineCtx.tariff && Array.isArray(lineCtx.tariff.services)) ? [...lineCtx.tariff.services] : [];
+        ovSvcs.forEach(s => { const i = base.findIndex(x => String(x.code) === String(s.code)); if(i>=0) base[i]=s; else base.push(s); });
+        lineTariff = { ...baseTariff, services: base, _resolvedVersionEffectiveDate:version&&version.effectiveDate||baseTariff.effectiveDate, _increaseFactorApplied:_of };
       }
     }
     const effectiveLineCtx = { ...lineCtx, tariff:lineTariff };
