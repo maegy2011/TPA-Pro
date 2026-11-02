@@ -44,13 +44,14 @@ function renderContracts(){
     return true;
   });
   const body = $('#contractsBody');
-  if(!list.length){ body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--muted)">لا عقود</td></tr>'; return; }
+  if(!list.length){ body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--muted)">لا عقود</td></tr>'; return; }
   body.innerHTML = list.map(c => {
     const p = getProviderById(c.providerId);
     return `<tr>
       <td data-label="الجهة"><div class="prov-cell"><div class="prov-avatar alt">${escapeHtml((p?p.name:'—').charAt(0))}</div><div><div class="prov-name">${escapeHtml(p?p.name:'—')}</div><div class="prov-city">${escapeHtml(p?p.city:'' )}</div></div></div></td>
       <td data-label="البداية" class="hide-sm mono">${formatDate(c.startDate)}</td>
       <td data-label="النهاية" class="hide-sm mono">${formatDate(c.endDate)}</td>
+      <td data-label="المدة" class="mono">${yearsLabel(c.durationYears || contractDurationYears(c.startDate, c.endDate))}</td>
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
       <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div></td>
       <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
@@ -71,14 +72,14 @@ function openContractModal(id){
   $('#ctrModalTitle').textContent = isEdit ? 'تعديل العقد' : 'إضافة عقد';
   $('#ctrModalSub').textContent = isEdit ? ((getProviderById(c.providerId)||{}).name||'—') : 'بيانات جديدة';
   if(isEdit){
-    $('#ctrStart').value = c.startDate; $('#ctrEnd').value = c.endDate;
+    $('#ctrStart').value = c.startDate; $('#ctrDuration').value = c.durationYears || contractDurationYears(c.startDate, c.endDate); $('#ctrEnd').value = c.endDate;
     $('#ctrDiscount').value = c.discountRate; $('#ctrVersionEffective').value = daysFromNow(0);
     selectedExcludedServices = Array.isArray(c.excludedServices) ? [...c.excludedServices] : (c.coveredServices ? String(c.coveredServices).split('، ').map(x=>x.trim()).filter(Boolean) : []);
     $('#ctrNotes').value = c.notes||''; (el => { if (el) el.style.display = 'block'; })($('#deleteContract'));
   } else {
     const today = daysFromNow(0);
     selectedExcludedServices = [];
-    $('#ctrStart').value = today; $('#ctrEnd').value = daysFromNow(365);
+    $('#ctrStart').value = today; $('#ctrDuration').value = 1; $('#ctrEnd').value = contractEndFrom(today, 1);
     $('#ctrDiscount').value = 10; $('#ctrVersionEffective').value = today;
     $('#ctrNotes').value = '';
     (el => { if (el) el.style.display = 'none'; })($('#deleteContract'));
@@ -87,17 +88,25 @@ function openContractModal(id){
   if(hist){ const versions=(c&&Array.isArray(c.rateVersions)?c.rateVersions:[]).slice().sort((a,b)=>String(a.effectiveFrom||'').localeCompare(String(b.effectiveFrom||''))); hist.innerHTML=versions.length?versions.map(v=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)"><span>${escapeHtml(v.effectiveFrom||'—')} إلى ${escapeHtml(v.effectiveTo||'مفتوح')}</span><b>${Number(v.discountRate)||0}%</b></div>`).join(''):'لا توجد نسخ تاريخية بعد'; }
   const ss = $('#ctrServicesSearch'); if(ss) ss.value = '';
   renderContractServicesOptions('');
+  $('#ctrStart').oninput = updateContractEnd; $('#ctrDuration').oninput = updateContractEnd;
+  updateContractEnd();
   $('#contractModal').classList.add('open'); document.body.style.overflow = 'hidden';
 }
 function closeContractModal(){ if(!$('#contractModal').classList.contains('open')) return; $('#contractModal').classList.remove('open'); _unlockBodyScroll(); editingContractId = null; }
+function updateContractEnd(){
+  const s = $('#ctrStart')?.value || '', d = Math.max(1, Math.round(Number($('#ctrDuration')?.value)||1));
+  const e = $('#ctrEnd'); if(e) e.value = contractEndFrom(s, d);
+}
 function saveContract(){
   const pid = $('#ctrProvider').value; if(!pid){ showWarning('تنبيه','اختر جهة'); return; }
-  const s = $('#ctrStart').value, e = $('#ctrEnd').value;
-  if(!s || !e){ showWarning('تنبيه','أدخل التواريخ'); return; }
-  if(new Date(e) <= new Date(s)){ showWarning('تنبيه','النهاية بعد البداية'); return; }
+  const s = $('#ctrStart').value;
+  if(!s){ showWarning('تنبيه','أدخل تاريخ البداية'); return; }
+  const dur = Math.max(1, Math.round(Number($('#ctrDuration').value)||1));
+  const e = contractEndFrom(s, dur);
+  if(!e){ showWarning('تنبيه','تعذر حساب النهاية'); return; }
   const versionFrom = $('#ctrVersionEffective').value || s;
   if(versionFrom < s || versionFrom > e){ showWarning('تاريخ السريان','تاريخ سريان النسخة يجب أن يقع داخل مدة العقد'); return; }
-  const data = { providerId:pid, startDate:s, endDate:e, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], notes:$('#ctrNotes').value.trim() };
+  const data = { providerId:pid, startDate:s, endDate:e, durationYears:dur, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], notes:$('#ctrNotes').value.trim() };
   if(editingContractId){
     const c = getContractById(editingContractId); if(!c) return;
     c.rateVersions = Array.isArray(c.rateVersions) ? c.rateVersions : [];

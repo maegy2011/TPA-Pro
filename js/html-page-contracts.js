@@ -18,6 +18,6 @@ const PAGE_CONTRACTS = `
         </div>
       </div>
       </div>
-      <div class="panel"><div class="table-wrap"><table><thead><tr><th data-i18n="providers.provider">الجهة</th><th class="hide-sm" data-i18n="contracts.start">البداية</th><th class="hide-sm" data-i18n="contracts.end">النهاية</th><th data-i18n="contracts.remaining">المتبقي</th><th data-i18n="contracts.discount">الخصم</th><th></th></tr></thead><tbody id="contractsBody"></tbody></table></div></div>
+      <div class="panel"><div class="table-wrap"><table><thead><tr><th data-i18n="providers.provider">الجهة</th><th class="hide-sm" data-i18n="contracts.start">البداية</th><th class="hide-sm" data-i18n="contracts.end">النهاية</th><th data-i18n="contracts.duration">المدة</th><th data-i18n="contracts.remaining">المتبقي</th><th data-i18n="contracts.discount">الخصم</th><th></th></tr></thead><tbody id="contractsBody"></tbody></table></div></div>
     </section>
 `;

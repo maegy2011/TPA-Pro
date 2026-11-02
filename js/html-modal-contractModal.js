@@ -8,7 +8,8 @@ const MODAL_CONTRACT = `
         <div class="modal-body"><div class="form-grid">
           <div class="fg full"><label>الجهة *</label><select id="ctrProvider"></select></div>
           <div class="fg"><label>البداية *</label><input id="ctrStart" type="date"></div>
-          <div class="fg"><label>النهاية *</label><input id="ctrEnd" type="date"></div>
+          <div class="fg"><label>مدة العقد (سنة) *</label><input id="ctrDuration" type="number" min="1" step="1" value="1"></div>
+          <div class="fg"><label>النهاية (تلقائي)</label><input id="ctrEnd" type="date" readonly><small class="fg-hint">تُحسب تلقائيًا: البداية + المدة</small></div>
           <div class="fg"><label>الخصم %</label><input id="ctrDiscount" type="number" min="0" max="100"></div>
           <div class="fg"><label>سريان النسخة المالية من</label><input id="ctrVersionEffective" type="date"><small class="fg-hint">يُستخدم لتغيير الخصم والخدمات دون محو القيم التاريخية</small></div>
           <div class="fg full"><label>خدمات غير متعاقد عليها</label><small class="fg-hint" style="display:block;margin-bottom:6px">بنود اللائحة العامة المستثناة من هذا العقد — تُخصم تلقائيًا في المراجعة</small>

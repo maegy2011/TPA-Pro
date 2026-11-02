@@ -88,8 +88,26 @@ function renameProviderClaims(oldName, newName){
   }
   persistSessions(); persistData();
 }
-function nextContractNumber(sd){
-  const y = sd ? new Date(sd).getFullYear() : new Date().getFullYear();
+function contractEndFrom(startISO, years){
+  const m = String(startISO||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return '';
+  const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  d.setFullYear(d.getFullYear() + (Number(years)||0));
+  d.setDate(d.getDate() - 1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function contractDurationYears(s, e){
+  const ms = Date.parse(e) - Date.parse(s);
+  if(isNaN(ms)) return 1;
+  return Math.max(1, Math.round((ms/86400000 + 1)/365));
+}
+function yearsLabel(n){
+  n = Number(n)||0;
+  if(n === 1) return 'سنة';
+  if(n === 2) return 'سنتين';
+  if(n <= 10) return n + ' سنوات';
+  return n + ' سنة';
+}
+function nextContractNumber(sd){  const y = sd ? new Date(sd).getFullYear() : new Date().getFullYear();
   const pre = 'CTR-'+y+'-';
   let m = 0;
   contracts.forEach(c=>{ if(c.id.startsWith(pre)){ const n = parseInt(c.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
