@@ -252,12 +252,29 @@ function validateReviewForSign(){
   return { pendingN, paN, billed, entered, targetInfo, mismatch, missingDocs, finalReason, decision, needsReason, missing };
 }
 function _excFilter(){ return (window._excFilterVal || 'all'); }
-function setExcFilter(v){ window._excFilterVal = v; renderExceptions(); }
+function setExcFilter(v){ window._excFilterVal = v; _excPage = 0; renderExceptions(); }
+let _excPage = 0; const EXC_PER_PAGE = 50; let _excSearch = '';
+function setExcPage(p){ _excPage = Math.max(0, Number(p)||0); if(typeof renderExceptions === 'function') renderExceptions(); }
+function setExcSearch(v){ _excSearch = String(v||'').trim().toLowerCase(); _excPage = 0; if(typeof renderExceptions === 'function') renderExceptions(); }
 function renderExceptions(){
-  const box = document.getElementById('rvExceptions') || document.getElementById('rvPageExceptions');
+  // السطح المرئي أولًا: الصفحة عند المراجعة، والمودال كبديل — إصلاح ازدواج العرض.
+  const pageBox = document.getElementById('rvPageExceptions'), modalBox = document.getElementById('rvExceptions');
+  const box = ((typeof currentPage !== 'undefined' && currentPage === 'review') ? pageBox : modalBox) || pageBox || modalBox;
   if (!box) return;
   const data = collectExceptions();
-  const pending = data.pending || [], processed = data.processed || [], pa = data.pa || [];
+  let pending = data.pending || [], processed = data.processed || [], pa = data.pa || [];
+  if(_excSearch){
+    const q = _excSearch;
+    const hit = e => `${e.ln.code||''} ${e.ln.name||''} ${e.pat.name||''} ${(e.ln._checksFailed||[]).join(' ')}`.toLowerCase().includes(q);
+    pending = pending.filter(hit); processed = processed.filter(hit); pa = pa.filter(hit);
+  }
+  const _pageSlice = arr => arr.slice(_excPage * EXC_PER_PAGE, (_excPage + 1) * EXC_PER_PAGE);
+  const _pager = (total, label) => {
+    const pages = Math.max(1, Math.ceil(total / EXC_PER_PAGE));
+    if(pages <= 1) return '';
+    if(_excPage > pages - 1) _excPage = pages - 1;
+    return `<div style="display:flex;gap:6px;align-items:center;margin:8px 0;font-size:12px"><span>${label}: صفحة ${_excPage+1}/${pages} (${total})</span><button type="button" class="btn-sm ghost" onclick="setExcPage(${_excPage-1})" ${_excPage<=0?'disabled':''}>‹</button><button type="button" class="btn-sm ghost" onclick="setExcPage(${_excPage+1})" ${_excPage>=pages-1?'disabled':''}>›</button></div>`;
+  };
   const cnt = document.getElementById('rvExcCount') || document.getElementById('rvPageExcCount');
   const totalPending = pending.length + pa.length;
   if (cnt) cnt.textContent = totalPending;
@@ -268,7 +285,8 @@ function renderExceptions(){
 
   let html = '';
   html += `<div class="rv-exc-summary">${pending.length} معلّقة · ${pa.length} بانتظار PA · ${processed.length} معالجة</div>`;
-  html += `<div class="rv-exc-filter" style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap">
+  html += `<div class="rv-exc-filter" style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;align-items:center">
+    <input type="search" placeholder="بحث: كود/مريض/سبب…" value="${escapeHtml(_excSearch)}" oninput="setExcSearch(this.value)" style="flex:1;min-width:140px">
     <button type="button" class="btn-sm ${filter==='all'?'solid':'ghost'}" onclick="setExcFilter('all')">الكل</button>
     <button type="button" class="btn-sm ${filter==='pending'?'solid':'ghost'}" onclick="setExcFilter('pending')">معلّقة (${pending.length})</button>
     <button type="button" class="btn-sm ${filter==='processed'?'solid':'ghost'}" onclick="setExcFilter('processed')">معالجة (${processed.length})</button>
@@ -285,9 +303,9 @@ function renderExceptions(){
     const after = ln._contractCovered ? Math.round(lesser*(1-rate/100)) : 0;
     const sev = (ln._checksFailed||[]).some(r => isRejectReason(r)) ? 'reject' : 'attention';
     const color = sev === 'reject' ? '#FEF2F2' : '#FFFBEB';
-    return `<div class="rv-exc-card" data-exc="${e.ii}-${e.pi}-${e.li}" style="background:${color};border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px">
-      <div style="font-weight:800;color:var(--navy)">${escapeHtml(ln.code)} · ${escapeHtml(ln.name)}</div>
-      <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1}</div>
+    return `<details class="rv-exc-card" data-exc="${e.ii}-${e.pi}-${e.li}" style="background:${color};border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <summary style="font-weight:800;color:var(--navy);cursor:pointer">${escapeHtml(ln.code)} · ${escapeHtml(ln.name)} <span style="font-weight:400;color:var(--muted);font-size:11px">· ${escapeHtml(e.pat.name)} · ${fmt(after)}</span> <span style="font-size:11px;font-weight:700;color:var(--warn)">⚠ ${escapeHtml(reasons.split('، ')[0]||'—')}${(ln._checksFailed||[]).length>1?` +${(ln._checksFailed||[]).length-1}`:''}</span></summary>
+      <div style="font-size:11.5px;color:var(--muted);margin:6px 0 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1}</div>
       <div style="font-size:12px;margin:6px 0">فاتورة ${fmt(billed)} · لائحة ${tariffTotal!==null?fmt(tariffTotal):'—'} · الأقل ${fmt(lesser)} · خصم ${rate}% → معتمد مقترح ${fmt(after)}</div>
       <div style="font-size:12px;font-weight:700;color:var(--warn)">⚠ ${escapeHtml(reasons)}</div>
       ${ln._ruleOverlap ? `<div style="font-size:11.5px;color:var(--warn);margin:4px 0">⚖ القواعد: ${escapeHtml((ln._ruleOverlap.rules||[]).join(' × '))} — المطبق مؤقتًا (الأشد): ${fmt(ln._ruleOverlap.applied)} · التراكمي: ${fmt(ln._ruleOverlap.stacked)}</div>` : ''}
@@ -304,7 +322,7 @@ function renderExceptions(){
       <div class="rv-exc-reduce-wrap" style="display:none;margin-top:6px" data-exc-reduce="${e.ii}-${e.pi}-${e.li}">
         <input type="number" class="rv-exc-reduce-val" data-exc-reduce-val="${e.ii}-${e.pi}-${e.li}" min="0" max="${after}" value="${after}" placeholder="مبلغ معتمد">
       </div>
-    </div>`;
+    </details>`;
   }
 
   function cardProcessed(e){
@@ -341,15 +359,15 @@ function renderExceptions(){
   }
 
   if (showPending && pending.length) {
-    html += `<div class="rv-exc-section-title">معلّقة (${pending.length})</div>` + pending.map(cardPending).join('');
+    html += `<div class="rv-exc-section-title">معلّقة (${pending.length})</div>` + _pager(pending.length, 'المعلّقة') + _pageSlice(pending).map(cardPending).join('');
   } else if (showPending) {
     html += `<div class="rv-empty" style="padding:12px;color:var(--ok);font-weight:700">✅ لا استثناءات معلّقة</div>`;
   }
   if (showProcessed && processed.length) {
-    html += `<div class="rv-exc-section-title">معالجة (${processed.length})</div>` + processed.map(cardProcessed).join('');
+    html += `<div class="rv-exc-section-title">معالجة (${processed.length})</div>` + _pager(processed.length, 'المعالجة') + _pageSlice(processed).map(cardProcessed).join('');
   }
   if (showPA && pa.length) {
-    html += `<div class="rv-exc-section-title">بانتظار PA (${pa.length})</div>` + pa.map(cardPA).join('');
+    html += `<div class="rv-exc-section-title">بانتظار PA (${pa.length})</div>` + _pager(pa.length, 'الانتظار') + _pageSlice(pa).map(cardPA).join('');
   }
 
   if (!pending.length && !processed.length && !pa.length) {

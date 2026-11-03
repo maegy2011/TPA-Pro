@@ -188,11 +188,10 @@ function bindReviewModal(){
     });
   });
 
-  // binding exceptions
-  const excBox = document.getElementById('rvExceptions');
-  if (excBox && !excBox.dataset.bound) {
-    excBox.dataset.bound = '1';
-    excBox.addEventListener('click', e => {
+  // binding exceptions — تفويض واحد على مستوى المستند يخدم السطحين (صفحة/مودال).
+  if (!document.body.dataset.excBound) {
+    document.body.dataset.excBound = '1';
+    document.addEventListener('click', e => {
       const reopen = e.target.closest('[data-exc-reopen]');
       if (reopen) {
         const key = reopen.dataset.excReopen;
@@ -215,7 +214,8 @@ function bindReviewModal(){
       const [ii, pi, li] = key.split('-').map(Number);
       const inv = workingInvoices[ii]; const pat = inv && inv.patients ? inv.patients[pi] : null; const ln = pat && pat.lines ? pat.lines[li] : null;
       if (!ln) return;
-      const noteInput = excBox.querySelector(`[data-exc-note="${key}"]`);
+      const _scopeBox = (btn && btn.closest && (btn.closest('#rvExceptions') || btn.closest('#rvPageExceptions'))) || document;
+      const noteInput = _scopeBox.querySelector(`[data-exc-note="${key}"]`);
       const note = noteInput ? noteInput.value.trim() : '';
       const act = btn.dataset.excAct;
       const _conflictCodes = ['cap-conflict','copay-conflict','rule-overlap','rule-cycle','rule-requires-missing'];
@@ -243,9 +243,9 @@ function bindReviewModal(){
         ln._decisionNote = note;
         if(typeof learnRuleFromReviewer === 'function'){ const _lr = learnRuleFromReviewer('line-reject', { claim: (typeof activeClaim !== 'undefined' ? activeClaim : null), line: ln, note }); if(_lr && _lr !== 'exists' && _lr !== 'updated' && typeof showSuccess === 'function') showSuccess('مسودة قاعدة','أُضيفت كمسودة بانتظار التفعيل في القواعد'); }
       } else if (act === 'reduce') {
-        const reduceWrap = excBox.querySelector(`[data-exc-reduce="${key}"]`);
+        const reduceWrap = _scopeBox.querySelector(`[data-exc-reduce="${key}"]`);
         if (reduceWrap) reduceWrap.style.display = '';
-        const valInput = excBox.querySelector(`[data-exc-reduce-val="${key}"]`);
+        const valInput = _scopeBox.querySelector(`[data-exc-reduce-val="${key}"]`);
         if (!valInput) return;
         const v = Number(valInput.value);
         if (isNaN(v) || v < 0) { showWarning('تنبيه','أدخل مبلغًا صالحًا'); return; }
