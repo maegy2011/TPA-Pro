@@ -216,7 +216,7 @@ function renderActiveInvoice(){
       </tbody></table></div>`;
     })()}
     </div>
-    <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button></div>`;
+    <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button><button type="button" data-legal-print="1" style="background:var(--navy);color:#fff">⚖ التخريج القانوني 🖨</button></div>`;
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
 }
 

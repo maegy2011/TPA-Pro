@@ -50,6 +50,7 @@ function bindReviewModal(){
     if(_pc0) rvActivePatientIdx = Number(_pc0.dataset.patIdx);
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
     if(e.target.closest('[data-add-patient]')){ openPatientEditor(rvActiveInvoiceIdx); return; }
+    if(e.target.closest('[data-legal-print]')){ if(typeof printLegalIssuance === 'function' && typeof activeClaim !== 'undefined' && activeClaim) printLegalIssuance(activeClaim.id); return; }
     if(e.target.closest('[data-add-line]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv||!inv.patients||!inv.patients.length){ showWarning('تنبيه','أضف مريضاً أولاً'); return; } openLineEditor(rvActivePatientIdx); return; }
     if(e.target.closest('[data-inv-collapse]')){ _collapsedInvIdx = (_collapsedInvIdx===rvActiveInvoiceIdx ? -1 : rvActiveInvoiceIdx); if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }
     if(e.target.closest('[data-pat-collapse]')){ _patCollapsedAll = !_patCollapsedAll; if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }

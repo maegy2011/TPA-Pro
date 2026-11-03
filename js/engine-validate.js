@@ -104,8 +104,11 @@ function getContractRateForService(ctx, code) {
   return Number(ctx?.contract?.discountRate) || 0;
 }
 
+/* القرار الدائم (بأمر محمد 2026-11-03): الخاص يغلب المستثنى — التوجيه اليدوي للخدمة
+   يتفوق على قائمة الاستثناءات، والمستثنى يوقف الصرف فقط عند غياب توجيه خاص. */
 function isServiceCovered(ctx, code) {
   const ov = ctx?.serviceOverrides?.[code];
+  if (ov && ov.covered === true) return true;
   if (ov && ov.covered === false) return false;
   const svc = (ctx?.tariff?.services || []).find(s => String(s.code) === String(code));
   if (svc && svc.covered === false) return false;

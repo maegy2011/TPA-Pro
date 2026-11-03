@@ -142,6 +142,7 @@ function finalizeReview(){
     while(activeClaim._reviewDrafts.length > REVIEW_DRAFTS_MAX) activeClaim._reviewDrafts.shift();
   }
   activeClaim.invoices = JSON.parse(JSON.stringify(workingInvoices));
+  activeClaim.invoices.forEach((inv, _ii) => { if(!inv.legalSerial && typeof nextLegalSerial === 'function') inv.legalSerial = nextLegalSerial(inv, _ii); });
   activeClaim._recalcUnlock = true;
   activeClaim.invoices.forEach(inv => (inv.patients||[]).forEach(p => computePatient(p, activeClaim, inv.date, inv)));
   activeClaim.reason = $('#rvReason').value;
