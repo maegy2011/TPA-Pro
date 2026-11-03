@@ -57,6 +57,17 @@ function runEngineTests(){
     const _s = sortRulesByPriority([{id:'a',priority:1},{id:'b',priority:5},{id:'c'}]);
     R.push(_tAssert(_s[0].id==='b' && _s[2].id==='c', 'الأولوية: الأعلى أولًا'));
     R.push(_tAssert(typeof getCyclicRuleIds==='function', 'الدوران الموحد: الدالة موجودة'));
+    // 27-28: محرك المراجعة
+    try {
+      R.push(_tAssert(typeof computeInvoice==='function', 'المراجعة: computeInvoice موجودة'));
+      const _tinv = { id:'INV-T', type:'inpatient', admissionDate:'2026-03-01', dischargeDate:'2026-03-05', operationClass:'major', patients:[{ id:'P1', name:'مريض', nationalId:'123', lines:[
+        { code:'SURG-1', name:'عملية جراحية كبرى', category:'جراحة', qty:1, billedUnit:5000 },
+        { code:'ROOM-1', name:'إقامة', category:'إقامة', qty:4, billedUnit:500 }
+      ] }] };
+      if(typeof normalizeInvoice==='function') normalizeInvoice(_tinv, 'employee');
+      const _r = computeInvoice(_tinv, { id:'CLM-T', type:'employee', date:'2026-03-01', priorApproval:{required:false} });
+      R.push(_tAssert(_r.billed===7000, 'المراجعة: إجمالي الفاتورة', String(_r.billed)));
+    } catch(e){ R.push(_tAssert(false,'محرك المراجعة',e.message)); }
   } catch(e){ R.push(_tAssert(false,'الفحوص الجديدة',e.message)); }
   const pass = R.filter(r=>r.ok).length, fail = R.length - pass;
   try { console.table(R.map(r=>({الحالة:r.ok?'✅':'❌',الاختبار:r.name,ملاحظة:r.extra}))); } catch(e){}

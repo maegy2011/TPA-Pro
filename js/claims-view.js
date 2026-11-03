@@ -485,16 +485,27 @@ function recalcReview(){
   if(typeof clearValidationCache === 'function') clearValidationCache();
   let billed = 0, eligible = 0, finalApproved = 0;
   const _invStats = workingInvoices.map(() => ({ pend: 0, rej: 0 }));
-  workingInvoices.forEach((inv, _ii) => { (inv.patients||[]).forEach(pat => {
-    // تنظيف لمرة واحدة: إزالة أعلام الفحص العابر الملغى (كل مذكرة مستقلة).
-    (pat.lines||[]).forEach(l => { if(Array.isArray(l._checksFailed) && l._checksFailed.includes('dup-xinvoice')) unflagLineAskReviewer(l, 'dup-xinvoice'); });
-    computePatient(pat, activeClaim, inv.date, inv);
-    (pat.lines||[]).forEach(l => { const f = l._checksFailed||[]; if(f.length){ _invStats[_ii].pend++; if(typeof isRejectReason === 'function' && f.some(isRejectReason)) _invStats[_ii].rej++; } });
-    billed += (pat.lines||[]).reduce((s,l)=>s + (Number(l.qty)||0)*(Number(l.billedUnit)||0), 0);
-    eligible += pat._subtotal || 0;
-    finalApproved += pat._final || 0;
+  workingInvoices.forEach((inv, _ii) => {
+    (inv.patients||[]).forEach(pat => {
+      // تنظيف لمرة واحدة: إزالة أعلام الفحص العابر الملغى (كل مذكرة مستقلة).
+      (pat.lines||[]).forEach(l => { if(Array.isArray(l._checksFailed) && l._checksFailed.includes('dup-xinvoice')) unflagLineAskReviewer(l, 'dup-xinvoice'); });
+    });
+    if(typeof computeInvoice === 'function'){
+      const _r = computeInvoice(inv, activeClaim);
+      billed += _r.billed; finalApproved += _r.approved;
+    } else {
+      (inv.patients||[]).forEach(pat => {
+        computePatient(pat, activeClaim, inv.date, inv);
+        billed += (pat.lines||[]).reduce((s,l)=>s + (Number(l.qty)||0)*(Number(l.billedUnit)||0), 0);
+        finalApproved += pat._final || 0;
+      });
+      if(typeof validateInpatientInvoice === 'function') validateInpatientInvoice(inv);
+    }
+    (inv.patients||[]).forEach(pat => {
+      eligible += pat._subtotal || 0;
+      (pat.lines||[]).forEach(l => { const f = l._checksFailed||[]; if(f.length){ _invStats[_ii].pend++; if(typeof isRejectReason === 'function' && f.some(isRejectReason)) _invStats[_ii].rej++; } });
+    });
   });
-  if(typeof validateInpatientInvoice === 'function') validateInpatientInvoice(inv); });
   try {
     document.querySelectorAll('.rv-inv-dot').forEach(d => {
       const st = _invStats[Number(d.dataset.dotIdx)] || { pend: 0, rej: 0 };

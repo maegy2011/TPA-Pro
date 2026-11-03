@@ -32,6 +32,7 @@ const VALIDATION_REASONS = {
   'checklist-blood':    { label: 'نقل دم بلا تعليم تدقيق — القرار للمراجع', severity: 'attention', category: 'checklist' },
   'link-fee-nosurgery': { label: 'أتعاب (جراح/تخدير) بلا إجراء جراحي — القرار للمراجع', severity: 'attention', category: 'linkage' },
   'link-assistant':     { label: 'مساعد جراح بلا شروطه (جراح + عملية كبرى/متوسطة) — القرار للمراجع', severity: 'attention', category: 'linkage' },
+  'link-anesthesia':    { label: 'إجراء جراحي بلا أتعاب تخدير — القرار للمراجع', severity: 'attention', category: 'linkage' },
   'opclass-stay-exceed': { label: 'تجاوز سقف أيام تصنيف العملية — القرار للمراجع', severity: 'attention', category: 'opclass' },
   'link-implant-nosurgery': { label: 'مزروع بلا إجراء جراحي — القرار للمراجع', severity: 'attention', category: 'linkage' },
   'consumables-share': { label: 'تجاوز حصة المستهلكات (25%) — القرار للمراجع', severity: 'attention', category: 'supplies' },

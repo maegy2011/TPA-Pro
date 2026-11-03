@@ -101,6 +101,14 @@ function validateInpatientInvoice(inv){
       const code = t.surgeryCode || ('link-' + t.key);
       if(!hasProc) flagLineAskReviewer(l, code); else unflagLineAskReviewer(l, code);
     });
+    // تخدير: إجراء جراحي بلا أتعاب تخدير — يُسأل المراجع.
+    const _anesLines = all.filter(x => /تخدير|بنج|anesthesia/i.test(`${x.l.category||''} ${x.l.name||''}`));
+    if(hasProc && !_anesLines.length){
+      const _tgt = all.find(x => x.types.some(t => t.surgeryProc) && !x.types.some(t => t.fee));
+      if(_tgt) flagLineAskReviewer(_tgt.l, 'link-anesthesia');
+    } else {
+      all.forEach(({l}) => unflagLineAskReviewer(l, 'link-anesthesia'));
+    }
     // مساعد: يستلزم أتعاب جراح + تصنيف
     if(types.some(t => t.requiresSurgeonFee)){
       const code = (types.find(t => t.requiresSurgeonFee).assistCode) || 'link-assistant';
@@ -144,11 +152,7 @@ function validateInpatientInvoice(inv){
   applyClosedPackage(inv);
 }
 const OP_CLASS_CAPS = { major:{ label:'كبرى', maxStay:14 }, medium:{ label:'متوسطة', maxStay:7 }, minor:{ label:'صغرى', maxStay:3 }, endo:{ label:'مناظير', maxStay:2 }, diag:{ label:'تشخيصية', maxStay:1 } };
-function _isFee(l){ return FEE_KW.some(k => _lineText(l).toLowerCase().includes(k)); }
-function _isSurgProc(l){ const t = _lineText(l).toLowerCase(); return SURG_PROC_KW.some(k => t.includes(k)) && !_isFee(l); }
-function _isSurgeonFee(l){ const t = _lineText(l).toLowerCase(); return (t.includes('جراح')) && _isFee(l); }
-function _isAnesFee(l){ const t = _lineText(l).toLowerCase(); return (t.includes('تخدير') || t.includes('بنج')) && _isFee(l); }
-function _isAssistFee(l){ const t = _lineText(l).toLowerCase(); return t.includes('مساعد') && _isFee(l); }
+/* ملاحظة: التصنيف القديم بالكلمات المتصلبة حُذف نهائيًا — البديل review-taxonomy.js (ديناميكي من الإعدادات). */
 /* الباكج المغلق: سقف إجمالي واحد للفاتورة — يُطبق بعد الحساب في كل إعادة حساب. */
 function applyClosedPackage(inv){
   if(!inv || inv.packageType !== 'closed') return;
@@ -442,6 +446,18 @@ function computePatient(pat, claim, refDate, invoice){
   if(pat._capMode === undefined) pat._capMode = 'auto';
   if(pat._copayMode === undefined) pat._copayMode = 'auto';
   return pat;
+}
+/* حساب فاتورة كاملة: كل مريض مرة واحدة + تحقق الإقامة — يمنع التكرار المبعثر في العارضات. */
+function computeInvoice(inv, claim){
+  if(!inv) return { billed:0, approved:0 };
+  let billed = 0, approved = 0;
+  (inv.patients||[]).forEach(p => {
+    if(typeof computePatient === 'function') computePatient(p, claim, inv.date, inv);
+    billed += (p.lines||[]).reduce((s,l)=>s+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
+    approved += (Number(p._final)||0);
+  });
+  if(typeof validateInpatientInvoice === 'function' && !(typeof isExternalInvoice==='function' && isExternalInvoice(inv))) validateInpatientInvoice(inv);
+  return { billed, approved };
 }
 function recalcClaim(c){
   if(typeof clearValidationCache === 'function') clearValidationCache();
