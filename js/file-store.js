@@ -103,6 +103,11 @@ async function fsImportFile(file){
   const v = fsVerifyEnvelope(env);
   if(!v.ok){ if(typeof showWarning==='function') showWarning('ملف مرفوض', v.msg); return; }
   const doApply = () => {
+    if(typeof normalizeClaim === 'function') normalizeClaim(env.claim);
+    if(typeof validateClaimShape === 'function'){
+      const iss = validateClaimShape(env.claim);
+      if(iss.length && typeof showWarning === 'function'){ showWarning('مشاكل شكل', iss.slice(0,5).join('<br>')); return; }
+    }
     const i = claims.findIndex(c => c.id === env.claim.id);
     if(i >= 0) claims[i] = env.claim; else claims.push(env.claim);
     if(typeof persistData==='function') persistData(true);
@@ -218,8 +223,16 @@ async function fsLoadAll(){
       } catch(err){}
     }
   }
+  let fixed = 0;
+  if(typeof normalizeClaim === 'function' && typeof validateClaimShape === 'function'){
+    loaded.forEach(c => {
+      fixed += normalizeClaim(c).fixed;
+      const iss = validateClaimShape(c);
+      if(iss.length) warnings.push(c.id + ': ' + iss.slice(0,3).join('، ') + (iss.length > 3 ? ` (+${iss.length - 3})` : ''));
+    });
+  }
   try { claims = loaded; if(typeof persistData === 'function') persistData(true); } catch(e){}
-  return { warnings, count: loaded.length };
+  return { warnings, count: loaded.length, fixed };
 }
 async function fsBoot(){
   try { await fsRestoreSilent(); } catch(e){}

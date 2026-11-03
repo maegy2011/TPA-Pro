@@ -39,7 +39,8 @@ function loadPersistedData(){
     if(Number.isFinite(p.version) && p.version > DATA_VERSION){ _dataStorageState = 'unsupported'; _dataStorageError = `إصدار بيانات أحدث (${p.version})`; return false; }
     const d = p.data;
     // Validate the complete envelope before assigning anything to live state.
-    for(const key of PERSISTED_ARRAY_KEYS){
+    try { if(typeof normalizeClaim === 'function' && Array.isArray(claims)) claims.forEach(c => normalizeClaim(c)); } catch(e){}
+  for(const key of PERSISTED_ARRAY_KEYS){
       if(d[key] !== undefined && !isPersistedRecordArray(d[key])) throw new Error(`حقل ${key} ليس قائمة سجلات صالحة`);
     }
     const next = {};
