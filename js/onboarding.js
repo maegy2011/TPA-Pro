@@ -12,6 +12,30 @@ function validateOnboardingInput(d){
   if(pwd !== conf) return { ok:false, msg:'التأكيد لا يطابق' };
   return { ok:true, msg:'' };
 }
+/* قوة كلمة المرور 0-4 — منطق خالص (يُختبر آليًا). */
+function passwordStrengthScore(v){
+  v = String(v || '');
+  let score = 0;
+  if(v.length > 0) score = 1;
+  if(v.length >= 6) score = 2;
+  if(v.length >= 10) score = 3;
+  if(/[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = Math.max(score, 3);
+  if(v.length >= 6 && /[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = 4;
+  if(/[^A-Za-z0-9\u0600-\u06FF]/.test(v)) score = Math.min(4, score+1);
+  return score;
+}
+/* تطبيق ملف الإعداد بعد الفحص — يملأ الافتراضيات ويشذب (يُختبر آليًا). */
+function applyOnboardingProfile(settings, d){
+  d = d || {};
+  const name = String(d.name || '').trim();
+  const role = String(d.role || '').trim() || 'مراجع مالي معتمد';
+  const cn = String(d.cn || '').trim() || 'TPA';
+  const cb = String(d.brand || '').trim() || 'TPA Pro';
+  settings.reviewer.name = name; settings.reviewer.role = role;
+  settings.company.name = cn; settings.company.brand = cb;
+  settings.company.tagline = settings.company.tagline || 'نظام المراجعة المالية للمطالبات الطبية';
+  return settings;
+}
 function showOnboardingError(msg){ const e = document.getElementById('onbErr'); if(e){ e.querySelector('span').textContent = msg; e.classList.add('show'); } }
 function clearOnboardingError(){ const e = document.getElementById('onbErr'); if(e){ e.classList.remove('show'); } }
 function bindOnboarding(){
@@ -36,14 +60,7 @@ function bindOnboarding(){
   const pwdIn = document.getElementById('onbPwd');
   const bar = document.getElementById('onbPwdBar');
   if(pwdIn && bar){ pwdIn.addEventListener('input', () => {
-    const v = pwdIn.value;
-    let score = 0;
-    if(v.length > 0) score = 1;
-    if(v.length >= 6) score = 2;
-    if(v.length >= 10) score = 3;
-    if(/[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = Math.max(score, 3);
-    if(v.length >= 6 && /[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = 4;
-    if(/[^A-Za-z0-9\u0600-\u06FF]/.test(v)) score = Math.min(4, score+1);
+    const score = (typeof passwordStrengthScore === 'function') ? passwordStrengthScore(pwdIn.value) : 0;
     bar.style.width = (score*25)+'%';
     bar.className = 'pw-bar s'+score;
   }); }
@@ -66,9 +83,7 @@ function bindOnboarding(){
     const conf = document.getElementById('onbPwdConfirm')?.value || '';
     const chk = (typeof validateOnboardingInput === 'function') ? validateOnboardingInput({ name, brand:cb, pwd, conf }) : { ok:true };
     if(!chk.ok){ showOnboardingError(chk.msg); return; }
-    appSettings.reviewer.name = name; appSettings.reviewer.role = role;
-    appSettings.company.name = cn; appSettings.company.brand = cb;
-    appSettings.company.tagline = appSettings.company.tagline || 'نظام المراجعة المالية للمطالبات الطبية';
+    if(typeof applyOnboardingProfile === 'function') applyOnboardingProfile(appSettings, { name, role, cn, brand:cb });
     saveAppSettings();
     next.disabled = true; next.textContent = '...';
     (async () => {
