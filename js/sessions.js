@@ -86,6 +86,37 @@ function updateSessionsBadge(){
   if(n > 0){ b.textContent = n; b.style.display = 'grid'; } else b.style.display = 'none';
   renderSessionSwitcher();
 }
+/* ترشيح الجلسات — منطق خالص (يُختبر آليًا). */
+function filterSessionsList(list, statusFilter, term, infoFn){
+  const q = String(term || '').trim().toLowerCase();
+  return (list || []).filter(s => {
+    if(statusFilter === 'active' && s.status !== 'active') return false;
+    if(statusFilter === 'paused' && s.status !== 'paused') return false;
+    if(q){ const info = infoFn(s), hay = String(s.claimId||'') + ' ' + String(info.patient||'') + ' ' + String(info.provider||''); return hay.toLowerCase().includes(q); }
+    return true;
+  });
+}
+/* فرز الجلسات بالأحدث نشاطًا — منطق خالص (يُختبر آليًا). */
+function sortSessionsByActivity(list){
+  return (list || []).slice().sort((a,b) => new Date(b.lastActiveAt) - new Date(a.lastActiveAt));
+}
+/* عبء الجلسة (فواتير/مرضى/بنود/مطالب/معتمد/نسبة) — منطق خالص (يُختبر آليًا). */
+function sessionWorkload(s){
+  const wi = (s && s.workingInvoices) || [];
+  let inv = wi.length, pat = 0, lines = 0, billed = 0, appr = 0;
+  wi.forEach(i => {
+    (i.patients || []).forEach(p => {
+      pat += 1;
+      (p.lines || []).forEach(l => {
+        lines += 1;
+        billed += (Number(l.qty) || 0) * (Number(l.billedUnit) || 0);
+        appr += (Number(l.approved) || 0);
+      });
+    });
+  });
+  const rate = billed ? ((billed - appr) / billed * 100) : 0;
+  return { inv, pat, lines, billed, appr, rate };
+}
 function renderSessionSwitcher(){
   const sel = document.getElementById('rvSessionSwitcher'); if(!sel) return;
   const others = workSessions.filter(s => s.id !== activeSessionId);
@@ -153,12 +184,8 @@ function formatTimeAgo(iso){
 }
 function renderSessionCard(s){
   const info = getSessionClaimInfo(s);
-  const inv = (s.workingInvoices||[]).length;
-  const pat = (s.workingInvoices||[]).reduce((a,i)=>a+(i.patients||[]).length,0);
-  const lines = (s.workingInvoices||[]).reduce((a,i)=>a+(i.patients||[]).reduce((b,p)=>b+(p.lines||[]).length,0),0);
-  const billed = (s.workingInvoices||[]).reduce((a,i)=>a+(i.patients||[]).reduce((b,p)=>b+(p.lines||[]).reduce((c,l)=>c+(l.qty*l.billedUnit),0),0),0);
-  const appr = (s.workingInvoices||[]).reduce((a,i)=>a+(i.patients||[]).reduce((b,p)=>b+(p.lines||[]).reduce((c,l)=>c+(Number(l.approved)||0),0),0),0);
-  const rate = billed ? ((billed-appr)/billed*100) : 0;
+  const _wl = (typeof sessionWorkload === 'function') ? sessionWorkload(s) : { inv:0, pat:0, lines:0, billed:0, appr:0, rate:0 };
+  const inv = _wl.inv, pat = _wl.pat, lines = _wl.lines, billed = _wl.billed, appr = _wl.appr, rate = _wl.rate;
   let pc = 'paused', pt = 'موقوفة';
   if(info.stale){ pc = 'stale'; pt = 'مفقودة'; }
   else if(s.status === 'active'){ pc = 'active'; pt = 'نشطة'; }
@@ -181,12 +208,10 @@ function renderSessions(){
       <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">مطالبات</div><div class="kpi-val">${workSessions.length} <small>مطالبة</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">غير مكتملة</div></div>
       <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">آخر نشاط</div><div class="kpi-val" style="font-size:13px">${workSessions.length?formatTimeAgo(workSessions.reduce((a,s)=> (s.lastActiveAt>a?s.lastActiveAt:a), workSessions[0].lastActiveAt)):'—'}</div></div><div class="kpi-ico">${kpiIcon('check')}</div></div><div class="kpi-foot">تحديث تلقائي</div></div>`;
   }
-  const filtered = workSessions.filter(s => {
-    if(sessionsFilter === 'active' && s.status !== 'active') return false;
-    if(sessionsFilter === 'paused' && s.status !== 'paused') return false;
-    if(sessionsSearch){ const info = getSessionClaimInfo(s), q = sessionsSearch.toLowerCase(); return s.claimId.toLowerCase().includes(q) || info.patient.toLowerCase().includes(q) || info.provider.toLowerCase().includes(q); }
-    return true;
-  }).sort((a,b) => new Date(b.lastActiveAt) - new Date(a.lastActiveAt));
+  const infoFn = (typeof getSessionClaimInfo === 'function') ? getSessionClaimInfo : (s => ({ patient:'', provider:'' }));
+  const filtered = (typeof sortSessionsByActivity === 'function' && typeof filterSessionsList === 'function')
+    ? sortSessionsByActivity(filterSessionsList(workSessions, (typeof sessionsFilter !== 'undefined' ? sessionsFilter : 'all'), (typeof sessionsSearch !== 'undefined' ? sessionsSearch : ''), infoFn))
+    : workSessions.slice();
   if(!filtered.length){
     box.innerHTML = `<div class="session-empty"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M6.5 3v4M17.5 3v4M2.5 10h19"/></svg><p>${workSessions.length?'لا نتائج':'لا جلسات'}</p><span>${workSessions.length?'جرّب آخر':'ابدأ بمراجعة'}</span></div>`;
   } else box.innerHTML = `<div class="sessions-grid">${filtered.map(renderSessionCard).join('')}</div>`;

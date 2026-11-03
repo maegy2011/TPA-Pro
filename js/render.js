@@ -16,7 +16,7 @@ function kpiIcon(name){
   return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${svgs[name]||''}</svg>`;
 }
 let dashSearchTerm = '', reportsSearchTerm = '';
-let currentFilter = 'all', currentSearch = '';
+let currentFilter = 'all', currentSearch = '', claimsSort = 'default';
 function renderKPIs(){
   const s = stats();
   const paCount = claims.filter(c => c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved').length;
@@ -73,6 +73,7 @@ function bindClaimsControls(){
     $$('#filterChips .chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active'); currentFilter = chip.dataset.filter; renderClaims();
   });
+  const _cs = $('#claimsSort'); if(_cs && !_cs.dataset.bound){ _cs.dataset.bound = '1'; _cs.addEventListener('change', () => { claimsSort = _cs.value; renderClaims(); }); }
   const recentBody = document.getElementById('recentBody');
   if(recentBody) recentBody.addEventListener('click', e => { const vw = e.target.closest('[data-view]'); if(vw){ openView('claim', vw.dataset.view); } });
   $('#claimsBody').addEventListener('click', e => {

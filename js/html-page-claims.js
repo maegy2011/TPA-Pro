@@ -15,6 +15,13 @@ const PAGE_CLAIMS = `
           <button class="chip" data-filter="pa-required">⚠ تحتاج موافقة</button>
           <button class="chip" data-filter="archived">أرشيف المطالبات</button>
         </div>
+        <select id="claimsSort" class="sort-select" title="فرز المطالبات" style="height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;padding:0 12px;font-size:13px;font-weight:600">
+          <option value="default">الترتيب الافتراضي</option>
+          <option value="date-desc">الأحدث واردًا</option>
+          <option value="date-asc">الأقدم واردًا</option>
+          <option value="billed-desc">الأعلى قيمة</option>
+          <option value="billed-asc">الأقل قيمة</option>
+        </select>
         <div class="export-group">
           <button class="btn-export excel" data-export="claims" data-format="excel"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="m9 13 6 6M15 13l-6 6"/></svg></button>
           <button class="btn-export pdf" data-export="claims" data-format="pdf"><svg viewBox="0 0 24 24"><path d="M14 2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2v6h6"/><path d="M8 13h4M8 17h8"/></svg></button>

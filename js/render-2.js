@@ -1,25 +1,39 @@
 // render-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
-function renderClaims(){
-  const _prevSel = new Set($$('#claimsBody .claim-cb:checked:not(:disabled)').map(cb => cb.dataset.id));
-  const list = claims.filter(c => {
+/* ترشيح المطالبات — منطق خالص (يُختبر آليًا). يغطي الرقم/المريض/الجهة/الوارد/البنود/الرقم القومي. */
+function filterClaimsList(list, filter, term){
+  const q = String(term || '').trim().toLowerCase();
+  return (list || []).filter(c => {
     const archived = c.archived === true || c.archiveStatus === 'read-only';
-    if(currentFilter === 'archived'){ if(!archived) return false; }
+    if(filter === 'archived'){ if(!archived) return false; }
     else if(archived) return false;
-    if(currentFilter === 'archived') { /* archived filter already applied */ }
-    else if(currentFilter === 'pa-required'){ if(!(c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved')) return false; }
-    else if(currentFilter !== 'all' && c.status !== currentFilter) return false;
-    if(currentSearch){
-      const q = currentSearch;
-      if(c.id.toLowerCase().includes(q) || c.patient.toLowerCase().includes(q) ||
-         c.provider.toLowerCase().includes(q) || (c.receivedNumber||'').toLowerCase().includes(q)) return true;
+    if(filter === 'pa-required'){ if(!(c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved')) return false; }
+    else if(filter && filter !== 'all' && filter !== 'archived' && c.status !== filter) return false;
+    if(q){
+      if(String(c.id||'').toLowerCase().includes(q) || String(c.patient||'').toLowerCase().includes(q) ||
+         String(c.provider||'').toLowerCase().includes(q) || String(c.receivedNumber||'').toLowerCase().includes(q)) return true;
       const lines = (c.invoices||[]).flatMap(inv => (inv.patients||[]).flatMap(p => p.lines||[]));
-      if(lines.some(l => (l.code||'').toLowerCase().includes(q) || (l.name||'').toLowerCase().includes(q))) return true;
+      if(lines.some(l => String(l.code||'').toLowerCase().includes(q) || String(l.name||'').toLowerCase().includes(q))) return true;
       const nids = (c.invoices||[]).flatMap(inv => (inv.patients||[]).map(p => p.nationalId));
-      if(nids.some(nid => (nid||'').toLowerCase().includes(q))) return true;
+      if(nids.some(nid => String(nid||'').toLowerCase().includes(q))) return true;
       return false;
     }
     return true;
   });
+}
+/* فرز المطالبات — منطق خالص (يُختبر آليًا). default = ترتيب الإدخال. */
+function sortClaimsList(list, mode){
+  const a = (list || []).slice();
+  if(mode === 'date-desc') a.sort((x,y) => String(y.receivedDate||y.date||'').localeCompare(String(x.receivedDate||x.date||'')));
+  else if(mode === 'date-asc') a.sort((x,y) => String(x.receivedDate||x.date||'').localeCompare(String(y.receivedDate||y.date||'')));
+  else if(mode === 'billed-desc') a.sort((x,y) => (Number(y.billed)||0) - (Number(x.billed)||0));
+  else if(mode === 'billed-asc') a.sort((x,y) => (Number(x.billed)||0) - (Number(y.billed)||0));
+  return a;
+}
+function renderClaims(){
+  const _prevSel = new Set($$('#claimsBody .claim-cb:checked:not(:disabled)').map(cb => cb.dataset.id));
+  const _flt = (typeof filterClaimsList === 'function') ? filterClaimsList(claims, currentFilter, currentSearch) : claims.slice();
+  const _mode = (typeof claimsSort !== 'undefined' ? claimsSort : 'default');
+  const list = (typeof sortClaimsList === 'function') ? sortClaimsList(_flt, _mode) : _flt;
   const body = $('#claimsBody');
   if(!list.length){ body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:36px;color:var(--muted)">لا مطالبات</td></tr>'; _resetClaimsBulk(); return; }
   body.innerHTML = list.map(c => {

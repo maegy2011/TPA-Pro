@@ -1,6 +1,32 @@
 // inbox.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let intakeMonthFilter = 'all', intakeStatusFilter = 'all', intakeSearch = '', editingBatchId = null;
 let workingBatchClaim = null;
+/* ترشيح الوارد — منطق خالص (يُختبر آليًا). يشمل دعم الفترات المركبة (a,b). */
+function filterBatchesList(list, monthFilter, statusFilter, term, providersList){
+  const q = String(term || '').trim().toLowerCase();
+  const byId = {};
+  (providersList || []).forEach(p => { byId[p.id] = p; });
+  return (list || []).filter(b => {
+    if(monthFilter && monthFilter !== 'all' && String(b.month) !== monthFilter && !(String(b.month).split(',').includes(monthFilter))) return false;
+    if(statusFilter && statusFilter !== 'all' && b.status !== statusFilter) return false;
+    if(q){ const p = byId[b.providerId]; const hay = String(b.receivedNumber || '') + ' ' + String(b.id || ''); return hay.toLowerCase().includes(q) || (p && String(p.name||'').toLowerCase().includes(q)); }
+    return true;
+  });
+}
+/* فرز الوارد بالأحدث استلامًا — منطق خالص (يُختبر آليًا). */
+function sortBatchesByReceived(list){
+  return (list || []).slice().sort((a,b) => String(b.receivedDate||'').localeCompare(String(a.receivedDate||'')));
+}
+/* فحص مدخلات الدفعة — منطق خالص (يُختبر آليًا). */
+function validateBatchInput(d){
+  d = d || {};
+  if(!d.providerId) return { ok:false, msg:'اختر الجهة' };
+  const cl = d.contractsList || [];
+  if(!cl.some(c => c.providerId === d.providerId)) return { ok:false, msg:'لا يوجد تعاقد مع هذه الجهة — لا يمكن استلام مطالبة (حالة العقد لا تمنع الاستلام)' };
+  if(!String(d.month || '').trim()) return { ok:false, msg:'أدخل فترة المطالبة' };
+  if(!Number(d.billed) || Number(d.billed) <= 0) return { ok:false, msg:'أدخل القيمة الإجمالية' };
+  return { ok:true, msg:'' };
+}
 function renderProviderOptions(filter){
   const sel = $('#btProvider'); if(!sel) return;
   const contracted = providers.filter(p => (typeof contracts !== 'undefined' ? contracts : []).some(c => c.providerId === p.id));
@@ -47,12 +73,9 @@ function renderIntake(){
   const mHtml = ['<button class="month-chip '+(intakeMonthFilter==='all'?'active':'')+'" data-month="all">الكل <span class="mc-count">'+total+'</span></button>']
     .concat(months.map(m => { const cnt = batches.filter(b=>b.month===m).length; return `<button class="month-chip ${intakeMonthFilter===m?'active':''}" data-month="${m}">${formatMonth(String(m).split(',')[0])} <span class="mc-count">${cnt}</span></button>`; }));
   $('#monthChips').innerHTML = mHtml.join('');
-  const list = batches.filter(b => {
-    if(intakeMonthFilter !== 'all' && String(b.month) !== intakeMonthFilter && !(String(b.month).split(',').includes(intakeMonthFilter))) return false;
-    if(intakeStatusFilter !== 'all' && b.status !== intakeStatusFilter) return false;
-    if(intakeSearch){ const p = getProviderById(b.providerId); const q = intakeSearch; return (b.receivedNumber||b.id).toLowerCase().includes(q) || (p && p.name.toLowerCase().includes(q)); }
-    return true;
-  }).sort((a,b) => (b.receivedDate||'').localeCompare(a.receivedDate||''));
+  const list = (typeof sortBatchesByReceived === 'function' && typeof filterBatchesList === 'function')
+    ? sortBatchesByReceived(filterBatchesList(batches, intakeMonthFilter, intakeStatusFilter, intakeSearch, (typeof providers !== 'undefined' ? providers : [])))
+    : batches.slice();
   const body = $('#batchesBody');
   if(!list.length){ body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--muted)">لا دفعات</td></tr>'; return; }
   body.innerHTML = list.map(b => {
@@ -114,10 +137,8 @@ function saveBatch(another){
   const claimDate = receivedDate;
   const billed = Number($('#btBilled').value);
   const notes = $('#btNotes').value.trim();
-  if(!providerId){ showWarning('تنبيه','اختر الجهة'); return; }
-  if(!(typeof contracts !== 'undefined' ? contracts : []).some(c => c.providerId === providerId)){ showWarning('تنبيه','لا يوجد تعاقد مع هذه الجهة — لا يمكن استلام مطالبة (حالة العقد لا تمنع الاستلام)'); return; }
-  if(!month){ showWarning('تنبيه','أدخل فترة المطالبة'); return; }
-  if(!billed || billed <= 0){ showWarning('تنبيه','أدخل القيمة الإجمالية'); return; }
+  const vchk = (typeof validateBatchInput === 'function') ? validateBatchInput({ providerId, month, billed, contractsList:(typeof contracts !== 'undefined' ? contracts : []) }) : { ok:true };
+  if(!vchk.ok){ showWarning('تنبيه', vchk.msg); return; }
   const p = getProviderById(providerId);
   const receivedNumber = $('#btNumber').value;
   const batchId = editingBatchId || ('BTH-'+month.split(',')[0]+'-'+receivedNumber);
