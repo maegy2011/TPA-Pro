@@ -4,13 +4,13 @@
 function _itAssert(name, cond, extra){
   return { name, ok: !!cond, extra: extra === undefined ? '' : String(extra).slice(0,200) };
 }
-function _itSnap(){ // حفظ واستعادة العموميات حتى لا تتلوث بيانات المراجع
+function _itSnap(){ // حفظ واستعادة العموميات — عبر eval غير مباشر (روابط let لا تُستعاد عبر globalThis)
   const g = (typeof globalThis !== 'undefined') ? globalThis : window;
   const keep = {};
   ['providers','contracts','tariffs','claims','batches','deductionRules','workingInvoices'].forEach(k => {
-    try { keep[k] = JSON.parse(JSON.stringify(g[k])); } catch(e){ keep[k] = undefined; }
+    try { keep[k] = JSON.parse(JSON.stringify((0,eval)(k))); } catch(e){ keep[k] = undefined; }
   });
-  return () => { Object.keys(keep).forEach(k => { if(keep[k] !== undefined){ try { g[k] = keep[k]; } catch(e){} } }); };
+  return () => { Object.keys(keep).forEach(k => { if(keep[k] === undefined) return; try { g['__itKeep'] = keep[k]; (0,eval)(k + ' = globalThis.__itKeep'); } catch(e){} }); try { delete g['__itKeep']; } catch(e){} };
 }
 function runIntegrationTests(){
   const R = [];
