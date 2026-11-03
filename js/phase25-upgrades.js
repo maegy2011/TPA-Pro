@@ -20,15 +20,25 @@
 
   function saveReviewProgress(claim, point){
     if(!claim) return null;
-    const p = point || { invoiceIdx: (typeof rvActiveInvoiceIdx!=='undefined'?rvActiveInvoiceIdx:0), patientIdx: (typeof rvActivePatientIdx!=='undefined'?rvActivePatientIdx:0), lineIdx: 0 };
-    claim.reviewProgress = Object.assign({ updatedAt: new Date().toISOString() }, p);
+    const p = Object.assign({ updatedAt: new Date().toISOString() }, point || { invoiceIdx: (typeof rvActiveInvoiceIdx!=='undefined'?rvActiveInvoiceIdx:0), patientIdx: (typeof rvActivePatientIdx!=='undefined'?rvActivePatientIdx:0), lineIdx: 0 });
+    try {
+      if(typeof findSessionByClaim === 'function'){
+        const s = findSessionByClaim(claim.id);
+        if(s){ s.lastSavedPoint = { invoiceIdx: p.invoiceIdx || 0, patientIdx: p.patientIdx || 0, lineIdx: p.lineIdx || 0, timestamp: p.updatedAt }; if(typeof persistSessions === 'function') persistSessions(); }
+      }
+    } catch(e){}
     try { if(typeof upsertCurrentSession === 'function') upsertCurrentSession(); } catch(e){}
-    try { if(typeof persistData === 'function') persistData(); } catch(e){}
-    return claim.reviewProgress;
+    return p;
   }
 
   function getReviewProgress(claim){
-    return claim && claim.reviewProgress ? claim.reviewProgress : null;
+    try {
+      if(typeof RC_cursorForClaim === 'function' && claim && claim.id){
+        const _c = RC_cursorForClaim(claim.id);
+        return { invoiceIdx: _c.invoice, patientIdx: _c.patient, lineIdx: 0 };
+      }
+    } catch(e){}
+    return null;
   }
 
   function notifyRuleConflict(message){

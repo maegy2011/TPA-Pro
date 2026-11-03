@@ -69,6 +69,7 @@ function normalizeClaim(claim){
   if(!Array.isArray(claim._auditTrail)) claim._auditTrail = [];
   if(!Array.isArray(claim._overrideChecklist)) claim._overrideChecklist = [];
   if(claim._modelVersion !== MODEL_VERSION){ claim._modelVersion = MODEL_VERSION; fixed++; }
+  if('reviewProgress' in claim){ delete claim.reviewProgress; fixed++; } // هجرة: المؤشر انتقل للجلسة
   claim.invoices.forEach(inv => { fixed += normalizeInvoice(inv, claim.type).fixed; });
   return { claim, fixed };
 }

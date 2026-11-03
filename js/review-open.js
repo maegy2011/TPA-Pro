@@ -83,9 +83,9 @@ function openReview(id){
     document.querySelectorAll('#reviewModal .rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
   } catch(e){}
   try {
-    if (c.reviewProgress) {
-      rvActiveInvoiceIdx = Number(c.reviewProgress.invoiceIdx) || rvActiveInvoiceIdx || 0;
-      rvActivePatientIdx = Number(c.reviewProgress.patientIdx) || rvActivePatientIdx || 0;
+    if(typeof RC_cursorForClaim === 'function' && c && c.id){
+      const _cur = RC_cursorForClaim(c.id);
+      if(_cur && (_cur.invoice || _cur.patient)){ rvActiveInvoiceIdx = _cur.invoice; rvActivePatientIdx = _cur.patient; }
     }
   } catch(e){}
   if(typeof renderReviewInvoices === 'function') renderReviewInvoices();
