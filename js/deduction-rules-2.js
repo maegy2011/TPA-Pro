@@ -50,19 +50,20 @@ function closeDrModal(){ $('#drModal').classList.remove('open'); editingDrId = n
 function saveDr(){
   const name = $('#drName').value.trim(), type = $('#drType').value, rate = Number($('#drRate').value);
   const from = $('#drFrom').value, to = $('#drTo').value;
-  if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
-  if(isNaN(rate) || rate < 0 || rate > 100){ showWarning('تنبيه','النسبة'); return; }
-  if(!from){ showWarning('تنبيه','أدخل السريان'); return; }
   const cts = $$('.dr-ctype').filter(cb=>cb.checked).map(cb=>cb.value);
-  if(!cts.length){ showWarning('تنبيه','حدد نوع'); return; }
   const _notes = ($('#drNotes') && $('#drNotes').value.trim()) || '';
-  if(!_notes){ showWarning('تنبيه','اكتب سبب القاعدة بالعربية (إلزامي للتخريج القانوني)'); return; }
-  const _prioEl = document.getElementById('drPriority'); const _prio = _prioEl ? Number(_prioEl.value)||0 : 0;
-  const _retro = !!(document.getElementById('drRetro') && document.getElementById('drRetro').checked);
   const _scopeAll = !!(document.getElementById('drScopeAll') && document.getElementById('drScopeAll').checked);
   const _selProv = Array.from(document.querySelectorAll('.dr-scope-p:checked')).map(cb => cb.value);
-  if(!_selProv.length && !_scopeAll){ showWarning('تنبيه','حدد جهة واحدة على الأقل أو علّم «كل الجهات» صراحة — القاعدة بلا نطاق ممنوعة'); return; }
+  const _chk = (typeof validateRuleDefinition === 'function') ? validateRuleDefinition({ name, rate, effectiveFrom:from, claimTypes:cts, notes:_notes, providerIds:_selProv, scopeExplicitAll:_scopeAll }) : { ok:true };
+  if(!_chk.ok){ showWarning(_chk.msg === 'النسبة' || _chk.msg === 'أدخل السريان' || _chk.msg === 'حدد نوع' ? 'تنبيه' : (_chk.msg.startsWith('حدد جهة') ? 'النطاق' : 'تنبيه'), _chk.msg); return; }
+  const _prioEl = document.getElementById('drPriority'); const _prio = _prioEl ? Number(_prioEl.value)||0 : 0;
+  const _retro = !!(document.getElementById('drRetro') && document.getElementById('drRetro').checked);
   const data = { name, type, action: type==='coverage_cap'?'apply_cap':'apply_copay', rate, priority:_prio, retroactive:_retro, scopeExplicitAll:_scopeAll, effectiveFrom:from, effectiveTo:to||'', active:$('#drActive').checked, notes:$('#drNotes').value.trim(), scope:{ providerIds:_selProv, contractIds:[], claimTypes:cts } };
+  const _cf = (typeof detectRuleConflicts === 'function') ? detectRuleConflicts({ ...(editingDrId ? (deductionRules.find(x=>x.id===editingDrId)||{}) : {}), ...data, id:editingDrId || 'DR-NEW' }, deductionRules) : { hasConflicts:false, conflicts:[] };
+  const _errs = (_cf.conflicts || []).filter(c => c.severity === 'error');
+  if(_errs.length){ showWarning('تعارض يمنع الحفظ', _errs.map(c => c.message).join('<br>')); return; }
+  const _warns = (_cf.conflicts || []).filter(c => c.severity !== 'error');
+  const _doSave = () => {
   if(editingDrId){ const r = deductionRules.find(x=>x.id===editingDrId); if(r){ r._prevVersion = { rate:r.rate, priority:(r.priority||0), at:new Date().toISOString() }; Object.assign(r, data); r.version = (Number(r.version)||1)+1; r._simulated = false; r.enabled = false; r.active = false; } showSuccess('تم — القاعدة معطلة حتى محاكاة إجبارية', 'نفّذ «محاكاة» لعرض الأثر ثم فعّلها'); }
   else {
     const y = new Date(from).getFullYear(), pre = 'DR-'+y+'-';
@@ -71,10 +72,17 @@ function saveDr(){
     deductionRules.push({ id:pre+String(m+1).padStart(3,'0'), version:1, _simulated:false, enabled:false, active:false, ...data, enabled:false, active:false });
     showSuccess('تم','تمت');
   }
-  closeDrModal(); renderDeductionRules();
-  if (typeof claims !== 'undefined') { claims.forEach(c => { if (typeof recalcClaim === 'function') recalcClaim(c); }); }
-  if (typeof persistData === 'function') persistData(true);
-  if (typeof renderAll === 'function') renderAll();
+  };
+  const _finish = () => {
+    closeDrModal();
+    try { if(typeof renderDeductionRules === 'function') renderDeductionRules(); } catch(e){}
+    if (typeof claims !== 'undefined') { claims.forEach(c => { try { if(typeof recalcClaim === 'function') recalcClaim(c); } catch(e){} }); }
+    if (typeof persistData === 'function') persistData(true);
+    if (typeof renderAll === 'function') renderAll();
+  };
+  if(_warns.length){ showWarning('تحذيرات التعارض', _warns.map(c => `• ${c.message}`).join('<br>') + '<br><br>متابعة الحفظ؟', () => { _doSave(); _finish(); }); return; }
+  _doSave();
+  _finish();
 }
 function deleteDr(id){
   const r = deductionRules.find(x=>x.id===id); if(!r) return;
@@ -162,6 +170,10 @@ function applyLearnedRuleNow(id){
     if(typeof deductionRules === 'undefined' || !id) return false;
     const r = deductionRules.find(x => x && x.id === id && x.source === 'learned');
     if(!r || r.enabled !== false) return false;
+    if(typeof detectRuleConflicts === 'function'){
+      const cf = detectRuleConflicts(r, deductionRules);
+      if((cf.conflicts || []).some(c => c.severity === 'error')) return false;
+    }
     r.enabled = true; r.active = true;
     r._autoApplied = true; r._autoAppliedAt = new Date().toISOString();
     r.notes = String(r.notes || '') + ' — طُبقت فورًا بتأكيد المراجع';
@@ -245,48 +257,11 @@ function simulateRule(id){
   if(!rule){ showWarning('تنبيه','القاعدة غير موجودة'); return; }
   if(!claims.length){ showWarning('تنبيه','لا مطالبات للاختبار'); return; }
   const sample = claims.slice(-10);
-  let totalLines = 0, affected = 0;
-  let totalBefore = 0, totalAfter = 0, totalExtraDed = 0;
-  const affectedSamples = [];
-  const isPatientLevel = ['apply_cap','apply_copay'].includes(rule.action);
-
-  sample.forEach(claim => {
-    const refDate = claim.date || claim.receivedDate || daysFromNow(0);
-    if(isPatientLevel){
-      (claim.invoices||[]).forEach(inv => {
-        (inv.patients||[]).forEach(pat => {
-          const subtotal = (pat.lines||[]).reduce((s,l) => s + (Number(l.approved)|| (Number(l.qty)||0)*(Number(l.billedUnit)||0)), 0);
-          const ctx = { claim, patient: pat, invoice: inv };
-          const matched = ruleMatchesContext(rule, ctx, refDate);
-          if(!matched){ totalBefore += subtotal; totalAfter += subtotal; return; }
-          const res = evaluateRuleAction(rule, ctx, subtotal);
-          const deduct = res.deduct !== undefined ? res.deduct : (subtotal - (res.newApproved !== undefined ? res.newApproved : subtotal));
-          const after = Math.max(0, subtotal - deduct);
-          totalLines += (pat.lines||[]).length;
-          totalBefore += subtotal; totalAfter += after;
-          if(deduct > 0){ affected++; totalExtraDed += deduct; if(affectedSamples.length < 8) affectedSamples.push({ claim: claim.id, service: (pat.lines||[]).map(l=>l.name||l.code).join(', ').slice(0,40), before: subtotal, after }); }
-        });
-      });
-    } else {
-      (claim.invoices||[]).forEach(inv => {
-        (inv.patients||[]).forEach(pat => {
-          (pat.lines||[]).forEach(line => {
-            totalLines++;
-            const base = line.qty * (line.tariffUnit != null ? Math.min(line.billedUnit, line.tariffUnit) : line.billedUnit);
-            const ctx = { claim, patient: pat, invoice: inv, line: { ...line, lineBase: base } };
-            const matched = ruleMatchesContext(rule, ctx, refDate);
-            if(!matched){ totalBefore += base; totalAfter += base; return; }
-            const res = rule.isComposite ? evaluateCompositeRule(rule, ctx, refDate) : evaluateRuleAction(rule, ctx, base);
-            const newVal = res && res.newApproved !== undefined ? res.newApproved : (base - (res && res.deduct ? res.deduct : 0));
-            totalBefore += base; totalAfter += newVal;
-            if(newVal < base){ affected++; totalExtraDed += (base - newVal); if(affectedSamples.length < 8) affectedSamples.push({ claim: claim.id, service: line.name || line.code, before: base, after: newVal }); }
-          });
-        });
-      });
-    }
-  });
-
-  const pct = totalBefore ? ((totalExtraDed/totalBefore)*100).toFixed(1) : '0';
+  const _sum = (typeof summarizeRuleImpact === 'function') ? summarizeRuleImpact(rule, sample) : { claims:sample.length, lines:0, affected:0, before:0, after:0, extraDed:0, pct:'0', samples:[] };
+  const totalLines = _sum.lines, affected = _sum.affected;
+  const totalBefore = _sum.before, totalAfter = _sum.after, totalExtraDed = _sum.extraDed;
+  const affectedSamples = _sum.samples;
+  const pct = _sum.pct;
   let msg = `القاعدة: ${rule.name}<br>المطالبات المختبرة: ${sample.length}<br>البنود: ${totalLines}<br>البنود/المرضى المتأثرون: ${affected}<br>إجمالي قبل: ${fmt(totalBefore)}<br>إجمالي بعد: ${fmt(totalAfter)}<br>استقطاع إضافي: ${fmt(totalExtraDed)} (${pct}%)`;
   if(affectedSamples.length){
     msg += '<br><br><b>عينة من البنود المتأثرة:</b><br>';

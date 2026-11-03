@@ -14,7 +14,23 @@ function bindDeductionRulesControls(){
     chip.classList.add('active'); drFilter = chip.dataset.drf; renderDeductionRules();
   });
   $('#addDrBtn').addEventListener('click', () => openDrWizard());
+  const _tgl = (id) => {
+    const r = deductionRules.find(x => x.id === id); if(!r) return;
+    const t = (typeof toggleRuleEnabled === 'function') ? toggleRuleEnabled(r) : { ok:false };
+    if(!t.ok && t.needsSim){
+      showWarning('تفعيل بلا محاكاة', 'القاعدة لم تُحاكَ بعد — التفعيل المباشر قد يفاجئ المراجعة.<br><br>تفعيل مباشر؟ (الأفضل: محاكاة أولًا)', () => {
+        r.enabled = true; r.active = true;
+        try { if(typeof persistData === 'function') persistData(true); } catch(e){}
+        renderDeductionRules(); showSuccess('تم التفعيل', r.name);
+      });
+      return;
+    }
+    if(!t.ok){ showWarning('تنبيه', t.msg || 'تعذر التبديل'); return; }
+    try { if(typeof persistData === 'function') persistData(true); } catch(e){}
+    renderDeductionRules(); showSuccess('تم', r.name + (t.enabled ? ' — مفعّلة' : ' — موقوفة'));
+  };
   $('#drBody').addEventListener('click', e => {
+    const tg = e.target.closest('[data-toggle-dr]'); if(tg){ _tgl(tg.dataset.toggleDr); return; }
     const ed = e.target.closest('[data-edit-dr]'); if(ed) openDrModal(ed.dataset.editDr);
     const del = e.target.closest('[data-del-dr]'); if(del) deleteDr(del.dataset.delDr);
     const ts = e.target.closest('[data-test-dr]'); if(ts) testDeductionRule(ts.dataset.testDr);
@@ -58,7 +74,7 @@ function renderDeductionRules(){
     if(drFilter === 'expired' && drStatus(r).cls !== 'expired') return false;
     if((drFilter === 'coverage_cap' || drFilter === 'retiree_copay') && r.type !== drFilter) return false;
     if(drFilter === 'learned' && !(r.source === 'learned' && r.enabled === false)) return false;
-    if(drSearch){ const q = drSearch; return r.name.toLowerCase().includes(q) || r.type.includes(q); }
+    if(drSearch){ const q = drSearch; return (r.name || '').toLowerCase().includes(q) || (r.type || '').includes(q) || (r.id || '').toLowerCase().includes(q); }
     return true;
   });
   const body = $('#drBody');
@@ -71,6 +87,13 @@ function renderDeductionRules(){
     if(r.scope?.providerIds?.length) tags.push(`<span class="dr-scope-tag">${r.scope.providerIds.length} جهة</span>`);
     (r.scope?.claimTypes||[]).forEach(ct => tags.push(`<span class="dr-scope-tag ${ct==='retiree'?'warn':''}">${ct==='employee'?'عاملين':'معاشات'}</span>`));
     if(!r.scope?.providerIds?.length) tags.unshift('<span class="dr-scope-tag bad">كل</span>');
+    try {
+      if(typeof detectRuleConflicts === 'function' && r.enabled !== false && r.active !== false){
+        const _cf = detectRuleConflicts(r, deductionRules).conflicts || [];
+        _cf.filter(c => c.type === 'REDUNDANT' || c.type === 'CONTRADICTORY').slice(0,2).forEach(c => tags.push(`<span class="dr-scope-tag warn" title="${escapeHtml(c.message)}">⚠ ${c.type === 'REDUNDANT' ? 'مكررة' : 'متعارضة'}</span>`));
+      }
+    } catch(e){}
+    const _simLine = (r._simResult && typeof r._simResult.affected !== 'undefined') ? `<div style="font-size:10px;color:var(--teal);font-weight:700">محاكاة: ${r._simResult.affected} متأثر · ${fmt(r._simResult.extraDed || 0)}</div>` : '';
     return `<tr>
       <td data-label="الرقم"><span class="clm-id">${escapeHtml(r.id)}</span></td>
       <td data-label="الاسم"><div style="font-weight:700;font-size:12.5px">${escapeHtml(r.name)}</div>${r.notes?`<div style="font-size:10.5px;color:var(--muted);margin-top:2px">${escapeHtml(r.notes)}</div>`:''}</td>
@@ -78,8 +101,8 @@ function renderDeductionRules(){
       <td data-label="النسبة"><span class="dr-rate-badge">${r.rate}%</span></td>
       <td data-label="النطاق"><div class="dr-scope-tags">${tags.join('')}</div></td>
       <td data-label="السريان" style="font-size:11px;line-height:1.6"><div>${escapeHtml(r.effectiveFrom||'—')}</div><div style="color:var(--muted)">${escapeHtml(r.effectiveTo||'—')}</div></td>
-      <td data-label="الحالة"><span class="dr-status-pill ${st.cls}">${st.label}</span>${_deadIds.has(r.id)?'<div style="font-size:10px;color:var(--warn);font-weight:700">💀 ميتة (0 مطابقة/آخر 30)</div>':''}</td>
-      <td class="act"><div style="display:flex;gap:5px;align-items:center"><button class="btn-xs" data-test-dr="${escapeHtml(r.id)}">اختبار</button><button class="btn-xs" data-sim-dr="${escapeHtml(r.id)}">محاكاة</button><button class="btn-xs" data-edit-dr="${escapeHtml(r.id)}">تحرير</button><button class="btn-xs danger" data-del-dr="${escapeHtml(r.id)}">×</button></div></td>
+      <td data-label="الحالة"><span class="dr-status-pill ${st.cls}">${st.label}</span>${_simLine}${_deadIds.has(r.id)?'<div style="font-size:10px;color:var(--warn);font-weight:700">💀 ميتة (0 مطابقة/آخر 30)</div>':''}</td>
+      <td class="act"><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap"><button class="btn-xs" data-toggle-dr="${escapeHtml(r.id)}">${(r.enabled === false || !r.active) ? 'تفعيل' : 'إيقاف'}</button><button class="btn-xs" data-test-dr="${escapeHtml(r.id)}">اختبار</button><button class="btn-xs" data-sim-dr="${escapeHtml(r.id)}">محاكاة</button><button class="btn-xs" data-edit-dr="${escapeHtml(r.id)}">تحرير</button><button class="btn-xs danger" data-del-dr="${escapeHtml(r.id)}">×</button></div></td>
     </tr>`;
   }).join('');
   renderPaProcedures();

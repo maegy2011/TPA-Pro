@@ -38,14 +38,16 @@ function ruleMatchesContext(rule, ctx, refDate){
   if(rule.effectiveFrom && rDate < toDate(rule.effectiveFrom)) return false;
   if(rule.effectiveTo && rDate > toDate(rule.effectiveTo)) return false;
   const claim = ctx.claim;
+  const _plist = ctx.providers || (function(){ try { return (typeof providers !== 'undefined') ? providers : []; } catch(e){ return []; } })() || [];
+  const _clist = ctx.contracts || (function(){ try { return (typeof contracts !== 'undefined') ? contracts : []; } catch(e){ return []; } })() || [];
   if(rule.scope?.claimTypes?.length && !rule.scope.claimTypes.includes(claim.type || 'employee')) return false;
   if(rule.scope?.providerIds?.length){
-    const prov = providers.find(p => (claim.providerCode != null && p.code === claim.providerCode) || p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId));
+    const prov = _plist.find(p => (claim.providerCode != null && p.code === claim.providerCode) || p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId));
     if(!prov || !rule.scope.providerIds.includes(prov.id)) return false;
   }
   if(rule.scope?.contractIds?.length){
-    const prov = providers.find(p => (claim.providerCode != null && p.code === claim.providerCode) || p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId));
-    const cids = prov ? contracts.filter(c => c.providerId === prov.id).map(c => c.id) : [];
+    const prov = _plist.find(p => (claim.providerCode != null && p.code === claim.providerCode) || p.name === claim.provider || p.id === claim.provider || (claim.providerId && p.id === claim.providerId));
+    const cids = prov ? _clist.filter(c => c.providerId === prov.id).map(c => c.id) : [];
     if(!rule.scope.contractIds.some(cid => cids.includes(cid))) return false;
   }
   if(rule.conditions && rule.conditions.rules && rule.conditions.rules.length){
@@ -61,6 +63,70 @@ function getCyclicRuleIds(){
     const kept = new Set(sorted.map(r => r.id));
     return new Set(rules.map(r => r.id).filter(id => !kept.has(id)));
   } catch(e){ return new Set(); }
+}
+/* فحص تعريف القاعدة — منطق خالص (يُختبر آليًا). مرآة شروط الحفظ في الواجهة. */
+function validateRuleDefinition(d){
+  d = d || {};
+  if(!String(d.name || '').trim()) return { ok:false, msg:'أدخل الاسم' };
+  if(!Number.isFinite(Number(d.rate)) || Number(d.rate) < 0 || Number(d.rate) > 100) return { ok:false, msg:'النسبة' };
+  if(!String(d.effectiveFrom || '').trim()) return { ok:false, msg:'أدخل السريان' };
+  if(!Array.isArray(d.claimTypes) || !d.claimTypes.length) return { ok:false, msg:'حدد نوع' };
+  if(!String(d.notes || '').trim()) return { ok:false, msg:'اكتب سبب القاعدة بالعربية (إلزامي للتخريج القانوني)' };
+  const sel = Array.isArray(d.providerIds) ? d.providerIds.filter(Boolean) : [];
+  if(!sel.length && !d.scopeExplicitAll) return { ok:false, msg:'حدد جهة واحدة على الأقل أو علّم «كل الجهات» صراحة — القاعدة بلا نطاق ممنوعة' };
+  return { ok:true, msg:'' };
+}
+/* ملخص أثر قاعدة على عينة مطالبات — منطق خالص (يُختبر آليًا). */
+function summarizeRuleImpact(rule, claimsSample){
+  const out = { claims:0, lines:0, affected:0, before:0, after:0, extraDed:0, pct:'0', samples:[] };
+  if(!rule || !Array.isArray(claimsSample) || !claimsSample.length) return out;
+  const isPatientLevel = ['apply_cap','apply_copay'].includes(rule.action);
+  out.claims = claimsSample.length;
+  claimsSample.forEach(claim => {
+    const refDate = claim.date || claim.receivedDate || '';
+    (claim.invoices || []).forEach(inv => {
+      (inv.patients || []).forEach(pat => {
+        if(isPatientLevel){
+          const subtotal = (pat.lines || []).reduce((s,l) => s + ((Number(l.approved) || (Number(l.qty) || 0) * (Number(l.billedUnit) || 0))), 0);
+          const matched = (typeof ruleMatchesContext === 'function') ? ruleMatchesContext(rule, { claim, patient:pat, invoice:inv }, refDate) : false;
+          out.lines += (pat.lines || []).length;
+          if(!matched){ out.before += subtotal; out.after += subtotal; return; }
+          const res = (typeof evaluateRuleAction === 'function') ? evaluateRuleAction(rule, { claim, patient:pat, invoice:inv }, subtotal) : {};
+          const deduct = res.deduct !== undefined ? res.deduct : 0;
+          out.before += subtotal; out.after += Math.max(0, subtotal - deduct);
+          if(deduct > 0){ out.affected++; out.extraDed += deduct;
+            if(out.samples.length < 8) out.samples.push({ claim:claim.id, service:(pat.lines||[]).map(l=>l.name||l.code).join(', ').slice(0,40), before:subtotal, after:Math.max(0, subtotal-deduct) }); }
+        } else {
+          (pat.lines || []).forEach(line => {
+            out.lines++;
+            const base = (Number(line.qty) || 0) * (line.tariffUnit != null ? Math.min(Number(line.billedUnit) || 0, Number(line.tariffUnit)) : (Number(line.billedUnit) || 0));
+            const ctx = { claim, patient:pat, invoice:inv, line:{ ...line, lineBase:base } };
+            const matched = (typeof ruleMatchesContext === 'function') ? ruleMatchesContext(rule, ctx, refDate) : false;
+            if(!matched){ out.before += base; out.after += base; return; }
+            const res = (rule.isComposite && typeof evaluateCompositeRule === 'function') ? evaluateCompositeRule(rule, ctx, refDate) : ((typeof evaluateRuleAction === 'function') ? evaluateRuleAction(rule, ctx, base) : {});
+            const nv = res && res.newApproved !== undefined ? res.newApproved : (base - (res && res.deduct ? res.deduct : 0));
+            out.before += base; out.after += nv;
+            if(nv < base){ out.affected++; out.extraDed += (base - nv);
+              if(out.samples.length < 8) out.samples.push({ claim:claim.id, service:line.name || line.code, before:base, after:nv }); }
+          });
+        }
+      });
+    });
+  });
+  out.before = Math.round(out.before); out.after = Math.round(out.after); out.extraDed = Math.round(out.extraDed);
+  out.pct = out.before ? ((out.extraDed / out.before) * 100).toFixed(1) : '0';
+  return out;
+}
+/* تبديل تفعيل قاعدة — منطق خالص يعيد القرار (تحتاج محاكاة أولًا أم لا). */
+function toggleRuleEnabled(rule){
+  if(!rule || typeof rule !== 'object') return { ok:false, msg:'القاعدة غير موجودة' };
+  if(rule.enabled === false || rule.active === false){
+    if(!rule._simulated) return { ok:false, needsSim:true, msg:'لم تُحاكَ بعد — نفّذ «محاكاة» أولًا أو فعّل مباشرة بتأكيدك' };
+    rule.enabled = true; rule.active = true;
+    return { ok:true, enabled:true };
+  }
+  rule.enabled = false;
+  return { ok:true, enabled:false };
 }
 /* أولوية القاعدة: الأعلى يُطبَّق أولًا؛ الافتراضي 0. */
 function rulePriority(r){ const p = Number(r && r.priority); return isNaN(p) ? 0 : p; }
