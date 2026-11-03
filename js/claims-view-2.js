@@ -42,7 +42,12 @@ function _draftTotals(invoices){
   return { billed: Math.round(billed), approved: Math.round(approved) };
 }
 function saveReviewDraft(label){
-  if(!activeClaim || !Array.isArray(workingInvoices)) return;
+  if(!activeClaim || !Array.isArray(workingInvoices)){
+    if(typeof showWarning === 'function') showWarning('لا توجد مراجعة نشطة', 'افتح مطالبة للمراجعة أولًا ثم احفظ المسودة.');
+    else if(typeof showToast === 'function') showToast('⚠ لا توجد مراجعة نشطة');
+    return;
+  }
+  try {
   if(!Array.isArray(activeClaim._reviewDrafts)) activeClaim._reviewDrafts = [];
   workingInvoices.forEach(inv => (inv.patients||[]).forEach(p => { if(typeof computePatient === 'function') computePatient(p, activeClaim, inv.date, inv); }));
   const t = _draftTotals(workingInvoices);
@@ -66,6 +71,11 @@ function saveReviewDraft(label){
   }
   if(typeof renderReviewDrafts === 'function') renderReviewDrafts();
   if(typeof showSuccess === 'function') showSuccess('مسودة محفوظة', `المعتمد في هذه المسودة: ${fmt(t.approved)}`);
+  } catch(err){
+    try { console.error('saveReviewDraft failed', err); } catch(e){}
+    if(typeof showWarning === 'function') showWarning('تعذّر حفظ المسودة', String((err && err.message) || err));
+    else if(typeof showToast === 'function') showToast('⚠ تعذّر حفظ المسودة');
+  }
 }
 function restoreReviewDraft(id){
   if(!activeClaim) return;

@@ -53,7 +53,15 @@ function setDialogButtonLabel(button, label, countdown){
   }
 }
 function openDialog(opts){
+  opts = opts || {};
   if(dialogState.interval){ clearInterval(dialogState.interval); dialogState.interval = null; }
+  const _dShell = (typeof document !== 'undefined') ? document.getElementById('dialog') : null;
+  if(!_dShell){
+    try { if(typeof alert === 'function') alert(String(opts.title || 'تنبيه') + '\n' + String(opts.message || '')); } catch(e){}
+    try { console.error('openDialog: dialog shell missing', opts.title, opts.message); } catch(e){}
+    try { if(typeof dialogState !== 'undefined' && typeof dialogState.onCancel === 'function'){ const _cb = dialogState.onCancel; dialogState.onCancel = null; _cb(); } } catch(e){}
+    return false;
+  }
   const type = opts.type || 'info';
   const iconType = type === 'delete' ? 'delete' : type;
   $('#dialogIcon').className = 'dialog-icon-wrap ' + (iconType === 'delete' ? 'danger' : type);

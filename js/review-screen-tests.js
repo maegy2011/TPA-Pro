@@ -88,6 +88,22 @@ function runReviewScreenTests(){
         A('مراجعة-شاشة: إعادة الحفظ تؤرشف نسخة', Array.isArray(activeClaim._reviewDrafts) && activeClaim._reviewDrafts.length >= 1);
         workingInvoices = [];
       } catch(e){ A('مراجعة-شاشة: الحفظ', false, e.message); }
+
+      /* ---------- 5. الحفظ لا يموت بصمت ---------- */
+      try {
+        activeClaim = null; workingInvoices = [];
+        lastWarn = null; saveReviewDraft('تجربة');
+        A('مراجعة-شاشة: بلا مراجعة = تحذير لا صمت', (lastWarn || '').includes('نشطة'), lastWarn || '');
+        activeClaim = { id:'CLM-S', priorApproval:{ required:false }, _reviewDrafts:[] };
+        workingInvoices = [{ id:'I', patients:[] }];
+        const _circ = { id:'I', patients:[] }; _circ.self = _circ;
+        workingInvoices = [_circ];
+        lastWarn = null;
+        saveReviewDraft('تجربة');
+        A('مراجعة-شاشة: الاستثناء = تحذير لا صمت', (lastWarn || '').includes('تعذّر'), lastWarn || '');
+        A('مراجعة-شاشة: الفشل لا يترك مسودة ناقصة', activeClaim._reviewDrafts.length === 0);
+        workingInvoices = [];
+      } catch(e){ A('مراجعة-شاشة: اللاصمت', false, e.message); }
     } finally { Object.keys(shell).forEach(k => { try { g[k] = shell[k]; } catch(e){} }); }
   } finally {
     Object.keys(dlg).forEach(k => { try { g[k] = dlg[k]; } catch(e){} });
