@@ -31,6 +31,9 @@ function checkRequires(rule, appliedIds){
 }
 function ruleMatchesContext(rule, ctx, refDate){
   if(rule.enabled === false || rule.active === false) return false;
+  if(!rule.retroactive && rule._simAt){
+    try { const _rd = (refDate && String(refDate).slice(0,10)) || ''; if(_rd && _rd < String(rule._simAt).slice(0,10)) return false; } catch(e){}
+  }
   const rDate = (typeof toDate === 'function') ? toDate(refDate) : new Date(refDate);
   if(rule.effectiveFrom && rDate < toDate(rule.effectiveFrom)) return false;
   if(rule.effectiveTo && rDate > toDate(rule.effectiveTo)) return false;

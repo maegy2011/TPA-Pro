@@ -36,3 +36,9 @@ function newPatientId(inv){
   return inv.id+'-P'+(m+1);
 }
 function _hasUnsavedChanges(){ return _sessionDirty === true; }
+if(typeof window !== 'undefined' && !window._tpaUnloadGuard){
+  window._tpaUnloadGuard = true;
+  window.addEventListener('beforeunload', (e) => {
+    try { if(typeof _hasUnsavedChanges === 'function' && _hasUnsavedChanges()){ e.preventDefault(); e.returnValue = ''; } } catch(err){}
+  });
+}

@@ -53,6 +53,18 @@ function bindReviewModal(){
     if(e.target.closest('[data-legal-print]')){ if(typeof printLegalIssuance === 'function' && typeof activeClaim !== 'undefined' && activeClaim) printLegalIssuance(activeClaim.id); return; }
     if(e.target.closest('[data-run-tests]')){ const r = (typeof runEngineTests==='function') ? runEngineTests() : null; if(r && typeof showSuccess==='function') showSuccess('الاختبارات', `${r.pass}/${r.total} ناجح${r.fail?` — ${r.fail} فاشل`:''}`); return; }
     if(e.target.closest('[data-add-line]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv||!inv.patients||!inv.patients.length){ showWarning('تنبيه','أضف مريضاً أولاً'); return; } openLineEditor(rvActivePatientIdx); return; }
+    if(e.target.closest('[data-approve-clean]')){
+      const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
+      let n = 0;
+      (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
+        if(!(l._checksFailed||[]).length && l._decision !== 'manual-approved'){ l._decision='manual-approved'; l._overrideMode='manual'; l._decidedBy='reviewer'; l._decidedAt=new Date().toISOString(); l._decisionNote='اعتماد جماعي نظيف'; try { if(typeof appendClaimAuditEvent==='function' && typeof activeClaim!=='undefined' && activeClaim) appendClaimAuditEvent(activeClaim,{action:'review.manual-decision',details:{line:l.code||'',decision:'approve-clean',by:'reviewer'}}); } catch(e){} n++; }
+      }));
+      try { if(typeof markSessionDirty==='function') markSessionDirty(); } catch(e){}
+      if(typeof renderActiveInvoice==='function') renderActiveInvoice();
+      if(typeof recalcReview==='function') recalcReview();
+      if(typeof showSuccess==='function') showSuccess('اعتماد نظيف', `${n} بند`);
+      return;
+    }
     if(e.target.closest('[data-inv-collapse]')){ _collapsedInvIdx = (_collapsedInvIdx===rvActiveInvoiceIdx ? -1 : rvActiveInvoiceIdx); if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }
     if(e.target.closest('[data-pat-collapse]')){ _patCollapsedAll = !_patCollapsedAll; if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }
     if(e.target.closest('[data-edit-invoice]')){ openInvoiceEditor(rvActiveInvoiceIdx); return; }

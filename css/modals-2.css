@@ -148,7 +148,7 @@
 /* ---------- Review modal: collapsible patients (professional) ---------- */
 .rv-patient-details{border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.04);transition:box-shadow .18s, border-color .18s}
 .rv-patient-details[open]{border-color:var(--teal);box-shadow:0 4px 14px rgba(14,124,123,.12)}
-.rv-patient-details > summary{list-style:none;padding:12px 14px;background:linear-gradient(180deg,#F8FAFC,#F1F5F9);display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.rv-patient-details > summary{list-style:none;padding:12px 14px;background:linear-gradient(180deg,#F8FAFC,#F1F5F9);display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;user-select:none;position:sticky;top:0;z-index:5}
 .rv-patient-details > summary::-webkit-details-marker{display:none}
 .rv-patient-details > summary:focus{outline:2px solid var(--teal);outline-offset:-2px}
 .rv-patient-details > summary:hover{background:linear-gradient(180deg,#F1F5F9,#E8F0F0)}

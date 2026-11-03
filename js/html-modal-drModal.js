@@ -12,6 +12,12 @@ const MODAL_DR = `
           <div class="fg"><label>السريان *</label><input id="drFrom" type="date"></div>
           <div class="fg"><label>الانتهاء</label><input id="drTo" type="date"></div>
           <div class="fg full"><label class="check-row"><input type="checkbox" id="drActive" checked> نشطة</label></div>
+          <div class="fg"><label>الأولوية (الأعلى أولًا)</label><input id="drPriority" type="number" value="0" step="1"></div>
+          <div class="fg"><label class="check-row"><input type="checkbox" id="drRetro"> بأثر رجعي من السريان (وإلا: من التفعيل فقط)</label></div>
+          <div class="fg full"><label>النطاق: جهة واحدة على الأقل أو «كل الجهات» صراحة</label>
+            <div class="scope-grid" id="drScopeProviders" style="max-height:120px;overflow:auto"></div>
+            <label class="check-row" style="margin-top:6px"><input type="checkbox" id="drScopeAll"> كل الجهات (توثيق صريح)</label>
+          </div>
           <div class="fg full"><label>نوع المطالبة</label>
             <div class="scope-grid" style="max-height:none">
               <label class="scope-chk"><input type="checkbox" class="dr-ctype" value="employee" checked> عاملين</label>

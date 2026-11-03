@@ -1,4 +1,23 @@
 // deduction-rules-2.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
+function detectDeadRules(){
+  const sample = (typeof claims !== 'undefined' ? claims : []).slice(-30);
+  const dead = [];
+  (typeof deductionRules !== 'undefined' ? deductionRules : []).forEach(rule => {
+    if(rule.enabled === false || rule.active === false) return;
+    let hits = 0;
+    try {
+      sample.forEach(c => {
+        const _ref = c.date || c.receivedDate || daysFromNow(0);
+        (c.invoices||[]).forEach(inv => (inv.patients||[]).forEach(p => {
+          const ctx = { claim:c, patient:p, invoice:inv };
+          if(typeof ruleMatchesContext==='function' && ruleMatchesContext(rule, ctx, _ref)) hits++;
+        }));
+      });
+    } catch(e){}
+    if(!hits) dead.push(rule);
+  });
+  return dead;
+}
 function renderPaProcedures(){
   const body = $('#paProcBody'); if(!body) return;
   if(!paProcedures.length){ body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--muted)">لا إجراءات</td></tr>'; return; }
@@ -12,6 +31,16 @@ function openDrModal(id){
   $('#drName').value = r ? r.name : ''; $('#drType').value = r ? r.type : 'coverage_cap'; $('#drRate').value = r ? r.rate : 20;
   $('#drFrom').value = r ? r.effectiveFrom : daysFromNow(0); $('#drTo').value = r ? (r.effectiveTo||'') : daysFromNow(365);
   $('#drActive').checked = r ? r.active : true; $('#drNotes').value = r ? r.notes||'' : '';
+  try {
+    const _pr = document.getElementById('drPriority'); if(_pr) _pr.value = (r && r.priority) || 0;
+    const _rt = document.getElementById('drRetro'); if(_rt) _rt.checked = !!(r && r.retroactive);
+    const _sa = document.getElementById('drScopeAll'); if(_sa) _sa.checked = !!(r && r.scopeExplicitAll);
+    const _box = document.getElementById('drScopeProviders');
+    if(_box && typeof providers !== 'undefined'){
+      const _sel = (r && r.scope && r.scope.providerIds) || [];
+      _box.innerHTML = providers.map(p => `<label class="scope-chk"><input type="checkbox" class="dr-scope-p" value="${p.id}" ${_sel.includes(p.id)?'checked':''}> ${escapeHtml(p.name||p.id)}</label>`).join('') || '<span style="color:var(--muted)">لا جهات</span>';
+    }
+  } catch(e){}
   const ct = r ? (r.scope.claimTypes||[]) : ['employee'];
   $$('.dr-ctype').forEach(cb => cb.checked = ct.includes(cb.value));
   (el => { if (el) el.style.display = r ? 'block' : 'none'; })($('#deleteDrBtn'));
@@ -29,7 +58,11 @@ function saveDr(){
   const _notes = ($('#drNotes') && $('#drNotes').value.trim()) || '';
   if(!_notes){ showWarning('تنبيه','اكتب سبب القاعدة بالعربية (إلزامي للتخريج القانوني)'); return; }
   const _prioEl = document.getElementById('drPriority'); const _prio = _prioEl ? Number(_prioEl.value)||0 : 0;
-  const data = { name, type, action: type==='coverage_cap'?'apply_cap':'apply_copay', rate, priority:_prio, effectiveFrom:from, effectiveTo:to||'', active:$('#drActive').checked, notes:$('#drNotes').value.trim(), scope:{ providerIds:[], contractIds:[], claimTypes:cts } };
+  const _retro = !!(document.getElementById('drRetro') && document.getElementById('drRetro').checked);
+  const _scopeAll = !!(document.getElementById('drScopeAll') && document.getElementById('drScopeAll').checked);
+  const _selProv = Array.from(document.querySelectorAll('.dr-scope-p:checked')).map(cb => cb.value);
+  if(!_selProv.length && !_scopeAll){ showWarning('تنبيه','حدد جهة واحدة على الأقل أو علّم «كل الجهات» صراحة — القاعدة بلا نطاق ممنوعة'); return; }
+  const data = { name, type, action: type==='coverage_cap'?'apply_cap':'apply_copay', rate, priority:_prio, retroactive:_retro, scopeExplicitAll:_scopeAll, effectiveFrom:from, effectiveTo:to||'', active:$('#drActive').checked, notes:$('#drNotes').value.trim(), scope:{ providerIds:_selProv, contractIds:[], claimTypes:cts } };
   if(editingDrId){ const r = deductionRules.find(x=>x.id===editingDrId); if(r){ r._prevVersion = { rate:r.rate, priority:(r.priority||0), at:new Date().toISOString() }; Object.assign(r, data); r.version = (Number(r.version)||1)+1; r._simulated = false; r.enabled = false; r.active = false; } showSuccess('تم — القاعدة معطلة حتى محاكاة إجبارية', 'نفّذ «محاكاة» لعرض الأثر ثم فعّلها'); }
   else {
     const y = new Date(from).getFullYear(), pre = 'DR-'+y+'-';

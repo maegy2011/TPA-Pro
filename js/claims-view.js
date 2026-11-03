@@ -163,6 +163,7 @@ function renderActiveInvoice(){
       ${!_isExt ? `<div class="rv-meta-item"><span>تصنيف العملية</span><b>${(typeof OP_CLASS_CAPS !== 'undefined' && inv.operationClass && OP_CLASS_CAPS[inv.operationClass]) ? OP_CLASS_CAPS[inv.operationClass].label : '—'}</b></div><div class="rv-meta-item"><span>الباكج</span><b>${inv.packageType==='closed' ? 'مغلق ('+fmtC(Number(inv.packagePrice)||0)+')' : 'مفتوح'}</b></div>` : ''}
     </div>
     <div class="rv-inv-actions">
+      <button type="button" class="rv-act-btn solid" data-approve-clean="1" style="background:var(--ok);color:#fff">✅ اعتماد الكل نظيف</button>
       <button type="button" class="rv-act-btn ghost" data-inv-collapse="1">${_collapsedInvIdx===rvActiveInvoiceIdx ? '▸ توسيع المذكرة' : '▾ طي المذكرة'}</button>
       <button type="button" class="rv-act-btn ghost" data-pat-collapse="1">${_patCollapsedAll ? '▸ توسيع المرضى' : '▾ طي المرضى'}</button>
       <button type="button" class="rv-act-btn primary" data-add-patient="1">+ مريض</button>
