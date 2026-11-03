@@ -16,8 +16,9 @@ function runEngineTests(){
   R.push(_tAssert(X(L({qty:2}), { tariff:T([{code:'MRI-01',currentPrice:800}]), contract:C() }).lesser===1600, 'الكمية تُضرب'));
   // 5-7: الخصم
   R.push(_tAssert(X(L(), { tariff:T([{code:'MRI-01',currentPrice:1000}]), contract:C({discountRate:20}) }).afterContract===800, 'خصم 20%'));
-  R.push(_tAssert(X(L(), { tariff:T([{code:'MRI-01',currentPrice:1000}]), contract:C({discountRate:20, serviceOverrides:{'MRI-01':{discountRate:50}}}) }).rate===50, 'الخاص يغلب نسبة العقد'));
-  R.push(_tAssert(X(L(), { tariff:T([{code:'MRI-01',currentPrice:1000}]), contract:C({discountRate:20, serviceOverrides:{'MRI-01':{discountRate:50}}}) }).afterContract===500, 'الخاص يغلب في المبلغ'));
+  const _ov = { 'MRI-01':{ discountRate:50 } };
+  R.push(_tAssert(X(L(), { tariff:T([{code:'MRI-01',currentPrice:1000}]), contract:C({discountRate:20}), serviceOverrides:_ov }).rate===50, 'الخاص يغلب نسبة العقد'));
+  R.push(_tAssert(X(L(), { tariff:T([{code:'MRI-01',currentPrice:1000}]), contract:C({discountRate:20}), serviceOverrides:_ov }).afterContract===500, 'الخاص يغلب في المبلغ'));
   // 8-11: التغطية والاستثناء (القرار الدائم: الخاص يغلب)
   R.push(_tAssert(isServiceCovered({ tariff:T([]), contract:C({excludedServices:['MRI-01']}), serviceOverrides:{} }, 'MRI-01')===false, 'المستثنى بلا خاص: مرفوض'));
   R.push(_tAssert(isServiceCovered({ tariff:T([]), contract:C({excludedServices:['MRI-01']}), serviceOverrides:{'MRI-01':{covered:true}} }, 'MRI-01')===true, 'الخاص يغلب المستثنى'));
@@ -51,8 +52,10 @@ function runEngineTests(){
     R.push(_tAssert(validateLine(_over[0], _mkCtx(_over)).failed.includes('over-frequency'), 'تكرار مفرط: 4 مرات نفس الكود'));
     const _wctx = { claim:{id:'C',date:'2026-03-01',type:'employee'}, patient:{id:'P',letterDate:'2026-02-01',lines:[{code:'X',qty:1,billedUnit:100,procedureDate:'2026-01-05'}]}, invoice:{id:'I',date:'2026-03-01'} };
     R.push(_tAssert(validateLine({code:'X',qty:1,billedUnit:100,procedureDate:'2026-01-05'}, _wctx).failed.includes('waiting-period'), 'فترة انتظار: إجراء قبل الخطاب'));
-    const _unb = [{code:'C1',name:'كشف',category:'كشف',qty:1,billedUnit:100,procedureDate:'2026-03-01'},{code:'S1',name:'عملية جراحية',category:'جراحة',qty:1,billedUnit:500,procedureDate:'2026-03-01'}];
-    R.push(_tAssert(validateLine(_unb[0], _mkCtx(_unb)).failed.includes('unbundling'), 'تفكيك: كشف + جراحة نفس اليوم'));
+    const _feeAlone = [{code:'F1',name:'أتعاب جراحة',category:'أتعاب',qty:1,billedUnit:500},{code:'M1',name:'دواء',category:'أدوية',qty:1,billedUnit:100}];
+    const _feeWithSurg = [{code:'F1',name:'أتعاب جراحة',category:'أتعاب',qty:1,billedUnit:500},{code:'S1',name:'عملية جراحة',category:'جراحة',qty:1,billedUnit:500}];
+    R.push(_tAssert(validateLine(_feeAlone[0], _mkCtx(_feeAlone)).failed.includes('unbundling'), 'تفكيك: أتعاب بلا جراحة'));
+    R.push(_tAssert(!validateLine(_feeWithSurg[0], _mkCtx(_feeWithSurg)).failed.includes('unbundling'), 'تفكيك: أتعاب مع جراحة سليمة'));
     R.push(_tAssert(typeof sortRulesByPriority==='function', 'الأولوية: دالة الترتيب موجودة'));
     const _s = sortRulesByPriority([{id:'a',priority:1},{id:'b',priority:5},{id:'c'}]);
     R.push(_tAssert(_s[0].id==='b' && _s[2].id==='c', 'الأولوية: الأعلى أولًا'));

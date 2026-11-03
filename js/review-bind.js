@@ -51,7 +51,7 @@ function bindReviewModal(){
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
     if(e.target.closest('[data-add-patient]')){ openPatientEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-legal-print]')){ if(typeof printLegalIssuance === 'function' && typeof activeClaim !== 'undefined' && activeClaim) printLegalIssuance(activeClaim.id); return; }
-    if(e.target.closest('[data-run-tests]')){ const r = (typeof runEngineTests==='function') ? runEngineTests() : null; if(r && typeof showSuccess==='function') showSuccess('الاختبارات', `${r.pass}/${r.total} ناجح${r.fail?` — ${r.fail} فاشل`:''}`); return; }
+    if(e.target.closest('[data-run-tests]')){ const r = (typeof runEngineTests==='function') ? runEngineTests() : null; const ri = (typeof runIntegrationTests==='function') ? runIntegrationTests() : null; const _t = (r?r.total:0)+(ri?ri.total:0), _f = (r?r.fail:0)+(ri?ri.fail:0); if(typeof showSuccess==='function') showSuccess('الاختبارات', `محرك ${(r?r.pass:0)}/${(r?r.total:0)} · تكامل ${(ri?ri.pass:0)}/${(ri?ri.total:0)}${_f?` — ${_f} فاشل`:''}`); return; }
     if(e.target.closest('[data-add-line]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv||!inv.patients||!inv.patients.length){ showWarning('تنبيه','أضف مريضاً أولاً'); return; } openLineEditor(rvActivePatientIdx); return; }
     if(e.target.closest('[data-approve-clean]')){
       const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;

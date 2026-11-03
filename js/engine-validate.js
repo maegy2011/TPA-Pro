@@ -174,6 +174,8 @@ function _validationCacheKey(line, ctx){
       } : null,
       contract: ctx.contract && ctx.contract.id, tariff: ctx.tariff && ctx.tariff.id, tariffVersion: ctx.tariff && ctx.tariff._resolvedVersionEffectiveDate,
       serviceOverride: (ctx.serviceOverrides || ctx.contract?.serviceOverrides || {})[String(line.code)] || null,
+      // الفحوص الشقيقة (تكرار/تفرّق/تفكيك) تعتمد على بنود المريض كلها — أي تغيير فيها يُبطل الكاش.
+      siblings: (ctx.patient && Array.isArray(ctx.patient.lines)) ? ctx.patient.lines.map(l => `${l.code||''}×${l.qty||0}@${l.procedureDate||l.serviceDate||l.date||''}`).join('|') : '',
     });
   } catch(e){ return null; }
 }
