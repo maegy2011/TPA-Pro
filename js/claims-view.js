@@ -23,7 +23,7 @@ function renderReviewInvoices(){
     const tot = invoiceTotals(inv);
     const name = inv.debitNoteNumber || inv.number || inv.id;
     const ct = inv.claimType === 'retiree' ? 'معاشات' : 'عاملين';
-    return `<button type="button" class="rv-inv-tab ${i===rvActiveInvoiceIdx?'active':''}" data-inv-idx="${i}"><span>مذكرة خصم ${escapeHtml(name)} • ${ct}</span><span class="cnt">${(inv.patients||[]).length} مريض</span><span class="amt">${fmt(tot.billed)}</span></button>`;
+    return `<button type="button" class="rv-inv-tab ${i===rvActiveInvoiceIdx?'active':''}" data-inv-idx="${i}"><span class="rv-inv-dot" data-dot-idx="${i}" title="حالة المراجعة" style="color:var(--muted)">●</span><span>مذكرة خصم ${escapeHtml(name)} • ${ct}</span><span class="cnt">${(inv.patients||[]).length} مريض</span><span class="amt">${fmt(tot.billed)}</span></button>`;
   }).join('') + '<button type="button" class="rv-add-tab" data-add-invoice="1">+ مذكرة خصم</button>';
   renderActiveInvoice(); recalcReview();
 }
@@ -115,7 +115,7 @@ function renderActiveInvoice(){
     const linesHtml = (p.lines||[]).length ? (p.lines||[]).map((ln,i)=>reviewLineRow(ln,i)).join('') : '<tr><td colspan="11" style="text-align:center;padding:18px;color:var(--muted)">لا بنود</td></tr>';
     const patDocs = p.documents || {};
     const pDocsHtml = DOC_ITEMS.map(d => { const on = !!patDocs[d.key]; return `<label class="rv-doc ${on?'ok':'miss'}"><input type="checkbox" data-pat-doc="${d.key}" data-pat-idx="${pi}" ${on?'checked':''}>${d.label}</label>`; }).join('');
-    return `<details class="rv-patient-details ${pi===rvActivePatientIdx?'rv-patient-reviewing':''}" data-pat-idx="${pi}" ${pi===rvActivePatientIdx?'open':''}>
+    return `<details class="rv-patient-details ${pi===rvActivePatientIdx?'rv-patient-reviewing':''}" data-pat-idx="${pi}" ${(!_patCollapsedAll && pi===rvActivePatientIdx)?'open':''}>
       <summary class="rv-patient-summary">
         <span class="rv-patient-seq" style="margin-inline-end:6px;color:var(--teal);font-weight:800">#${pi+1}</span>
         <span class="rv-patient-name">${escapeHtml(p.name)}</span>
@@ -163,10 +163,13 @@ function renderActiveInvoice(){
       ${!_isExt ? `<div class="rv-meta-item"><span>تصنيف العملية</span><b>${(typeof OP_CLASS_CAPS !== 'undefined' && inv.operationClass && OP_CLASS_CAPS[inv.operationClass]) ? OP_CLASS_CAPS[inv.operationClass].label : '—'}</b></div><div class="rv-meta-item"><span>الباكج</span><b>${inv.packageType==='closed' ? 'مغلق ('+fmtC(Number(inv.packagePrice)||0)+')' : 'مفتوح'}</b></div>` : ''}
     </div>
     <div class="rv-inv-actions">
+      <button type="button" class="rv-act-btn ghost" data-inv-collapse="1">${_collapsedInvIdx===rvActiveInvoiceIdx ? '▸ توسيع المذكرة' : '▾ طي المذكرة'}</button>
+      <button type="button" class="rv-act-btn ghost" data-pat-collapse="1">${_patCollapsedAll ? '▸ توسيع المرضى' : '▾ طي المرضى'}</button>
       <button type="button" class="rv-act-btn primary" data-add-patient="1">+ مريض</button>
       <button type="button" class="rv-act-btn ghost" data-edit-invoice="1">تعديل مذكرة الخصم</button>
       <button type="button" class="rv-act-btn danger" data-delete-invoice="1">حذف مذكرة الخصم</button>
     </div>
+    <div class="rv-inv-body" data-inv-body="1" style="${_collapsedInvIdx===rvActiveInvoiceIdx ? 'display:none' : ''}">
     <div class="rv-inv-total"><span>مطالب: <b>${fmtC(tot.billed)}</b></span><span>معتمد: <b style="color:var(--ok)">${fmtC(tot.approved)}</b></span><span>استقطاع: <b style="color:var(--bad)">${fmtC(tot.deduction)}</b></span></div>
     ${!_isExt ? (() => { const checks=[['surgery','الإجراء الجراحي ونوع العملية'],['surgeon','أتعاب الجراح'],['assistant','أتعاب مساعد الجراح'],['anesthesia','أتعاب التخدير وطبيب التخدير'],['or','استخدام وتجهيز غرفة العمليات'],['implants','الدعامات والمسامير والمستلزمات المزروعة'],['consumables','المستهلكات الطبية'],['admission','مبرر الدخول وقرار الحجز'],['stay','عدد أيام الإقامة ومطابقتها'],['room','فئة الغرفة وسعرها'],['icu','العناية المركزة ومبرراتها'],['nursing','خدمات التمريض'],['meds','الأدوية والجرعات'],['labs','التحاليل والفحوص'],['imaging','الأشعة والتقارير'],['blood','نقل الدم ومشتقاته'],['physio','العلاج الطبيعي والتأهيل'],['discharge','ملخص الخروج وخطة العلاج']]; const _base=new Set(checks.map(c=>c[0])); const saved=inv.internalReview||{}; let extra=[]; try { extra=(typeof getLineTaxonomy==='function'?getLineTaxonomy():[]).filter(t=>t.requiresChecklist&&(t.checklistKey||t.key)&&!_base.has(t.checklistKey||t.key)).map(t=>[(t.checklistKey||t.key),(t.label||t.key)+' (مخصص)']); } catch(e){} const all=checks.concat(extra); return `<details class="rv-internal-review"><summary>قائمة تدقيق الفاتورة الداخلية والعمليات والإقامة</summary><div class="rv-internal-check-grid">${all.map(([k,label])=>`<label><input type="checkbox" data-internal-review="${k}" ${saved[k]===true?'checked':''}> ${label}</label>`).join('')}</div><div class="fg" style="margin-top:8px"><label>ملاحظات المراجع على الفاتورة الداخلية</label><textarea data-internal-review-note rows="2">${escapeHtml(saved.note||'')}</textarea></div></details>`; })() : ''}
     <div class="rv-section-title">المرضى (${(inv.patients||[]).length})</div>
@@ -212,6 +215,7 @@ function renderActiveInvoice(){
         <tr style="font-weight:800"><td>الإجمالي</td><td class="mono" style="color:var(--bad)">${fmtC(_totalDed)}</td><td></td></tr>
       </tbody></table></div>`;
     })()}
+    </div>
     <div class="rv-reapply-bar"><span>📋 القواعد نشطة</span><button type="button" data-reapply-all="1">⟲ إعادة تطبيق</button></div>`;
   if (typeof renderExceptions === 'function') { clearTimeout(window._excDebounce); window._excDebounce = setTimeout(renderExceptions, 120); }
 }
@@ -254,6 +258,7 @@ function validateReviewForSign(){
 function _excFilter(){ return (window._excFilterVal || 'all'); }
 function setExcFilter(v){ window._excFilterVal = v; _excPage = 0; renderExceptions(); }
 let _excPage = 0; const EXC_PER_PAGE = 50; let _excSearch = '';
+let _collapsedInvIdx = -1; let _patCollapsedAll = false;
 function setExcPage(p){ _excPage = Math.max(0, Number(p)||0); if(typeof renderExceptions === 'function') renderExceptions(); }
 function setExcSearch(v){ _excSearch = String(v||'').trim().toLowerCase(); _excPage = 0; if(typeof renderExceptions === 'function') renderExceptions(); }
 function renderExceptions(){
@@ -479,15 +484,24 @@ function renderFinalSummary(){
 function recalcReview(){
   if(typeof clearValidationCache === 'function') clearValidationCache();
   let billed = 0, eligible = 0, finalApproved = 0;
-  workingInvoices.forEach(inv => { (inv.patients||[]).forEach(pat => {
+  const _invStats = workingInvoices.map(() => ({ pend: 0, rej: 0 }));
+  workingInvoices.forEach((inv, _ii) => { (inv.patients||[]).forEach(pat => {
     // تنظيف لمرة واحدة: إزالة أعلام الفحص العابر الملغى (كل مذكرة مستقلة).
     (pat.lines||[]).forEach(l => { if(Array.isArray(l._checksFailed) && l._checksFailed.includes('dup-xinvoice')) unflagLineAskReviewer(l, 'dup-xinvoice'); });
     computePatient(pat, activeClaim, inv.date, inv);
+    (pat.lines||[]).forEach(l => { const f = l._checksFailed||[]; if(f.length){ _invStats[_ii].pend++; if(typeof isRejectReason === 'function' && f.some(isRejectReason)) _invStats[_ii].rej++; } });
     billed += (pat.lines||[]).reduce((s,l)=>s + (Number(l.qty)||0)*(Number(l.billedUnit)||0), 0);
     eligible += pat._subtotal || 0;
     finalApproved += pat._final || 0;
   });
   if(typeof validateInpatientInvoice === 'function') validateInpatientInvoice(inv); });
+  try {
+    document.querySelectorAll('.rv-inv-dot').forEach(d => {
+      const st = _invStats[Number(d.dataset.dotIdx)] || { pend: 0, rej: 0 };
+      d.style.color = st.rej > 0 ? 'var(--bad)' : st.pend > 0 ? 'var(--warn)' : 'var(--ok)';
+      d.title = st.rej > 0 ? `${st.rej} رفض + ${st.pend} معلّق` : st.pend > 0 ? `${st.pend} معلّق` : 'سليمة — لا معلّق';
+    });
+  } catch(e){}
   const ded = Math.max(0, billed-finalApproved);
   const rate = billed ? (ded/billed*100) : 0;
   const b1 = document.getElementById('calcBilled') || document.getElementById('rvPageCalcBilled');

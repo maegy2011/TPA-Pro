@@ -51,6 +51,8 @@ function bindReviewModal(){
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
     if(e.target.closest('[data-add-patient]')){ openPatientEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-add-line]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv||!inv.patients||!inv.patients.length){ showWarning('تنبيه','أضف مريضاً أولاً'); return; } openLineEditor(rvActivePatientIdx); return; }
+    if(e.target.closest('[data-inv-collapse]')){ _collapsedInvIdx = (_collapsedInvIdx===rvActiveInvoiceIdx ? -1 : rvActiveInvoiceIdx); if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }
+    if(e.target.closest('[data-pat-collapse]')){ _patCollapsedAll = !_patCollapsedAll; if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }
     if(e.target.closest('[data-edit-invoice]')){ openInvoiceEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-delete-invoice]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return; showDelete('حذف الفاتورة', `سيتم حذف "${inv.number||inv.id}".`, () => { markSessionDirty(); workingInvoices.splice(rvActiveInvoiceIdx,1); rvActiveInvoiceIdx = Math.max(0, rvActiveInvoiceIdx-1); rvActivePatientIdx = 0; renderReviewInvoices(); }); return; }
     if(e.target.closest('[data-edit-patient]')){ openPatientEditor(rvActiveInvoiceIdx, rvActivePatientIdx); return; }
