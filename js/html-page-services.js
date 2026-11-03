@@ -28,6 +28,7 @@ const PAGE_SERVICES = `
     <label style="font-size:12px;color:var(--muted)">سريان التحديث <input type="date" id="servicesEffectiveDate" style="padding:7px;border:1px solid var(--line);border-radius:7px"></label>
     <button class="btn-xs" id="servicesImportBtn">استيراد Excel / CSV</button>
     <button class="btn-xs" id="servicesHistoryBtn">سجل التحديثات</button>
+    <button class="btn-xs" id="servicesBulkToggle">تخصيص لجهات</button>
     <input type="file" id="servicesImportFile" accept=".xlsx,.csv,.txt" style="display:none">
   </div>
   <div id="servicesAdvPanel" style="display:none;margin-bottom:12px;padding:10px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
@@ -60,6 +61,16 @@ const PAGE_SERVICES = `
     </div>
   </div>
   <div id="tariffChangeHistory" style="display:none;margin:10px 0"></div>
+  <div id="bulkOvPanel" style="display:none;margin-bottom:12px;padding:12px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+      <div><label style="font-size:12px;color:var(--muted)">الخدمة *</label><select id="bulkOvService" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"></select></div>
+      <div><label style="font-size:12px;color:var(--muted)">التغطية</label><select id="bulkOvCovered" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"><option value="">بدون تغيير</option><option value="on">مفعّلة في الجهات</option><option value="off">معطّلة في الجهات</option></select></div>
+      <div><label style="font-size:12px;color:var(--muted)">الموافقة المسبقة</label><select id="bulkOvPA" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"><option value="">بدون تغيير</option><option value="on">مشروطة في الجهات</option><option value="off">غير مشروطة في الجهات</option></select></div>
+    </div>
+    <div style="margin-top:8px"><label style="font-size:12px;color:var(--muted)">الجهات *</label><div id="bulkOvProviders" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"></div></div>
+    <div id="bulkOvPreview" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+    <div style="margin-top:8px;display:flex;gap:8px"><button class="btn-xs" id="bulkOvApply">تطبيق على الجهات</button><button class="btn-xs" id="bulkOvCancel">إلغاء</button></div>
+  </div>
   <div class="chips" id="servicesFilterChips" style="margin-bottom:10px">
     <button class="chip active" data-sfilter="all">الكل</button>
     <button class="chip" data-sfilter="covered">مغطاة</button>

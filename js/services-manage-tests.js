@@ -160,6 +160,41 @@ function runServicesManageTests(){
       const ap2 = applyServicePayload(t1, null, p2, '2025-03-01');
       A('نواة: التطبيق تحديث بلا تكرار', ap2.ok === true && ap2.action === 'service-update' && t1.services.length === 1 && t1.services[0].currentPrice === 150);
     } catch(e){ A('نواة: الخدمات الموحدة', false, e.message); }
+    /* ---------- التخصيص الجماعي للجهات ---------- */
+    try {
+      const _ps = [{ id:'P1', name:'جهة 1' }, { id:'P2', name:'جهة 2' }, { id:'P3', name:'بلا عقد' }];
+      const _cs = [
+        { id:'C1', providerId:'P1', startDate:'2025-01-01', endDate:'2027-01-01', serviceOverrides:{}, changeLog:[] },
+        { id:'C1B', providerId:'P1', startDate:'2024-01-01', endDate:'2024-12-31', serviceOverrides:{}, changeLog:[] },
+        { id:'C2', providerId:'P2', startDate:'2025-01-01', endDate:'2027-01-01',
+          serviceOverrides:{ 'X-1':{ covered:true, discountRate:5, requiresPA:false } }, changeLog:[] }
+      ];
+      // الأحدث هو المستهدف
+      const t = resolveBulkOverrideTargets(['P1','P2','P3'], { code:'X-1', providers:_ps, contracts:_cs });
+      A('جماعي: الأحدث مستهدف', t[0].contractId === 'C1', t[0].contractId);
+      A('جماعي: الحالي يُقرأ', t[1].current && t[1].current.covered === true && t[1].current.discountRate === 5);
+      A('جماعي: بلا عقد يُعلَّم', t[2].hasContract === false && t[2].contractId === null);
+      // الفحص
+      A('جماعي: بلا خدمة', validateBulkOverride({ code:'', providerIds:['P1'], covered:true, requiresPA:null, targets:t }).ok === false);
+      A('جماعي: بلا جهات', validateBulkOverride({ code:'X-1', providerIds:[], covered:true, requiresPA:null, targets:[] }).ok === false);
+      A('جماعي: بلا تغيير', validateBulkOverride({ code:'X-1', providerIds:['P1'], covered:null, requiresPA:null, targets:t }).ok === false);
+      A('جماعي: الكل بلا عقود', validateBulkOverride({ code:'X-1', providerIds:['P3'], covered:false, requiresPA:null, targets:[t[2]] }).ok === false);
+      const v = validateBulkOverride({ code:'X-1', providerIds:['P1','P2','P3'], covered:false, requiresPA:true, targets:t });
+      A('جماعي: صالح (2 قابل + 1 متخطى)', v.ok === true && v.applicable === 2 && v.skipped === 1, JSON.stringify({ a:v.applicable, s:v.skipped }));
+      // التطبيق
+      const cs2 = JSON.parse(JSON.stringify(_cs));
+      const r = applyBulkServiceOverride('X-1', { covered:false, requiresPA:true }, t, cs2);
+      A('جماعي: طُبق على عقدين', r.applied.length === 2 && r.skipped.length === 1, JSON.stringify({ a:r.applied.length, s:r.skipped.length }));
+      const c1 = cs2.find(c => c.id === 'C1');
+      A('جماعي: التعطيل سُجل', c1.serviceOverrides['X-1'].covered === false);
+      A('جماعي: الموافقة سُجلت', c1.serviceOverrides['X-1'].requiresPA === true);
+      const c2 = cs2.find(c => c.id === 'C2');
+      A('جماعي: الخصم القديم محفوظ', c2.serviceOverrides['X-1'].discountRate === 5 && c2.serviceOverrides['X-1'].covered === false);
+      A('جماعي: حدث تدقيق', (c1._auditTrail||[]).length === 1 && (c2._auditTrail||[]).length === 1 && c1._auditTrail[0].action === 'contract.bulk-service-override');
+      // المحرك يحترم التجاوز
+      const ctx = { serviceOverrides: c1.serviceOverrides, tariff: { services:[{ code:'X-1', covered:true }] }, contract: c1 };
+      A('جماعي: المحرك يرى التعطيل', (typeof isServiceCovered === 'function' ? isServiceCovered(ctx, 'X-1') : null) === false);
+    } catch(e){ A('جماعي: التخصيص للجهات', false, e.message); }
   } finally {
     try { if(hadDocument){ try { if(origQS) document.querySelector = origQS; } catch(e){} try { if(origGID) document.getElementById = origGID; } catch(e){} } else { try { delete g.document; } catch(e){} } } catch(e){}
     uiStubs.forEach(k => { try { if(origUi[k] === undefined) delete g[k]; else g[k] = origUi[k]; } catch(e){} });

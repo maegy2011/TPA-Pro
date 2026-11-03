@@ -128,6 +128,65 @@ function diffImportRows(incoming, tariff){
     return { code:s.code, name:s.name, action:has ? 'update' : 'add', oldPrice:op, newPrice:np, pct };
   });
 }
+/* ---------- التخصيص الجماعي للجهات: أحدث عقد لكل جهة هو المستهدف ---------- */
+function latestContractForProvider(providerId, contractsList){
+  const cs = contractsList || (function(){ try { return (typeof contracts !== 'undefined') ? contracts : []; } catch(e){ return []; } })() || [];
+  const mine = cs.filter(c => c.providerId === providerId);
+  if(!mine.length) return null;
+  return mine.slice().sort((a,b) => String(b.startDate||'').localeCompare(String(a.startDate||'')) || String(b.endDate||'').localeCompare(String(a.endDate||'')))[0];
+}
+/* أهداف التخصيص الجماعي — منطق خالص (يُختبر آليًا). */
+function resolveBulkOverrideTargets(providerIds, opts){
+  opts = opts || {};
+  const _ps = opts.providers || (function(){ try { return (typeof providers !== 'undefined') ? providers : []; } catch(e){ return []; } })() || [];
+  const _cs = opts.contracts || (function(){ try { return (typeof contracts !== 'undefined') ? contracts : []; } catch(e){ return []; } })() || [];
+  const code = String((opts.code || '')).trim();
+  return (providerIds || []).map(pid => {
+    const p = _ps.find(x => x.id === pid) || null;
+    const c = latestContractForProvider(pid, _cs);
+    const cur = (c && c.serviceOverrides && code && c.serviceOverrides[code]) ? c.serviceOverrides[code] : null;
+    return { providerId: pid, providerName: p ? p.name : pid,
+      contractId: c ? c.id : null,
+      hasContract: !!c,
+      current: cur ? { covered: !(cur.covered === false), requiresPA: !!cur.requiresPA,
+        discountRate: (cur.discountRate === null || cur.discountRate === undefined) ? null : Number(cur.discountRate) } : null };
+  });
+}
+/* فحص التخصيص الجماعي — منطق خالص (يُختبر آليًا). */
+function validateBulkOverride(d){
+  d = d || {};
+  if(!String(d.code || '').trim()) return { ok:false, msg:'اختر الخدمة' };
+  const ids = Array.isArray(d.providerIds) ? d.providerIds.filter(Boolean) : [];
+  if(!ids.length) return { ok:false, msg:'اختر جهة واحدة على الأقل' };
+  if(d.covered !== true && d.covered !== false && d.requiresPA !== true && d.requiresPA !== false)
+    return { ok:false, msg:'حدد تغييرًا واحدًا على الأقل (تغطية أو موافقة)' };
+  const targets = Array.isArray(d.targets) ? d.targets : [];
+  const withContract = targets.filter(t => t.hasContract);
+  if(!withContract.length) return { ok:false, msg:'لا يوجد عقد لأي جهة مختارة — التخصيص يتطلب عقدًا ساريًا أو لاحقًا' };
+  return { ok:true, msg:'', applicable:withContract.length, skipped:targets.length - withContract.length };
+}
+/* تطبيق التخصيص الجماعي — يعيد {applied, skipped} ولا يلمس التخزين (الاستدعاء يحفظ). */
+function applyBulkServiceOverride(code, patch, targets, contractsList){
+  code = String(code || '').trim();
+  patch = patch || {};
+  const out = { applied:[], skipped:[] };
+  if(!code) return out;
+  const _cs = contractsList || (function(){ try { return (typeof contracts !== 'undefined') ? contracts : []; } catch(e){ return []; } })() || [];
+  (targets || []).forEach(t => {
+    if(!t.hasContract){ out.skipped.push({ providerId:t.providerId, reason:'بلا عقد' }); return; }
+    const c = _cs.find(x => x.id === t.contractId);
+    if(!c){ out.skipped.push({ providerId:t.providerId, reason:'العقد غير موجود' }); return; }
+    if(!c.serviceOverrides || typeof c.serviceOverrides !== 'object') c.serviceOverrides = {};
+    const prev = c.serviceOverrides[code] ? { ...c.serviceOverrides[code] } : null;
+    const next = { ...(prev || {}), ...(patch.covered !== null && patch.covered !== undefined ? { covered: !!patch.covered } : {}),
+      ...(patch.requiresPA !== null && patch.requiresPA !== undefined ? { requiresPA: !!patch.requiresPA } : {}) };
+    if(prev) { if(prev.discountRate !== null && prev.discountRate !== undefined) next.discountRate = prev.discountRate; }
+    c.serviceOverrides[code] = next;
+    try { if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.bulk-service-override', details:{ code, prev, next } }); } catch(e){}
+    out.applied.push({ providerId:t.providerId, contractId:c.id, prev, next });
+  });
+  return out;
+}
 function renderServicesTariffFilter(){
   const sel = $('#servicesTariffFilter'); if(!sel) return;
   const cur = sel.value || 'all';
@@ -551,6 +610,66 @@ function renderTariffChangeHistory(){
   box.innerHTML=entries.map(e=>`<div class="panel" style="padding:10px;margin:8px 0"><b>${escapeHtml(e.tariffName)} (${escapeHtml(e.tariffId)})</b><div style="font-size:12px;color:var(--muted)">${escapeHtml(e.action)} · سريان ${escapeHtml(e.effectiveDate||'—')} · ${escapeHtml(e.actor||'—')} · ${escapeHtml(e.at||'')}</div><div style="font-size:12px;margin-top:5px">${(e.changes||[]).map(c=>`${escapeHtml(c.action)}: ${escapeHtml(c.code)}`).join('، ')}</div></div>`).join('');
 }
 
+let bulkOvServiceCode = '', bulkOvProviderIds = [];
+function renderBulkOvPanel(){
+  const svcSel = $('#bulkOvService');
+  if(svcSel){
+    const all = (typeof getAllServicesDistinct === 'function') ? getAllServicesDistinct() : [];
+    svcSel.innerHTML = '<option value="">اختر الخدمة…</option>' + all.map(s => `<option value="${escapeHtml(s.code)}">${escapeHtml(s.name)} (${escapeHtml(s.code)})</option>`).join('');
+    if(bulkOvServiceCode) svcSel.value = bulkOvServiceCode;
+  }
+  const box = $('#bulkOvProviders');
+  if(box){
+    const ps = (typeof providers !== 'undefined' ? providers : []) || [];
+    box.innerHTML = ps.length ? ps.map(p => `<label class="check-row" style="font-size:12px"><input type="checkbox" data-bulk-prov="${escapeHtml(p.id)}" ${bulkOvProviderIds.includes(p.id) ? 'checked' : ''}> ${escapeHtml(p.name)}</label>`).join('') : '<span style="color:var(--muted)">لا جهات</span>';
+    box.querySelectorAll('[data-bulk-prov]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = cb.dataset.bulkProv;
+        if(cb.checked && !bulkOvProviderIds.includes(id)) bulkOvProviderIds.push(id);
+        if(!cb.checked) bulkOvProviderIds = bulkOvProviderIds.filter(x => x !== id);
+        renderBulkOvPreview();
+      });
+    });
+  }
+  renderBulkOvPreview();
+}
+function renderBulkOvPreview(){
+  const box = $('#bulkOvPreview'); if(!box) return;
+  if(!bulkOvServiceCode || !bulkOvProviderIds.length){ box.innerHTML = 'اختر الخدمة والجهات لعرض الأثر قبل التطبيق.'; return; }
+  const targets = resolveBulkOverrideTargets(bulkOvProviderIds, { code: bulkOvServiceCode });
+  const cov = $('#bulkOvCovered')?.value || '', cpa = $('#bulkOvPA')?.value || '';
+  const covTxt = cov === 'on' ? 'تفعيل' : cov === 'off' ? 'تعطيل' : '—';
+  const paTxt = cpa === 'on' ? 'اشتراط موافقة' : cpa === 'off' ? 'إلغاء الاشتراط' : '—';
+  box.innerHTML = `<b>معاينة:</b> ${escapeHtml(String(targets.length))} جهة — التغطية: <b>${covTxt}</b> · الموافقة: <b>${paTxt}</b><br>` +
+    targets.map(t => {
+      const cur = t.current ? `${t.current.covered ? 'مغطاة' : 'معطلة'}${t.current.requiresPA ? ' + موافقة' : ''}` : 'افتراضي اللائحة';
+      const flag = t.hasContract ? '' : ' <b style="color:var(--bad)">(بلا عقد — ستُتخطى)</b>';
+      return `· ${escapeHtml(t.providerName)}: حاليًا ${escapeHtml(cur)}${flag}`;
+    }).join('<br>');
+}
+function applyBulkOverrideFromUI(){
+  const code = bulkOvServiceCode;
+  const cov = $('#bulkOvCovered')?.value || '', cpa = $('#bulkOvPA')?.value || '';
+  const patch = { covered: cov === '' ? null : cov === 'on', requiresPA: cpa === '' ? null : cpa === 'on' };
+  const targets = resolveBulkOverrideTargets(bulkOvProviderIds, { code });
+  const _v = validateBulkOverride({ code, providerIds: bulkOvProviderIds, covered: patch.covered, requiresPA: patch.requiresPA, targets });
+  if(!_v.ok){ showWarning('تنبيه', _v.msg); return; }
+  const ts = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => (t.services || []).some(s => String(s.code) === String(code)));
+  const svcName = (typeof svcNameByCode === 'function' && svcNameByCode(code)) || code;
+  showDelete('تطبيق جماعي', `سيُطبق على ${code} — ${svcName}: ${cov === 'on' ? 'تفعيل' : cov === 'off' ? 'تعطيل' : 'التغطية بلا تغيير'} / ${cpa === 'on' ? 'اشتراط موافقة' : cpa === 'off' ? 'إلغاء الاشتراط' : 'الموافقة بلا تغيير'} — في ${_v.applicable} عقد${_v.skipped ? ` (${_v.skipped} جهة بلا عقد ستُتخطى)` : ''}.`, () => {
+    const snapshot = JSON.parse(JSON.stringify(contracts));
+    const res = applyBulkServiceOverride(code, patch, targets);
+    const saved = typeof persistData === 'function' ? persistData(true) : true;
+    if(saved === false){
+      try { contracts.length = 0; snapshot.forEach(c => contracts.push(c)); } catch(e){}
+      showWarning('خطأ', 'تعذر الحفظ؛ تم التراجع عن التطبيق الجماعي');
+      return;
+    }
+    renderBulkOvPreview();
+    if(typeof renderContracts === 'function') renderContracts();
+    showSuccess('تم', `طُبق على ${res.applied.length} عقد${res.skipped.length ? ` — تُخطيت ${res.skipped.length} بلا عقد` : ''}`);
+  });
+}
 function bindServicesControls(){
   const effectiveInput=$('#servicesEffectiveDate'); if(effectiveInput && !effectiveInput.value){ effectiveInput.value=tariffDatePlusOne(new Date().toISOString().slice(0,10)); }
   const s = $('#servicesSearch'); if(s && !s.dataset.bound){ s.dataset.bound='1'; s.addEventListener('input', e => { servicesSearchTerm = e.target.value.trim(); renderServices(); }); }
@@ -566,6 +685,12 @@ function bindServicesControls(){
   if(impBtn && impFile && !impBtn.dataset.bound){ impBtn.dataset.bound='1'; impBtn.addEventListener('click', () => { if(!$('#servicesTariffFilter').value || $('#servicesTariffFilter').value==='all'){ showWarning('اختر لائحة','حدد اللائحة المستهدفة قبل الاستيراد'); return; } if(!$('#servicesEffectiveDate').value){ showWarning('حدد السريان','أدخل تاريخ سريان التحديث'); return; } impFile.click(); }); impFile.addEventListener('change', async e => { const f=e.target.files&&e.target.files[0]; if(f) await importServicesFile(f,{tariffId:$('#servicesTariffFilter').value,effectiveDate:$('#servicesEffectiveDate').value}); e.target.value=''; }); }
   const historyBtn=$('#servicesHistoryBtn'); if(historyBtn&&!historyBtn.dataset.bound){historyBtn.dataset.bound='1';historyBtn.addEventListener('click',()=>{const box=$('#tariffChangeHistory');if(box){box.style.display=box.style.display==='none'?'block':'none';renderTariffChangeHistory();}});}
   const addBtn = $('#servicesAddBtn'); if(addBtn && !addBtn.dataset.bound){ addBtn.dataset.bound='1'; addBtn.addEventListener('click', () => showServiceFormPanel()); }
+  const bulkT = $('#servicesBulkToggle'); if(bulkT && !bulkT.dataset.bound){ bulkT.dataset.bound='1'; bulkT.addEventListener('click', () => { const p = $('#bulkOvPanel'); if(!p) return; const open = p.style.display !== 'block'; p.style.display = open ? 'block' : 'none'; if(open) renderBulkOvPanel(); }); }
+  const bulkS = $('#bulkOvService'); if(bulkS && !bulkS.dataset.bound){ bulkS.dataset.bound='1'; bulkS.addEventListener('change', () => { bulkOvServiceCode = bulkS.value; renderBulkOvPreview(); }); }
+  const bulkC = $('#bulkOvCovered'); if(bulkC && !bulkC.dataset.bound){ bulkC.dataset.bound='1'; bulkC.addEventListener('change', renderBulkOvPreview); }
+  const bulkP = $('#bulkOvPA'); if(bulkP && !bulkP.dataset.bound){ bulkP.dataset.bound='1'; bulkP.addEventListener('change', renderBulkOvPreview); }
+  const bulkA = $('#bulkOvApply'); if(bulkA && !bulkA.dataset.bound){ bulkA.dataset.bound='1'; bulkA.addEventListener('click', applyBulkOverrideFromUI); }
+  const bulkX = $('#bulkOvCancel'); if(bulkX && !bulkX.dataset.bound){ bulkX.dataset.bound='1'; bulkX.addEventListener('click', () => { const p = $('#bulkOvPanel'); if(p) p.style.display = 'none'; bulkOvServiceCode = ''; bulkOvProviderIds = []; }); }
   ['sfCode','sfCurrentPrice','sfBasePrice'].forEach(id => { const el = $('#'+id); if(el && !el.dataset.impactBound){ el.dataset.impactBound='1'; el.addEventListener('input', () => renderServiceImpact()); } });
   try { if(!showServiceFormPanel._impactHook){ showServiceFormPanel._impactHook = true; const _orig = showServiceFormPanel; showServiceFormPanel = function(t, i){ const r = _orig(t, i); try { renderServiceImpact(); } catch(e){} return r; }; } } catch(e){}
   const sfSave = $('#sfSaveBtn'); if(sfSave && !sfSave.dataset.bound){ sfSave.dataset.bound='1'; sfSave.addEventListener('click', () => saveServiceForm()); }
