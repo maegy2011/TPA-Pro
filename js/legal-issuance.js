@@ -31,6 +31,13 @@ function buildLegalIssuanceHTML(claim){
       <div style="font-size:12px">مطالب: <b>${fmtC(b)}</b> · معتمد: <b>${fmtC(ap)}</b> · مستقطع: <b style="color:#C00">${fmtC(b-ap)}</b></div>
     </div>`;
   }).join('');
+  const _manual = [];
+  (claim.invoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => {
+    if(l._decidedBy==='reviewer' && l._decision && l._decision.startsWith('manual')){
+      _manual.push(`<tr><td>${esc(l.code||'—')} — ${esc(l.name||'')}</td><td>${esc(l._decision)}</td><td>${esc(l._decisionReason||'—')}</td><td>${esc(l._decisionNote||'—')}</td><td>${esc(l._decidedAt||'')}</td></tr>`);
+    }
+  })));
+  const _manualTable = _manual.length ? `<div style="border:1px solid #E2E8F0;border-radius:8px;padding:12px;margin-top:16px"><div style="font-weight:800;margin-bottom:8px">ملحق القرارات اليدوية (${_manual.length})</div><table><thead><tr><th>البند</th><th>القرار</th><th>السبب</th><th>الملاحظة</th><th>التاريخ</th></tr></thead><tbody>${_manual.join('')}</tbody></table></div>` : '';
   const kpis = [
     { label: 'المطالبة', value: esc(claim.id) },
     { label: 'مقدم الخدمة', value: esc(provName) },
@@ -51,7 +58,8 @@ function buildLegalIssuanceHTML(claim){
         <div style="flex:1;border-top:1px solid #999;padding-top:6px">المراجع المالي: ${esc(reviewer)} · التوقيع: ............ · التاريخ: ............</div>
         <div style="flex:1;border-top:1px solid #999;padding-top:6px">المدير المالي: ............ · التوقيع: ............ · التاريخ: ............</div>
       </div>
-      <div style="font-size:10px;color:#64748B;margin-top:8px">إجمالي المطالب: ${fmtC(grandBilled)} · إجمالي المستقطع: ${fmtC(grandDed)} · الصافي المعتمد: ${fmtC(grandBilled-grandDed)}</div>
+      ${_manualTable}
+    <div style="font-size:10px;color:#64748B;margin-top:8px">إجمالي المطالب: ${fmtC(grandBilled)} · إجمالي المستقطع: ${fmtC(grandDed)} · الصافي المعتمد: ${fmtC(grandBilled-grandDed)}</div>
     </div></div></body>`);
 }
 function printLegalIssuance(claimId){

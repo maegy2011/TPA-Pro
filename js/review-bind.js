@@ -51,6 +51,7 @@ function bindReviewModal(){
     if(e.target.closest('[data-add-invoice]')){ openInvoiceEditor(); return; }
     if(e.target.closest('[data-add-patient]')){ openPatientEditor(rvActiveInvoiceIdx); return; }
     if(e.target.closest('[data-legal-print]')){ if(typeof printLegalIssuance === 'function' && typeof activeClaim !== 'undefined' && activeClaim) printLegalIssuance(activeClaim.id); return; }
+    if(e.target.closest('[data-run-tests]')){ const r = (typeof runEngineTests==='function') ? runEngineTests() : null; if(r && typeof showSuccess==='function') showSuccess('الاختبارات', `${r.pass}/${r.total} ناجح${r.fail?` — ${r.fail} فاشل`:''}`); return; }
     if(e.target.closest('[data-add-line]')){ const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv||!inv.patients||!inv.patients.length){ showWarning('تنبيه','أضف مريضاً أولاً'); return; } openLineEditor(rvActivePatientIdx); return; }
     if(e.target.closest('[data-inv-collapse]')){ _collapsedInvIdx = (_collapsedInvIdx===rvActiveInvoiceIdx ? -1 : rvActiveInvoiceIdx); if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }
     if(e.target.closest('[data-pat-collapse]')){ _patCollapsedAll = !_patCollapsedAll; if(typeof renderActiveInvoice === 'function') renderActiveInvoice(); return; }
@@ -226,6 +227,7 @@ function bindReviewModal(){
       if(_hasConflictQ && (act === 'approve' || act === 'reduce' || act === 'reject') && !note){ showWarning('تنبيه','هذا البند معلق بسؤال (تعارض) — سجّل سبب الحسم في الملاحظة'); return; }
       markSessionDirty();
       if (act === 'approve') {
+        try { if(typeof appendClaimAuditEvent==='function' && typeof activeClaim!=='undefined' && activeClaim) appendClaimAuditEvent(activeClaim,{action:'review.manual-decision',details:{line:ln.code||'',decision:'approve',note:note||'',by:'reviewer'}}); } catch(e){}
         ln._decision = 'manual-approved';
         ln._overrideMode = 'manual';
         ln._manualValue = ln._contractCovered ? (ln.lineBaseAfterContract !== undefined ? ln.lineBaseAfterContract : ln.lineBase) : 0;
@@ -236,6 +238,7 @@ function bindReviewModal(){
         ln._decisionNote = note;
       } else if (act === 'reject') {
         if (!note) { showWarning('تنبيه','الملاحظة إلزامية للرفض'); return; }
+        try { if(typeof appendClaimAuditEvent==='function' && typeof activeClaim!=='undefined' && activeClaim) appendClaimAuditEvent(activeClaim,{action:'review.manual-decision',details:{line:ln.code||'',decision:'reject',note:note||'',by:'reviewer'}}); } catch(e){}
         ln._decision = 'manual-rejected';
         ln._overrideMode = 'manual';
         ln._manualValue = 0;
@@ -254,6 +257,7 @@ function bindReviewModal(){
         if (isNaN(v) || v < 0) { showWarning('تنبيه','أدخل مبلغًا صالحًا'); return; }
         if (v > (ln._contractCovered ? (ln.lineBaseAfterContract||ln.lineBase||0) : 0)) { showWarning('تنبيه','المبلغ يتجاوز المعتمد'); return; }
         if (v < (ln._contractCovered ? (ln.lineBaseAfterContract||ln.lineBase||0) : 0) && !note) { showWarning('تنبيه','الملاحظة إلزامية للتخفيض'); return; }
+        try { if(typeof appendClaimAuditEvent==='function' && typeof activeClaim!=='undefined' && activeClaim) appendClaimAuditEvent(activeClaim,{action:'review.manual-decision',details:{line:ln.code||'',decision:'reduce',value:v,note:note||'',by:'reviewer'}}); } catch(e){}
         ln._decision = 'manual-reduced';
         ln._overrideMode = 'manual';
         ln._manualValue = v;
