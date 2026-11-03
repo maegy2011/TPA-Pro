@@ -1,11 +1,16 @@
 // render-4.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 function renderReports(){
-  let base = claims;
-  if(reportsSearchTerm){
-    const q = reportsSearchTerm.toLowerCase();
-    base = claims.filter(c => c.id.toLowerCase().includes(q) || c.patient.toLowerCase().includes(q) || c.provider.toLowerCase().includes(q));
-    $('#reportsSearchInfo').innerHTML = `عرض ${base.length} من ${claims.length}`;
-  } else $('#reportsSearchInfo').innerHTML = '';
+  let base = (typeof getReportsBase === 'function') ? getReportsBase() : claims;
+  try {
+    const _ps = $('#reportsProvider');
+    if(_ps && !_ps.dataset.filled){
+      const _names = [...new Set((claims||[]).map(c => c.provider).filter(Boolean))].sort();
+      _ps.innerHTML = '<option value="">كل الجهات</option>' + _names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+      _ps.dataset.filled = '1';
+    }
+  } catch(e){}
+  const _activeF = (reportsSearchTerm ? 1 : 0) + (reportsDateFrom ? 1 : 0) + (reportsDateTo ? 1 : 0) + (reportsProviderFilter ? 1 : 0) + (reportsStatusFilter ? 1 : 0);
+  $('#reportsSearchInfo').innerHTML = _activeF ? `عرض ${base.length} من ${claims.length} · ${_activeF} فلتر` : '';
   const s = statsFor(base);
   const vTotal = base.reduce((s,c)=> s + (c.violationDeduction||0), 0);
   $('#reportKpi').innerHTML = `
@@ -26,4 +31,15 @@ function renderReports(){
   const rBox = $('#reasonBars2');
   if(!rData.length) rBox.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">لا استقطاعات</p>';
   else { const max = Math.max(...rData.map(d=>d[1])); rBox.innerHTML = rData.map(([n,v]) => `<div class="bar-row"><div class="bar-top"><span>${escapeHtml(n)}</span><b>${fmtC(v)}</b></div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,v/max*100)}%"></div></div></div>`).join(''); }
+  try {
+    const _tp = (typeof reportsTopProviders === 'function') ? reportsTopProviders(base, 5) : [];
+    const _tpBox = $('#topProvidersList');
+    if(_tpBox) _tpBox.innerHTML = _tp.length ? _tp.map((t,i) => `<div class="info-row"><span class="k">${i+1}. ${escapeHtml(t.provider)} <small style="color:var(--muted)">(${t.claims})</small></span><span class="v" style="color:var(--bad)">${fmtC(t.deduction)}</span></div>`).join('') : '<p style="color:var(--muted);text-align:center;padding:10px">لا استقطاعات</p>';
+    const _tr = (typeof reportsMonthlyTrend === 'function') ? reportsMonthlyTrend(base) : [];
+    const _trBox = $('#monthlyTrendBars');
+    if(_trBox){
+      if(!_tr.length) _trBox.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">لا بيانات شهرية</p>';
+      else { const _mx = Math.max(..._tr.map(r => r.billed), 1); _trBox.innerHTML = _tr.map(r => `<div class="bar-row"><div class="bar-top"><span>${escapeHtml(r.month)} <small style="color:var(--muted)">(${r.claims})</small></span><b>${fmtC(r.deduction)}</b></div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,r.billed/_mx*100)}%" title="المطالب: ${fmtC(r.billed)} · المعتمد: ${fmtC(r.approved)}"></div></div></div>`).join(''); }
+    }
+  } catch(e){}
 }

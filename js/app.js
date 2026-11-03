@@ -35,6 +35,11 @@ function initApp(){
     let t1, t2;
     $('#dashSearch').addEventListener('input', e => { clearTimeout(t1); t1 = setTimeout(() => { dashSearchTerm = e.target.value.trim(); renderRecent(); }, 200); });
     $('#reportsSearch').addEventListener('input', e => { clearTimeout(t2); t2 = setTimeout(() => { reportsSearchTerm = e.target.value.trim(); renderReports(); }, 200); });
+    $('#reportsFrom').addEventListener('change', e => { reportsDateFrom = e.target.value || ''; renderReports(); });
+    $('#reportsTo').addEventListener('change', e => { reportsDateTo = e.target.value || ''; renderReports(); });
+    $('#reportsProvider').addEventListener('change', e => { reportsProviderFilter = e.target.value || ''; renderReports(); });
+    $('#reportsStatus').addEventListener('change', e => { reportsStatusFilter = e.target.value || ''; renderReports(); });
+    $('#reportsReset').addEventListener('click', () => { reportsSearchTerm=''; reportsDateFrom=''; reportsDateTo=''; reportsProviderFilter=''; reportsStatusFilter=''; const _s=v=>{try{const el=$(v); if(el) el.value='';}catch(e){}}; _s('#reportsSearch'); _s('#reportsFrom'); _s('#reportsTo'); _s('#reportsProvider'); _s('#reportsStatus'); renderReports(); });
     currentPage = 'dashboard';
     if(typeof setLang === 'function') setLang(currentLang || 'ar');
     if(typeof applyPage === 'function') applyPage('dashboard');

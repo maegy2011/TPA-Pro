@@ -237,6 +237,41 @@ function statsFor(customClaims){
   };
 }
 function reasonsBreakdown(){ return reasonsBreakdownFor(claims); }
+/* ترشيح التقارير — منطق خالص (يُختبر آليًا): نص + فترة + جهة + حالة. */
+function filterReportsClaims(list, f){
+  f = f || {};
+  let base = Array.isArray(list) ? list.slice() : [];
+  const q = String(f.q || '').trim().toLowerCase();
+  if(q) base = base.filter(c => String(c.id||'').toLowerCase().includes(q) || String(c.patient||'').toLowerCase().includes(q) || String(c.provider||'').toLowerCase().includes(q) || String(c.receivedNumber||'').toLowerCase().includes(q));
+  if(f.from){ const d0 = String(f.from).slice(0,10); base = base.filter(c => String(c.date||c.receivedDate||'').slice(0,10) >= d0); }
+  if(f.to){ const d1 = String(f.to).slice(0,10); base = base.filter(c => String(c.date||c.receivedDate||'').slice(0,10) <= d1); }
+  if(f.provider) base = base.filter(c => String(c.provider||'') === String(f.provider));
+  if(f.status) base = base.filter(c => String(c.status||'pending') === String(f.status));
+  return base;
+}
+/* أعلى الجهات استقطاعًا — منطق خالص. */
+function reportsTopProviders(list, n){
+  const m = {};
+  (Array.isArray(list) ? list : []).forEach(c => {
+    const d = (Number(c.billed)||0) - (Number(c.approved)||0);
+    if(d <= 0) return;
+    const k = c.provider || '—';
+    m[k] = m[k] || { provider:k, deduction:0, billed:0, claims:0 };
+    m[k].deduction += d; m[k].billed += (Number(c.billed)||0); m[k].claims++;
+  });
+  return Object.values(m).sort((a,b) => b.deduction - a.deduction).slice(0, Math.max(1, Number(n)||5));
+}
+/* الاتجاه الشهري (مطالب/معتمد/استقطاع) — منطق خالص، آخر 6 شهور بها بيانات. */
+function reportsMonthlyTrend(list){
+  const m = {};
+  (Array.isArray(list) ? list : []).forEach(c => {
+    const k = String(c.date||c.receivedDate||'').slice(0,7);
+    if(!/^\d{4}-\d{2}$/.test(k)) return;
+    m[k] = m[k] || { month:k, billed:0, approved:0, claims:0 };
+    m[k].billed += (Number(c.billed)||0); m[k].approved += (Number(c.approved)||0); m[k].claims++;
+  });
+  return Object.values(m).sort((a,b) => a.month < b.month ? -1 : 1).slice(-6).map(r => ({ ...r, deduction: r.billed - r.approved }));
+}
 function reasonsBreakdownFor(list){
   const m = {};
   list.forEach(c=>{

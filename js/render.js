@@ -16,6 +16,14 @@ function kpiIcon(name){
   return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${svgs[name]||''}</svg>`;
 }
 let dashSearchTerm = '', reportsSearchTerm = '';
+let reportsDateFrom = '', reportsDateTo = '', reportsProviderFilter = '', reportsStatusFilter = '';
+/* القاعدة المفلترة للتقارير — تُستخدم في العرض والتصدير معًا (مصدر واحد). */
+function getReportsBase(){
+  try {
+    if(typeof filterReportsClaims === 'function') return filterReportsClaims((typeof claims !== 'undefined' ? claims : []), { q:reportsSearchTerm, from:reportsDateFrom, to:reportsDateTo, provider:reportsProviderFilter, status:reportsStatusFilter });
+  } catch(e){}
+  return (typeof claims !== 'undefined' ? claims : []);
+}
 let currentFilter = 'all', currentSearch = '', claimsSort = 'default', claimsArchiveTab = 'active';
 function renderKPIs(){
   const s = stats();

@@ -7,7 +7,7 @@ function getSessionState(){
     currentPage,
     viewState: JSON.parse(JSON.stringify(viewState)),
     currentTimelineClaimId,
-    filters: { currentFilter, currentSearch, dashSearchTerm, reportsSearchTerm, intakeMonthFilter, intakeStatusFilter, intakeSearch, providerStatusFilter, providerSearch, contractStatusFilter, contractSearch, tariffFilter, tariffSearch, drFilter, drSearch, trashFilter, trashSearch, srchTerm, srchTariffId, srchFilter, srchPage, srchPerPage, sessionsFilter, sessionsSearch },
+    filters: { currentFilter, currentSearch, dashSearchTerm, reportsSearchTerm, reportsDateFrom, reportsDateTo, reportsProviderFilter, reportsStatusFilter, intakeMonthFilter, intakeStatusFilter, intakeSearch, providerStatusFilter, providerSearch, contractStatusFilter, contractSearch, tariffFilter, tariffSearch, drFilter, drSearch, trashFilter, trashSearch, srchTerm, srchTariffId, srchFilter, srchPage, srchPerPage, sessionsFilter, sessionsSearch },
     activeSessionId: activeSessionId || null,
     capturedAt: new Date().toISOString()
   };
@@ -20,6 +20,10 @@ function restoreSessionState(state){
     if(typeof f.currentSearch === 'string') currentSearch = f.currentSearch;
     if(typeof f.dashSearchTerm === 'string') dashSearchTerm = f.dashSearchTerm;
     if(typeof f.reportsSearchTerm === 'string') reportsSearchTerm = f.reportsSearchTerm;
+    if(typeof f.reportsDateFrom === 'string') reportsDateFrom = f.reportsDateFrom;
+    if(typeof f.reportsDateTo === 'string') reportsDateTo = f.reportsDateTo;
+    if(typeof f.reportsProviderFilter === 'string') reportsProviderFilter = f.reportsProviderFilter;
+    if(typeof f.reportsStatusFilter === 'string') reportsStatusFilter = f.reportsStatusFilter;
     if(f.intakeMonthFilter !== undefined) intakeMonthFilter = f.intakeMonthFilter;
     if(f.intakeStatusFilter !== undefined) intakeStatusFilter = f.intakeStatusFilter;
     if(typeof f.intakeSearch === 'string') intakeSearch = f.intakeSearch;
@@ -52,6 +56,7 @@ function restoreSessionState(state){
     const mc = document.querySelector('#monthChips'); if(mc) mc.querySelectorAll('.month-chip').forEach(ch => ch.classList.toggle('active', ch.dataset.month === intakeMonthFilter));
     const setVal = (sel, v) => { const el = document.querySelector(sel); if(el) el.value = v; };
     setVal('#searchInput',currentSearch||''); setVal('#dashSearch',dashSearchTerm||''); setVal('#reportsSearch',reportsSearchTerm||'');
+    setVal('#reportsFrom',reportsDateFrom||''); setVal('#reportsTo',reportsDateTo||''); setVal('#reportsProvider',reportsProviderFilter||''); setVal('#reportsStatus',reportsStatusFilter||'');
     setVal('#intakeSearch',intakeSearch||''); setVal('#providerSearch',providerSearch||''); setVal('#contractSearch',contractSearch||'');
     setVal('#tariffSearch',tariffSearch||''); setVal('#drSearch',drSearch||''); setVal('#trashSearch',trashSearch||'');
     setVal('#srchQuery',srchTerm||''); setVal('#srchTariff',srchTariffId||'all'); setVal('#srchPerPage',String(srchPerPage));
