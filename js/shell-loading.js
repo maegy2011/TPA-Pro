@@ -14,6 +14,7 @@ const SHELL_LOADING = `
     <div>
       <div class="ld-track"><div class="ld-fill" id="ldFill"></div></div>
       <div class="ld-meta" style="margin-top:10px"><span id="ldStatus" data-i18n="loading.start">بدء التشغيل...</span><span class="ld-pct" id="ldPct">0%</span></div>
+      <div class="ld-steps" id="ldSteps"><span class="ld-step">تهيئة محرك المراجعة</span><span class="ld-step">تحميل المطالبات</span><span class="ld-step">تحميل اللوائح</span><span class="ld-step">تجهيز التصدير</span></div>
     </div>
   </div>
   <div class="ld-foot">© 2026 TPA Pro — جميع الحقوق محفوظة</div>

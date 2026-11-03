@@ -1,5 +1,14 @@
 // init.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const LOAD_STEPS = ['تهيئة محرك المراجعة...','تحميل المطالبات...','تحميل اللوائح...','تجهيز التصدير...'];
+const BOOT_SPLASH_MS = 2400, LOADING_TICK_MS = 170, LOADING_DONE_DELAY_MS = 480;
+/* مؤشر خطوة التحميل من النسبة 0-100 — منطق خالص (يُختبر آليًا). */
+function loadingStepIndex(p){
+  p = Number(p);
+  if(!Number.isFinite(p)) p = 0;
+  if(p < 0) p = 0;
+  if(p > 100) p = 100;
+  return Math.min(3, Math.floor(p/25));
+}
 let loadingDone = false;
 function startLoading(){
   let p = 0;
@@ -8,11 +17,11 @@ function startLoading(){
     p += Math.random()*11+5;
     if(p >= 100) p = 100;
     fill.style.width = p+'%'; pctEl.textContent = Math.floor(p)+'%';
-    const idx = Math.min(3, Math.floor(p/25));
+    const idx = (typeof loadingStepIndex === 'function') ? loadingStepIndex(p) : 0;
     statEl.textContent = LOAD_STEPS[idx];
     steps.forEach((s,i) => { s.classList.remove('now','done'); if(i < idx) s.classList.add('done'); else if(i === idx && p < 100) s.classList.add('now'); else if(i === idx && p >= 100) s.classList.add('done'); });
-    if(p >= 100 && !loadingDone){ loadingDone = true; clearInterval(tick); steps.forEach(s => { s.classList.remove('now'); s.classList.add('done'); }); statEl.textContent = 'اكتمل التحميل'; setTimeout(afterLoading, 480); }
-  }, 170);
+    if(p >= 100 && !loadingDone){ loadingDone = true; clearInterval(tick); steps.forEach(s => { s.classList.remove('now'); s.classList.add('done'); }); statEl.textContent = 'اكتمل التحميل'; setTimeout(afterLoading, LOADING_DONE_DELAY_MS); }
+  }, LOADING_TICK_MS);
 }
 /* قرار شاشة الإقلاع — منطق خالص (يُختبر آليًا): onboarding | app | lock */
 function decideBootScreen(){
@@ -35,6 +44,25 @@ function afterLoading(){
   if(_screen === 'app'){ go('app'); initApp(); setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 100); }
   else { go('lock'); setTimeout(()=>$('#pwd').focus(), 350); }
 }
+/* رسالة خطأ القفل حسب المتبقي — منطق خالص (يُختبر آليًا). */
+function buildLockErrorMessage(remainingMs){
+  const r = Number(remainingMs) || 0;
+  if(r > 0) return `كلمة المرور غير صحيحة. تم إيقاف المحاولات مؤقتًا ${Math.ceil(r/1000)} ثانية.`;
+  return 'كلمة المرور غير صحيحة';
+}
+/* إتمام الدخول: جلسة التبويب فقط + انتقال — (يُختبر آليًا). */
+function completeLogin(){
+  try { sessionStorage.setItem(AUTH_KEY,'1'); } catch(e){}
+  try { const p = document.getElementById('pwd'); if(p) p.value = ''; } catch(e){}
+  if(typeof go === 'function') go('app');
+  if(typeof initApp === 'function') initApp();
+}
+/* الخروج: مسح الرمز من المخزنين + انتقال للقفل — (يُختبر آليًا). */
+function performLogout(){
+  try { sessionStorage.removeItem(AUTH_KEY); } catch(e){}
+  try { localStorage.removeItem(AUTH_KEY); } catch(e){}
+  if(typeof go === 'function') go('lock');
+}
 $('#eyeBtn').addEventListener('click', () => { const i = $('#pwd'); i.type = i.type === 'password' ? 'text' : 'password'; });
 let _loginInProgress = false;
 $('#lockForm').addEventListener('submit', async e => {
@@ -49,16 +77,16 @@ $('#lockForm').addEventListener('submit', async e => {
   try {
     const ok = await verifyPassword(v);
     if(ok){
-      resetAuthenticationFailures(); err.classList.remove('show'); sessionStorage.setItem(AUTH_KEY,'1'); $('#pwd').value = ''; go('app'); initApp();
+      resetAuthenticationFailures(); err.classList.remove('show'); completeLogin();
     } else {
       const remaining = recordAuthenticationFailure();
-      err.textContent = remaining > 0 ? `كلمة المرور غير صحيحة. تم إيقاف المحاولات مؤقتًا ${Math.ceil(remaining/1000)} ثانية.` : 'كلمة المرور غير صحيحة';
+      err.textContent = buildLockErrorMessage(remaining);
       err.classList.add('show'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); $('#pwd').select();
     }
   } finally { _loginInProgress = false; if(submit) submit.disabled = false; }
 });
 $('#pwd').addEventListener('input', () => $('#lockErr').classList.remove('show'));
-setTimeout(() => { if(typeof applyAllTranslations === 'function') applyAllTranslations(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); go('loading'); startLoading(); }, 2400);
+setTimeout(() => { if(typeof applyAllTranslations === 'function') applyAllTranslations(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); else if(typeof translateDOM === 'function') translateDOM(document.body); go('loading'); startLoading(); }, BOOT_SPLASH_MS);
 document.addEventListener('click', e => {
   const btn = e.target.closest && e.target.closest('#tbBackupBtn');
   if(!btn) return;

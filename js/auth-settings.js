@@ -2,21 +2,21 @@
 function logoutWithReminder(){
   if(hasRecentBackup(3600000) && !(typeof activeClaim !== 'undefined' && activeClaim)){
     openDialog({ type:'info', title:'تسجيل الخروج', message:`آخر نسخة ${getLastBackupAgo()}. خروج؟`, confirmText:'خروج', cancelText:'إلغاء',
-      onConfirm: () => { sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); } });
+      onConfirm: () => { performLogout(); setTimeout(()=>$('#pwd').focus(),300); } });
     return;
   }
   openDialog({
     type:'warning', title:'نسخة احتياطية', message:'لم تُنشئ نسخة حديثة.',
     body: `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12.5px;line-height:1.9;text-align:center"><div><b style="color:var(--navy);font-size:15px">${claims.length}</b> مطالبة · <b style="color:var(--navy);font-size:15px">${providers.length}</b> جهة · <b style="color:var(--navy);font-size:15px">${workSessions.length}</b> جلسة</div><div style="color:var(--muted);font-size:11px;margin-top:4px">آخر: ${getLastBackupAgo() || 'لم'}</div></div><div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">يمكنك إلغاء العملية أو تصدير نسخة قبل الخروج.</div>`,
     confirmText:'تصدير وخروج', cancelText:'إلغاء',
-    onConfirm: () => { doExportBackup(true); setTimeout(() => { sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); }, 500); }
+    onConfirm: () => { doExportBackup(true); setTimeout(() => { performLogout(); setTimeout(()=>$('#pwd').focus(),300); }, 500); }
   });
 }
 function confirmLogoutWithoutBackup(){
   closeDialog();
   setTimeout(() => {
     openDialog({ type:'danger', title:'خروج', message:'متأكد من الخروج بدون نسخة؟', confirmText:'خروج', cancelText:'إلغاء',
-      onConfirm: () => { sessionStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY); go('lock'); setTimeout(()=>$('#pwd').focus(),300); } });
+      onConfirm: () => { performLogout(); setTimeout(()=>$('#pwd').focus(),300); } });
   }, 200);
 }
 function bindSettingsPassword(){
@@ -34,13 +34,7 @@ function bindSettingsPassword(){
   const bar = document.getElementById('setPwdBar');
   if(newPwd && bar && !newPwd.dataset.bound){ newPwd.dataset.bound='1';
     newPwd.addEventListener('input', () => {
-      const v = newPwd.value; let score = 0;
-      if(v.length > 0) score = 1;
-      if(v.length >= 6) score = 2;
-      if(v.length >= 10) score = 3;
-      if(/[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = Math.max(score, 3);
-      if(v.length >= 6 && /[A-Za-z\u0600-\u06FF]/.test(v) && /\d/.test(v)) score = 4;
-      if(/[^A-Za-z0-9\u0600-\u06FF]/.test(v)) score = Math.min(4, score+1);
+      const score = (typeof passwordStrengthScore === 'function') ? passwordStrengthScore(newPwd.value) : 0;
       bar.style.width = (score*25)+'%';
       bar.className = 'pw-bar s'+score;
     });
