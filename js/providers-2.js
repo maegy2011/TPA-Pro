@@ -50,6 +50,45 @@ function setVisibleChecks(listId, values, on){
 function setVisibleExcluded(on){
   setVisibleChecks('ctrServicesList', selectedExcludedServices, on);
 }
+/* ترشيح العقود — منطق خالص (يُختبر آليًا). */
+function filterContractsList(list, statusFilter, term, providersList){
+  const q = String(term || '').trim().toLowerCase();
+  const byId = {};
+  (providersList || []).forEach(p => { byId[p.id] = p; });
+  return (list || []).filter(c => {
+    if(statusFilter && statusFilter !== 'all' && effectiveContractStatus(c) !== statusFilter) return false;
+    if(q){ const p = byId[c.providerId]; return !!(p && String(p.name||'').toLowerCase().includes(q)); }
+    return true;
+  });
+}
+/* فحص مدخلات العقد — منطق خالص (يُختبر آليًا). يعيد {ok,msg,end,dur}. */
+function validateContractInput(d){
+  d = d || {};
+  if(!d.providerId) return { ok:false, msg:'اختر جهة' };
+  if(!d.startDate) return { ok:false, msg:'أدخل تاريخ البداية' };
+  const dur = Math.max(1, Math.round(Number(d.duration)||1));
+  const end = (typeof contractEndFrom === 'function') ? contractEndFrom(d.startDate, dur) : '';
+  if(!end) return { ok:false, msg:'تعذر حساب النهاية' };
+  const versionFrom = d.versionFrom || d.startDate;
+  if(versionFrom < d.startDate || versionFrom > end) return { ok:false, msg:'تاريخ سريان النسخة يجب أن يقع داخل مدة العقد' };
+  return { ok:true, msg:'', end, dur, versionFrom };
+}
+/* شق النسخ المالية عند سريان جديد — منطق خالص (يُختبر آليًا). */
+function splitRateVersions(versions, versionFrom, endDate, newEntry, contractStart, contractDiscount, contractExcluded){
+  const vs = Array.isArray(versions) ? versions.map(v => ({...v})) : [];
+  const current = vs.find(v => v.effectiveFrom === versionFrom);
+  if(current){ Object.assign(current, { effectiveTo:endDate, discountRate:newEntry.discountRate, excludedServices:newEntry.excludedServices }); return vs; }
+  const previous = vs.filter(v => v.effectiveTo === '' || v.effectiveTo >= versionFrom).sort((a,b) => String(b.effectiveFrom).localeCompare(String(a.effectiveFrom)))[0];
+  if(previous && previous.effectiveFrom < versionFrom){
+    const d = new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
+    previous.effectiveTo = d.toISOString().slice(0,10);
+  } else if(!previous && contractStart < versionFrom){
+    const d = new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
+    vs.push({ effectiveFrom:contractStart, effectiveTo:d.toISOString().slice(0,10), discountRate:contractDiscount, excludedServices:contractExcluded });
+  }
+  vs.push({ effectiveFrom:versionFrom, effectiveTo:endDate, discountRate:newEntry.discountRate, excludedServices:newEntry.excludedServices });
+  return vs;
+}
 function renderContracts(){
   const activeN = contracts.filter(c=>effectiveContractStatus(c)==='active').length;
   const expN = contracts.filter(c=>effectiveContractStatus(c)==='expiring').length;
@@ -70,11 +109,7 @@ function renderContracts(){
     const parts = []; if(en) parts.push(`${en} تنتهي خلال 60 يوم`); if(xn) parts.push(`${xn} منتهي`);
     $('#contractAlertText').textContent = `لديك ${parts.join(' و ')}.`;
   } else al.classList.remove('show');
-  const list = contracts.filter(c => {
-    if(contractStatusFilter !== 'all' && effectiveContractStatus(c) !== contractStatusFilter) return false;
-    if(contractSearch){ const q = contractSearch, p = getProviderById(c.providerId); return (p && p.name.toLowerCase().includes(q)); }
-    return true;
-  });
+  const list = (typeof filterContractsList === 'function') ? filterContractsList(contracts, contractStatusFilter, contractSearch, (typeof providers !== 'undefined' ? providers : [])) : contracts.slice();
   const body = $('#contractsBody');
   if(!list.length){ body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--muted)">لا عقود</td></tr>'; return; }
   body.innerHTML = list.map(c => {
@@ -194,31 +229,13 @@ function updateContractEnd(){
   const e = $('#ctrEnd'); if(e) e.value = contractEndFrom(s, d);
 }
 function saveContract(){
-  const pid = $('#ctrProvider').value; if(!pid){ showWarning('تنبيه','اختر جهة'); return; }
-  const s = $('#ctrStart').value;
-  if(!s){ showWarning('تنبيه','أدخل تاريخ البداية'); return; }
-  const dur = Math.max(1, Math.round(Number($('#ctrDuration').value)||1));
-  const e = contractEndFrom(s, dur);
-  if(!e){ showWarning('تنبيه','تعذر حساب النهاية'); return; }
-  const versionFrom = $('#ctrVersionEffective').value || s;
-  if(versionFrom < s || versionFrom > e){ showWarning('تاريخ السريان','تاريخ سريان النسخة يجب أن يقع داخل مدة العقد'); return; }
+  const chk = (typeof validateContractInput === 'function') ? validateContractInput({ providerId:$('#ctrProvider').value, startDate:$('#ctrStart').value, duration:$('#ctrDuration').value, versionFrom:$('#ctrVersionEffective').value }) : { ok:true };
+  if(!chk.ok){ showWarning(chk.msg === 'اختر جهة' || chk.msg === 'أدخل تاريخ البداية' || chk.msg === 'تعذر حساب النهاية' ? 'تنبيه' : 'تاريخ السريان', chk.msg); return; }
+  const pid = $('#ctrProvider').value, s = $('#ctrStart').value, dur = chk.dur, e = chk.end, versionFrom = chk.versionFrom;
   const data = { providerId:pid, startDate:s, endDate:e, durationYears:dur, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], increaseHistory:workingContractIncreases.map(h=>({...h})), serviceOverrides:Object.fromEntries(workingServiceOverrides.map(o => [o.code, { covered:!!o.covered, discountRate:(o.discountRate===''||o.discountRate==null)?null:Number(o.discountRate), requiresPA:!!o.requiresPA }])), notes:$('#ctrNotes').value.trim() };
   if(editingContractId){
     const c = getContractById(editingContractId); if(!c) return;
-    c.rateVersions = Array.isArray(c.rateVersions) ? c.rateVersions : [];
-    const current = c.rateVersions.find(v=>v.effectiveFrom===versionFrom);
-    if(current){ Object.assign(current,{effectiveTo:e,discountRate:data.discountRate,excludedServices:data.excludedServices}); }
-    else {
-      const previous = c.rateVersions.filter(v=>v.effectiveTo==='' || v.effectiveTo>=versionFrom).sort((a,b)=>String(b.effectiveFrom).localeCompare(String(a.effectiveFrom)))[0];
-      if(previous && previous.effectiveFrom < versionFrom){
-        const d=new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
-        previous.effectiveTo=d.toISOString().slice(0,10);
-      } else if(!previous && c.startDate < versionFrom){
-        const d=new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
-        c.rateVersions.push({effectiveFrom:c.startDate,effectiveTo:d.toISOString().slice(0,10),discountRate:c.discountRate,excludedServices:Array.isArray(c.excludedServices)?[...c.excludedServices]:(c.coveredServices||'')});
-      }
-      c.rateVersions.push({effectiveFrom:versionFrom,effectiveTo:e,discountRate:data.discountRate,excludedServices:data.excludedServices});
-    }
+    c.rateVersions = (typeof splitRateVersions === 'function') ? splitRateVersions(c.rateVersions, versionFrom, e, { discountRate:data.discountRate, excludedServices:data.excludedServices }, c.startDate, c.discountRate, (Array.isArray(c.excludedServices)?[...c.excludedServices]:(c.coveredServices||''))) : (Array.isArray(c.rateVersions) ? c.rateVersions : []);
     // Keep the master contract's original start date so previous versions remain selectable.
     Object.assign(c,{...data,startDate:c.startDate||s,endDate:e});
     syncContractToProvider(c); showSuccess('تم','تم حفظ نسخة مالية بتاريخ سريان مستقل مع الاحتفاظ بالتاريخ السابق');

@@ -1,6 +1,38 @@
 // providers-3.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 let editingServiceTariffId = null;
 let workingLinkedServices = [];
+/* ترشيح اللوائح — منطق خالص (يُختبر آليًا). */
+function filterTariffsList(list, typeFilter, term){
+  const q = String(term || '').trim().toLowerCase();
+  return (list || []).filter(t => {
+    if(typeFilter && typeFilter !== 'all' && t.type !== typeFilter) return false;
+    if(q) return String(t.id||'').toLowerCase().includes(q) || String(t.name||'').toLowerCase().includes(q);
+    return true;
+  });
+}
+/* فحص مدخلات اللائحة — منطق خالص (يُختبر آليًا). */
+function validateTariffInput(d){
+  d = d || {};
+  if(!String(d.name || '').trim()) return { ok:false, msg:'أدخل الاسم' };
+  if(!d.effectiveDate) return { ok:false, msg:'أدخل السريان' };
+  if(d.expiryDate && d.expiryDate < d.effectiveDate) return { ok:false, msg:'الانتهاء قبل السريان' };
+  return { ok:true, msg:'' };
+}
+/* بوابة النسخة الجديدة عند تعديل الأسعار — منطق خالص (يُختبر آليًا). */
+function checkTariffNewVersion(t, servicesChanged, dateChanged, newEff){
+  if(!servicesChanged && !dateChanged) return { ok:true, msg:'' };
+  if(t && t.effectiveDate && newEff <= t.effectiveDate) return { ok:false, msg:'عند تغيير الأسعار أو تاريخ سريان النسخة يجب أن يكون التاريخ الجديد بعد النسخة الحالية' };
+  return { ok:true, msg:'' };
+}
+/* فرق الخدمات قبل/بعد — منطق خالص (يُختبر آليًا). */
+function diffTariffServices(before, after){
+  const b = Array.isArray(before) ? before : [], a = Array.isArray(after) ? after : [];
+  const oldBy = new Map(b.map(x => [String(x.code), x])), newBy = new Map(a.map(x => [String(x.code), x]));
+  const changes = [];
+  for(const [code, svc] of oldBy){ const n = newBy.get(code); if(!n) changes.push({ code, action:'delete', before:svc, after:null }); else if(JSON.stringify(svc) !== JSON.stringify(n)) changes.push({ code, action:'update', before:svc, after:n }); }
+  for(const [code, svc] of newBy) if(!oldBy.has(code)) changes.push({ code, action:'add', before:null, after:svc });
+  return changes;
+}
 function renderTariffs(){
   if(typeof autoRenewTariffs === 'function') autoRenewTariffs();
   const activeN = tariffs.filter(t=>effectiveTariffStatus(t)==='active').length;
@@ -14,11 +46,7 @@ function renderTariffs(){
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">التوزيع</div><div class="kpi-val" style="font-size:15px">عامة ${generalN} · خاصة ${privateN} · مكملة ${suppN}</div></div><div class="kpi-ico">${kpiIcon('file')}</div></div><div class="kpi-foot">${generalN+privateN+suppN}</div></div>
     <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">خدمات</div><div class="kpi-val">${totalServices}</div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">عبر اللوائح</div></div>
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">الروابط</div><div class="kpi-val">${totalLinks}</div></div><div class="kpi-ico">${kpiIcon('link')}</div></div><div class="kpi-foot">عقود</div></div>`;
-  const list = tariffs.filter(t => {
-    if(tariffFilter !== 'all' && t.type !== tariffFilter) return false;
-    if(tariffSearch){ const q = tariffSearch; return t.id.toLowerCase().includes(q) || t.name.toLowerCase().includes(q); }
-    return true;
-  });
+  const list = (typeof filterTariffsList === 'function') ? filterTariffsList(tariffs, tariffFilter, tariffSearch) : tariffs.slice();
   const body = $('#tariffsBody');
   if(!list.length){ body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--muted)">لا لوائح</td></tr>'; return; }
   body.innerHTML = list.map(t => {
@@ -120,8 +148,10 @@ function renderTariffServicesChecklist(q){
   });
 }
 function saveTariff(){
-  const name = $('#tfName').value.trim(); if(!name){ showWarning('تنبيه','أدخل الاسم'); return; }
-  const eff = $('#tfEffective').value; if(!eff){ showWarning('تنبيه','أدخل السريان'); return; }
+  const chk = (typeof validateTariffInput === 'function') ? validateTariffInput({ name:$('#tfName').value.trim(), effectiveDate:$('#tfEffective').value, expiryDate:$('#tfExpiry').value }) : { ok:true };
+  if(!chk.ok){ showWarning('تنبيه', chk.msg); return; }
+  const name = $('#tfName').value.trim();
+  const eff = $('#tfEffective').value;
   const lp = [];
   const lc = $$('#linkContractsList input:checked').map(i => i.value);
   const data = { name, type:$('#tfType').value, description:$('#tfDescription').value.trim(), effectiveDate:eff, expiryDate:$('#tfExpiry').value||'', status:$('#tfStatus').value||'active', linkedProviderIds:lp, linkedContractIds:lc, linkedServiceNames:workingLinkedServices, services:workingServices.map(s=>({...s})) };
@@ -130,10 +160,9 @@ function saveTariff(){
     const oldServices=JSON.stringify(t.services||[]), newServices=JSON.stringify(data.services||[]);
     const dateChanged=String(t.effectiveDate||'')!==String(eff||'');
     if(oldServices!==newServices || dateChanged){
-      if(t.effectiveDate && eff<=t.effectiveDate){showWarning('تاريخ السريان','عند تغيير الأسعار أو تاريخ سريان النسخة يجب أن يكون التاريخ الجديد بعد النسخة الحالية');return;}
-      const before=JSON.parse(oldServices), after=JSON.parse(newServices), oldBy=new Map(before.map(x=>[String(x.code),x])), newBy=new Map(after.map(x=>[String(x.code),x]));
-      const changes=[]; for(const [code,svc] of oldBy){const n=newBy.get(code);if(!n)changes.push({code,action:'delete',before:svc,after:null});else if(JSON.stringify(svc)!==JSON.stringify(n))changes.push({code,action:'update',before:svc,after:n});}
-      for(const [code,svc] of newBy)if(!oldBy.has(code))changes.push({code,action:'add',before:null,after:svc});
+      const gate = (typeof checkTariffNewVersion === 'function') ? checkTariffNewVersion(t, oldServices!==newServices, dateChanged, eff) : { ok:true };
+      if(!gate.ok){ showWarning('تاريخ السريان', gate.msg); return; }
+      const changes = (typeof diffTariffServices === 'function') ? diffTariffServices(JSON.parse(oldServices), JSON.parse(newServices)) : [];
       archiveTariffVersion(t,eff,'tariff-edit',changes);
     } else if(!Array.isArray(t.changeLog)) t.changeLog=[];
     Object.assign(t,data); if(oldServices===newServices && !dateChanged){t.changeLog.push({at:new Date().toISOString(),effectiveDate:eff,action:'tariff-metadata-edit',actor:(appSettings.reviewer&&appSettings.reviewer.name)||'المستخدم',changes:[]});}
