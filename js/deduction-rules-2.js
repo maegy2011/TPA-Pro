@@ -156,6 +156,39 @@ function learnRuleFromReviewer(kind, d){
     return id;
   } catch(e){ return null; }
 }
+/* تفعيل مسودة مستفادة فورًا بتأكيد المراجع — يعيد true عند التفعيل. */
+function applyLearnedRuleNow(id){
+  try {
+    if(typeof deductionRules === 'undefined' || !id) return false;
+    const r = deductionRules.find(x => x && x.id === id && x.source === 'learned');
+    if(!r || r.enabled !== false) return false;
+    r.enabled = true; r.active = true;
+    r._autoApplied = true; r._autoAppliedAt = new Date().toISOString();
+    r.notes = String(r.notes || '') + ' — طُبقت فورًا بتأكيد المراجع';
+    if(typeof persistData === 'function') persistData(true);
+    try { if(typeof renderDeductionRules === 'function' && typeof document !== 'undefined' && document.getElementById('deductionRulesBody')) renderDeductionRules(); } catch(e){}
+    try { if(typeof recalcReview === 'function') recalcReview(); } catch(e){}
+    return true;
+  } catch(e){ return false; }
+}
+/* عرض مسودة مستفادة على المراجع: تحذير + تأكيد التطبيق الفوري أو إبقاؤها مسودة.
+   تُستدعى بنتيجة learnRuleFromReviewer؛ لا تعرض شيئًا إلا عند إنشاء مسودة جديدة. */
+function offerApplyLearnedRule(result){
+  try {
+    if(typeof result !== 'string' || !result || result === 'exists' || result === 'updated') return result;
+    if(typeof deductionRules === 'undefined') return result;
+    const r = deductionRules.find(x => x && x.id === result);
+    if(!r) return result;
+    const scopeN = ((r.scope || {}).providerIds || []).length;
+    const msg = `${r.name || result} — النسبة ${Number(r.rate) || 0}% — النطاق: ${scopeN ? scopeN + ' جهة' : 'عام'}.<br><br>تطبيقها الآن على المراجعات؟ (إلغاء = تبقى مسودة معطلة بانتظار التفعيل من صفحة القواعد)`;
+    if(typeof showWarning === 'function'){
+      showWarning('قاعدة مستفادة جديدة', msg, () => {
+        if(applyLearnedRuleNow(result) && typeof showSuccess === 'function') showSuccess('تم التطبيق', 'القاعدة المستفادة أصبحت فعالة');
+      });
+    } else if(typeof showSuccess === 'function'){ showSuccess('مسودة قاعدة', 'أُضيفت كمسودة بانتظار التفعيل في القواعد'); }
+    return result;
+  } catch(e){ return result; }
+}
 function openPaProcModal(code){
   editingPaProcCode = code || null;
   const p = code ? paProcedures.find(x=>x.code===code) : null;

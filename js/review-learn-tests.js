@@ -109,6 +109,39 @@ function runLearnTests(){
       A('تعلم: المعطلة لا تُطابق', applied === false);
       A('تعلم: بلا مطالبة = بلا مسودة', learnRuleFromReviewer('line-reject', { claim:null, line:{ code:'X' } }) === null);
     } catch(e){ A('تعلم: عدم التطبيق', false, e.message); }
+    /* ---------- 7. التطبيق الفوري بتأكيد المراجع ---------- */
+    try {
+      seed();
+      const c = mkClaim();
+      const id = learnRuleFromReviewer('line-reject', { claim:c, line:{ code:'LAB-9' } });
+      A('فوري: مسودة أولًا', typeof id === 'string' && deductionRules.find(r => r.id === id).enabled === false);
+      // تأكيد المراجع → تُطبق
+      let captured = null;
+      const _sw = g.showWarning;
+      g.showWarning = (t, m, fn) => { captured = { t, m, fn }; };
+      let recalcCalled = false;
+      const _rr = g.recalcReview;
+      g.recalcReview = () => { recalcCalled = true; };
+      offerApplyLearnedRule(id);
+      A('فوري: تحذير بالتفاصيل', captured && String(captured.t).includes('مستفادة') && String(captured.m).includes('LAB-9'), captured && String(captured.t));
+      captured.fn();
+      const r = deductionRules.find(x => x.id === id);
+      A('فوري: التأكيد يُفعّل', r.enabled === true && r.active === true && r._autoApplied === true);
+      A('فوري: إعادة حساب', recalcCalled === true);
+      // إلغاء المراجع → تبقى مسودة
+      seed();
+      const id2 = learnRuleFromReviewer('line-reduce', { claim:mkClaim(), line:{ code:'LAB-9' }, base:1000, value:700 });
+      g.showWarning = () => {};
+      offerApplyLearnedRule(id2);
+      A('فوري: الإلغاء يُبقي مسودة', deductionRules.find(x => x.id === id2).enabled === false);
+      // حدود
+      A('فوري: بلا showWarning = بلا عطل', (() => { try { delete g.showWarning; } catch(e){} try { g.showSuccess = () => {}; } catch(e){} const o = offerApplyLearnedRule(id2); try { g.showWarning = _sw; } catch(e){} return o === id2; })());
+      A('فوري: المكرر بلا عرض', (() => { let n = 0; g.showWarning = () => { n++; }; offerApplyLearnedRule('exists'); offerApplyLearnedRule('updated'); offerApplyLearnedRule(null); try { g.showWarning = _sw; } catch(e){} return n === 0; })());
+      A('فوري: تفعيل مفقود = false', applyLearnedRuleNow('DR-NOPE') === false);
+      A('فوري: تفعيل مفعّلة = false', (() => { applyLearnedRuleNow(id2); return applyLearnedRuleNow(id2) === false; })());
+      try { g.showWarning = _sw; } catch(e){}
+      try { if(_rr === undefined) delete g.recalcReview; else g.recalcReview = _rr; } catch(e){}
+    } catch(e){ A('تعلم: التطبيق الفوري', false, e.message); }
   } finally {
     try { if(hadDocument){ try { if(origGID) document.getElementById = origGID; } catch(e){} } else { try { delete g.document; } catch(e){} } } catch(e){}
     uiStubs.forEach(k => { try { if(origUi[k] === undefined) delete g[k]; else g[k] = origUi[k]; } catch(e){} });
