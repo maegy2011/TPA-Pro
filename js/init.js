@@ -14,16 +14,25 @@ function startLoading(){
     if(p >= 100 && !loadingDone){ loadingDone = true; clearInterval(tick); steps.forEach(s => { s.classList.remove('now'); s.classList.add('done'); }); statEl.textContent = 'اكتمل التحميل'; setTimeout(afterLoading, 480); }
   }, 170);
 }
+/* قرار شاشة الإقلاع — منطق خالص (يُختبر آليًا): onboarding | app | lock */
+function decideBootScreen(){
+  let done = '0';
+  try { done = localStorage.getItem(ONBOARDING_KEY); } catch(e){ return 'onboarding'; }
+  if(done !== '1') return 'onboarding';
+  try { localStorage.removeItem(AUTH_KEY); } catch(e){}
+  try { if(sessionStorage.getItem(AUTH_KEY) === '1') return 'app'; } catch(e){}
+  return 'lock';
+}
 function afterLoading(){
   applyAppSettingsToUI();
-  if(localStorage.getItem(ONBOARDING_KEY) !== '1'){
+  if(decideBootScreen() === 'onboarding'){
     go('onboarding');
     setTimeout(() => { try { if(typeof bindOnboarding === 'function') bindOnboarding(); } catch(e){} const el = document.getElementById('onbReviewerName'); if(el) el.focus(); if(typeof translateDOMMulti === 'function') translateDOMMulti(); }, 350);
     return;
   }
   // Remove legacy persistent auth tokens; authentication is scoped to this tab session.
-  try { localStorage.removeItem(AUTH_KEY); } catch(e){}
-  if(sessionStorage.getItem(AUTH_KEY) === '1'){ go('app'); initApp(); setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 100); }
+  const _screen = decideBootScreen();
+  if(_screen === 'app'){ go('app'); initApp(); setTimeout(() => { if(typeof translateDOM === 'function') translateDOM(document.body); }, 100); }
   else { go('lock'); setTimeout(()=>$('#pwd').focus(), 350); }
 }
 $('#eyeBtn').addEventListener('click', () => { const i = $('#pwd'); i.type = i.type === 'password' ? 'text' : 'password'; });

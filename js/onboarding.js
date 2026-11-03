@@ -1,4 +1,17 @@
 // onboarding.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
+/* فحص مدخلات الإعداد الأول — منطق خالص بلا DOM (يُختبر آليًا). */
+function validateOnboardingInput(d){
+  d = d || {};
+  const name = String(d.name || '').trim();
+  const brand = String(d.brand || '').trim();
+  const pwd = String(d.pwd || ''), conf = String(d.conf || '');
+  if(!name) return { ok:false, msg:'أدخل اسم المراجع' };
+  if(!brand) return { ok:false, msg:'أدخل العلامة التجارية' };
+  if(!pwd || pwd.length < 6) return { ok:false, msg:'كلمة المرور 6 أحرف على الأقل' };
+  if(!/[A-Za-z\u0600-\u06FF]/.test(pwd) || !/\d/.test(pwd)) return { ok:false, msg:'كلمة المرور يجب أن تحتوي على أحرف وأرقام' };
+  if(pwd !== conf) return { ok:false, msg:'التأكيد لا يطابق' };
+  return { ok:true, msg:'' };
+}
 function showOnboardingError(msg){ const e = document.getElementById('onbErr'); if(e){ e.querySelector('span').textContent = msg; e.classList.add('show'); } }
 function clearOnboardingError(){ const e = document.getElementById('onbErr'); if(e){ e.classList.remove('show'); } }
 function bindOnboarding(){
@@ -51,11 +64,8 @@ function bindOnboarding(){
     const cb = (document.getElementById('onbCompanyBrand')?.value||'').trim() || 'TPA Pro';
     const pwd = document.getElementById('onbPwd')?.value || '';
     const conf = document.getElementById('onbPwdConfirm')?.value || '';
-    if(!name){ showOnboardingError('أدخل اسم المراجع'); return; }
-    if(!cb){ showOnboardingError('أدخل العلامة التجارية'); return; }
-    if(!pwd || pwd.length < 6){ showOnboardingError('كلمة المرور 6 أحرف على الأقل'); return; }
-    if(!/[A-Za-z\u0600-\u06FF]/.test(pwd) || !/\d/.test(pwd)){ showOnboardingError('كلمة المرور يجب أن تحتوي على أحرف وأرقام'); return; }
-    if(pwd !== conf){ showOnboardingError('التأكيد لا يطابق'); return; }
+    const chk = (typeof validateOnboardingInput === 'function') ? validateOnboardingInput({ name, brand:cb, pwd, conf }) : { ok:true };
+    if(!chk.ok){ showOnboardingError(chk.msg); return; }
     appSettings.reviewer.name = name; appSettings.reviewer.role = role;
     appSettings.company.name = cn; appSettings.company.brand = cb;
     appSettings.company.tagline = appSettings.company.tagline || 'نظام المراجعة المالية للمطالبات الطبية';
