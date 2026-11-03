@@ -154,7 +154,8 @@ function finalizeReview(){
   }
   recalcClaim(activeClaim);
   delete activeClaim._recalcUnlock;
-  if(activeClaim.status === 'pending') activeClaim.reviewedDate = daysFromNow(0);
+  // مطالبات الوارد تُنشأ بحالة new ولا شيء يقلبها pending — الختم عند أول حفظ مراجعة من أي حالة مفتوحة.
+  if(['new','pending'].includes(activeClaim.status)) activeClaim.reviewedDate = daysFromNow(0);
   if(activeClaim.approved <= 0) activeClaim.status = 'rejected';
   else if(activeClaim.approved >= activeClaim.billed) activeClaim.status = 'approved';
   else activeClaim.status = 'partial';
