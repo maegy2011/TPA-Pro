@@ -11,7 +11,6 @@ const MODAL_PROVIDER = `
             <div class="fg full"><label>اسم الجهة <span style="color:var(--bad,#DC2626)">*</span></label><input id="pvName" required><div class="hint">اسم الجهة كما يظهر في المطالبات</div></div>
             <div class="fg"><label>كود الجهة</label><input id="pvCode" readonly><div class="hint">رقم فريد يُولد تلقائيًا</div></div>
             <div class="fg"><label>النوع</label><select id="pvType"><option>مستشفى</option><option>معمل تحاليل</option><option>مركز أشعة</option><option>صيدلية</option></select></div>
-            <div class="fg"><label>الهاتف</label><input id="pvPhone" type="tel" placeholder="+964 ..."></div>
           </div>
           <div class="rv-section-title">الموقع</div>
           <div class="form-grid">
@@ -26,8 +25,9 @@ const MODAL_PROVIDER = `
           </div>
           <div class="rv-section-title">التواصل</div>
           <div class="form-grid">
-            <div class="fg"><label>التواصل</label><input id="pvContact" placeholder="اسم المسؤول"></div>
-            <div class="fg full"><label>البريد</label><input id="pvEmail" type="email" placeholder="example@domain.com"></div>
+            <div class="fg"><label>المسؤول</label><input id="pvContact" placeholder="اسم المسؤول"></div>
+            <div class="fg"><label>الهاتف</label><input id="pvPhone" type="tel" inputmode="tel" placeholder="01xxxxxxxxx"></div>
+            <div class="fg full"><label>البريد</label><input id="pvEmail" type="email" inputmode="email" placeholder="example@domain.com"></div>
           </div>
           <div class="rv-section-title">خيارات</div>
           <div class="form-grid">

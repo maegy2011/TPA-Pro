@@ -5,6 +5,26 @@ let selectedProvinces = [];
 let contractStatusFilter = 'all', contractSearch = '', editingContractId = null;
 let tariffFilter = 'all', tariffSearch = '', editingTariffId = null;
 let workingServices = [], editingServiceIndex = null;
+/* ترشيح الجهات — منطق خالص (يُختبر آليًا). */
+function filterProvidersList(list, statusFilter, term, statusFn){
+  const q = String(term || '').trim().toLowerCase();
+  return (list || []).filter(p => {
+    if(statusFilter && statusFilter !== 'all' && statusFn(p) !== statusFilter) return false;
+    if(q) return String(p.name||'').toLowerCase().includes(q) || String(p.city||'').toLowerCase().includes(q) || String(p.contact||'').toLowerCase().includes(q);
+    return true;
+  });
+}
+/* فحص مدخلات الجهة — منطق خالص (يُختبر آليًا). */
+function validateProviderInput(d){
+  d = d || {};
+  const name = String(d.name || '').trim();
+  if(!name) return { ok:false, msg:'أدخل اسم الجهة' };
+  const list = d.list || [];
+  if(list.some(p => p.name === name && p.id !== d.excludeId)) return { ok:false, msg:'الاسم مستخدم' };
+  if(!isValidProviderEmail(d.email)) return { ok:false, msg:'بريد إلكتروني غير صالح' };
+  if(!isValidProviderPhone(d.phone)) return { ok:false, msg:'رقم هاتف غير صالح' };
+  return { ok:true, msg:'' };
+}
 function bindProvidersControls(){
   $('#providerSearch').addEventListener('input', e => { providerSearch = e.target.value.trim().toLowerCase(); renderProviders(); });
   $('#providerFilterChips').addEventListener('click', e => {
@@ -36,11 +56,7 @@ function renderProviders(){
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">العقود</div><div class="kpi-val">${contracts.length} <small>عقد</small></div></div><div class="kpi-ico">${kpiIcon('contract')}</div></div><div class="kpi-foot">${providers.length} جهة</div></div>
     <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">المطالبات</div><div class="kpi-val">${fmt(tb)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('link')}</div></div><div class="kpi-foot">${tc} مطالبة</div></div>
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">متوسط الاستقطاع</div><div class="kpi-val">${avg.toFixed(1)}<small>%</small></div></div><div class="kpi-ico">${kpiIcon('cut')}</div></div><div class="kpi-foot">عبر الجهات</div></div>`;
-  const list = providers.filter(p => {
-    if(providerStatusFilter !== 'all' && getEffectiveProviderStatus(p) !== providerStatusFilter) return false;
-    if(providerSearch){ const q = providerSearch; return p.name.toLowerCase().includes(q) || p.city.toLowerCase().includes(q) || (p.contact||'').toLowerCase().includes(q); }
-    return true;
-  });
+  const list = (typeof filterProvidersList === 'function') ? filterProvidersList(providers, providerStatusFilter, providerSearch, getEffectiveProviderStatus) : providers.slice();
   const body = $('#providersBody');
   if(!list.length){ body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--muted)">لا جهات</td></tr>'; return; }
   body.innerHTML = list.map(p => {
@@ -92,13 +108,11 @@ function openProviderModal(id){
 }
 function closeProviderModal(){ if(!$('#providerModal').classList.contains('open')) return; $('#providerModal').classList.remove('open'); _unlockBodyScroll(); editingProviderId = null; }
 function saveProvider(){
+  const chk = (typeof validateProviderInput === 'function') ? validateProviderInput({ name:$('#pvName').value.trim(), email:$('#pvEmail').value.trim(), phone:$('#pvPhone').value.trim(), excludeId:editingProviderId, list:providers }) : { ok:true };
+  if(!chk.ok){ showWarning('تنبيه', chk.msg); return; }
   const name = $('#pvName').value.trim();
-  if(!name){ showWarning('تنبيه','أدخل اسم الجهة'); return; }
-  if(providers.find(p => p.name === name && p.id !== editingProviderId)){ showWarning('تنبيه','الاسم مستخدم'); return; }
   const email = $('#pvEmail').value.trim();
-  if(!isValidProviderEmail(email)){ showWarning('تنبيه','بريد إلكتروني غير صالح'); return; }
   const phone = $('#pvPhone').value.trim();
-  if(!isValidProviderPhone(phone)){ showWarning('تنبيه','رقم هاتف غير صالح'); return; }
   const provinceList = [...selectedProvinces];
   const data = { name, type:$('#pvType').value, province: provinceList, city: provinceList.join('، '), contact:$('#pvContact').value.trim(), phone:$('#pvPhone').value.trim(), email:$('#pvEmail').value.trim(), notes:$('#pvNotes').value.trim() };
   if(editingProviderId){ const p = getProviderById(editingProviderId); if(!p) return; const old = p.name; Object.assign(p, data); if(old !== name) renameProviderClaims(old, name); showSuccess('تم','تم التحديث'); }
