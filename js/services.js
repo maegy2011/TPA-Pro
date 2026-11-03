@@ -68,6 +68,66 @@ function validateServiceForm(d){
   if(d.tariffEffectiveDate && d.effectiveDate <= d.tariffEffectiveDate) return { ok:false, msg:'يجب أن يكون بعد تاريخ سريان النسخة الحالية حتى لا تتغير الأسعار التاريخية' };
   return { ok:true, msg:'' };
 }
+/* أثر الخدمة — منطق خالص (يُختبر آليًا): العقود المرتبطة عبر اللائحة + المطالبات المستخدمة للكود. */
+function serviceImpact(code, opts){
+  opts = opts || {};
+  const _tars = opts.tariffs || (((typeof tariffs !== 'undefined') && tariffs) ? tariffs : []) || [];
+  const _ctrs = opts.contracts || (((typeof contracts !== 'undefined') && contracts) ? contracts : []) || [];
+  const _clms = opts.claims || (((typeof claims !== 'undefined') && claims) ? claims : []) || [];
+  const key = String(code || '').trim().toLowerCase();
+  if(!key) return { code:'', tariffIds:[], contracts:[], claimsCount:0, recentClaims:[], oldPrice:null, newPrice:(opts.newPrice !== undefined ? opts.newPrice : null), diff:null };
+  const tIds = _tars.filter(t => (t.services || []).some(s => String(s.code || '').toLowerCase() === key)).map(t => t.id);
+  const linked = _ctrs.filter(c => tIds.includes(c.tariffId)).map(c => ({ id:c.id, providerId:c.providerId || '', tariffId:c.tariffId || '' }));
+  let old = null;
+  _tars.forEach(t => (t.services || []).forEach(s => { if(String(s.code || '').toLowerCase() === key && old === null) old = Number(s.currentPrice || s.basePrice || 0) || 0; }));
+  const used = [];
+  _clms.forEach(c => (c.invoices || []).forEach(inv => (inv.patients || []).forEach(p => (p.lines || []).forEach(l => {
+    if(String(l.code || '').toLowerCase() === key) used.push(c.id);
+  }))));
+  const uniq = [...new Set(used)];
+  const np = (opts.newPrice !== undefined && opts.newPrice !== null && opts.newPrice !== '') ? Number(opts.newPrice) : null;
+  const diff = (np !== null && Number.isFinite(np) && old !== null) ? np - old : null;
+  return { code:String(code).trim(), tariffIds:tIds, contracts:linked, claimsCount:uniq.length, recentClaims:uniq.slice(-10), oldPrice:old, newPrice:np, diff };
+}
+/* العقود المرتبطة بلائحة — منطق خالص. */
+function serviceLinkedContracts(tariffId, contractsList){
+  const cs = contractsList || (function(){ try { return (typeof contracts !== 'undefined') ? contracts : []; } catch(e){ return []; } })() || [];
+  return cs.filter(c => c.tariffId === tariffId).map(c => c.id);
+}
+/* تعارض الأسعار عام/خاص لنفس الكود — منطق خالص (يُختبر آليًا). */
+function detectServicePriceConflicts(tariffsList){
+  const ts = tariffsList || (function(){ try { return (typeof tariffs !== 'undefined') ? tariffs : []; } catch(e){ return []; } })() || [];
+  const by = {};
+  ts.forEach(t => (t.services || []).forEach(s => {
+    const k = String(s.code || '').trim().toLowerCase(); if(!k) return;
+    (by[k] = by[k] || []).push({ tariffId:t.id, tariff:t.name || t.id, type:t.type || '', price:Number(s.currentPrice || s.basePrice || 0) || 0 });
+  }));
+  return Object.keys(by).filter(k => {
+    const prices = [...new Set(by[k].map(e => e.price))];
+    return by[k].length > 1 && prices.length > 1;
+  }).map(k => ({ code:k, entries:by[k] }));
+}
+/* اقتراح خدمات بتاريخ الإجراء — منطق خالص (يُختبر آليًا). */
+function suggestServicesForDate(term, date, tariff){
+  if(!tariff) return [];
+  const list = (typeof getTariffServicesForDate === 'function') ? getTariffServicesForDate(tariff, date) : (tariff.services || []);
+  const q = String(term || '').trim().toLowerCase();
+  const out = (list || []).filter(s => !q || String(s.code || '').toLowerCase().includes(q) || String(s.name || '').toLowerCase().includes(q) || String(s.nameEn || '').toLowerCase().includes(q));
+  return out.slice(0, 20).map(s => ({ code:s.code, name:s.name, price:Number(s.currentPrice || s.basePrice || 0) || 0 }));
+}
+/* فرق الاستيراد قبل الاعتماد — منطق خالص (يُختبر آليًا). */
+function diffImportRows(incoming, tariff){
+  const cur = {};
+  (tariff && tariff.services || []).forEach(s => { cur[String(s.code || '').toLowerCase()] = Number(s.currentPrice || s.basePrice || 0) || 0; });
+  return (incoming || []).map(s => {
+    const k = String(s.code || '').toLowerCase();
+    const has = Object.prototype.hasOwnProperty.call(cur, k);
+    const np = Number(s.currentPrice || s.basePrice || 0) || 0;
+    const op = has ? cur[k] : null;
+    const pct = (has && op) ? ((np - op) / op * 100) : null;
+    return { code:s.code, name:s.name, action:has ? 'update' : 'add', oldPrice:op, newPrice:np, pct };
+  });
+}
 function renderServicesTariffFilter(){
   const sel = $('#servicesTariffFilter'); if(!sel) return;
   const cur = sel.value || 'all';
@@ -87,7 +147,7 @@ function renderServices(){
     <td class="mono">${escapeHtml(s.code)}</td>
     <td>${escapeHtml(s.name)}${s.nameEn?`<div style="font-size:11px;color:var(--muted);direction:ltr;text-align:right">${escapeHtml(s.nameEn)}</div>`:''}</td>
     <td>${escapeHtml(s.category||'—')}</td>
-    <td>${escapeHtml(s.tariff)}</td>
+    <td><a href="#" data-goto-tariff="${escapeHtml(s.tariffId)}" style="color:var(--link,#2563EB)">${escapeHtml(s.tariff)}</a></td>
     <td class="mono">${escapeHtml(s.effectiveDate||'—')}</td>
     <td class="mono">${escapeHtml(s.expiryDate||'مفتوح')}</td>
     <td class="mono">${s.versionCount}</td>
@@ -125,6 +185,22 @@ function showServiceFormPanel(tariffId, idx){
   $('#sfCovered').checked = svc? !!svc.covered : true;
   $('#sfRequiresPriorApproval').checked = svc? !!svc.requiresPriorApproval : false;
   const panel = $('#serviceFormPanel'); if(panel) panel.style.display = 'block';
+}
+function renderServiceImpact(){
+  const box = $('#sfImpact'); if(!box) return;
+  if(typeof serviceImpact !== 'function') return;
+  const code = ($('#sfCode') || {}).value || '';
+  const np = ($('#sfCurrentPrice') || {}).value || ($('#sfBasePrice') || {}).value || '';
+  if(!String(code).trim()){ box.innerHTML = ''; return; }
+  const im = serviceImpact(code, { newPrice: np });
+  const parts = [];
+  parts.push(`اللوائح: <b>${im.tariffIds.length}</b> · العقود المرتبطة: <b>${im.contracts.length}</b> · مطالبات تستخدم الكود: <b>${im.claimsCount}</b>`);
+  if(im.oldPrice !== null) parts.push(`السعر الحالي: <b>${fmt(im.oldPrice)}</b>`);
+  if(im.diff !== null && im.diff !== 0) parts.push(`الفرق: <b style="color:${im.diff > 0 ? 'var(--bad)' : 'var(--ok)'}">${im.diff > 0 ? '+' : ''}${fmt(im.diff)}</b>`);
+  if(im.recentClaims.length) parts.push(`آخر مطالبات: <span class="mono">${im.recentClaims.slice(-5).map(escapeHtml).join('، ')}</span>`);
+  const cf = (typeof detectServicePriceConflicts === 'function') ? detectServicePriceConflicts().filter(c => c.code === String(code).trim().toLowerCase()) : [];
+  if(cf.length) parts.push(`<span style="color:var(--bad)">⚠ تعارض سعري بين اللوائح (${cf[0].entries.map(e => escapeHtml(e.tariff) + ': ' + fmt(e.price)).join(' ≠ ')})</span>`);
+  box.innerHTML = parts.join('<br>');
 }
 function hideServiceFormPanel(){ const panel = $('#serviceFormPanel'); if(panel) panel.style.display = 'none'; editingServiceForm = {tariffId:null,index:null}; }
 function saveServiceForm(){
@@ -341,7 +417,11 @@ function renderTariffImportMapping(rows,layout){
 function renderTariffImportPreview(){
   const box=$('#tariffImportPreview');if(!box||!tariffImportRows)return;
   const mapped=buildTariffImportRows(tariffImportRows,tariffImportMapping,tariffImportHeaderRow).slice(1,6);
-  box.innerHTML=`<div class="hint">معاينة أول ${mapped.length} خدمات مكتشفة</div><table class="data-table" style="min-width:500px"><thead><tr><th>الكود</th><th>الخدمة</th><th>المجموعة</th><th>الأساسي</th><th>الحالي</th></tr></thead><tbody>${mapped.map(r=>`<tr>${[r[0],r[1],r[2],r[3],r[4]].map(v=>`<td>${escapeHtml(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  const _t = (typeof tariffs !== 'undefined') ? tariffs.find(t => t.id === ($('#servicesTariffFilter') || {}).value) : null;
+  const _rows = mapped.map(r => ({ code:r[0], name:r[1], basePrice:Number(String(r[3]).replace(/[,٬،\s]/g,'')) || 0, currentPrice:Number(String(r[4]).replace(/[,٬،\s]/g,'')) || 0 }));
+  const _diff = (typeof diffImportRows === 'function' && _t) ? diffImportRows(_rows, _t) : [];
+  const _nAdd = _diff.filter(d => d.action === 'add').length, _nUpd = _diff.filter(d => d.action === 'update').length;
+  box.innerHTML=`<div class="hint">معاينة أول ${mapped.length} خدمات مكتشفة${_diff.length ? ` — <b>${_nAdd}</b> جديدة · <b>${_nUpd}</b> تحديث` : ''}</div><table class="data-table" style="min-width:640px"><thead><tr><th>الكود</th><th>الخدمة</th><th>الحالة</th><th>القديم</th><th>الجديد</th><th>الفرق%</th></tr></thead><tbody>${(_diff.length ? _diff.slice(0,5) : _rows.slice(0,5).map(r => ({ code:r.code, name:r.name, action:'add', oldPrice:null, newPrice:r.currentPrice, pct:null }))).map(d=>`<tr><td class="mono">${escapeHtml(d.code)}</td><td>${escapeHtml(d.name)}</td><td>${d.action === 'add' ? '<span class="badge ok sm">جديدة</span>' : '<span class="badge warn sm">تحديث</span>'}</td><td class="mono">${d.oldPrice === null ? '—' : fmt(d.oldPrice)}</td><td class="mono">${fmt(d.newPrice)}</td><td class="mono">${d.pct === null ? '—' : (d.pct > 0 ? '+' : '') + d.pct.toFixed(1) + '%'}</td></tr>`).join('')}</tbody></table>`;
 }
 function importServicesRows(rows, options={}){
   try{
@@ -446,10 +526,13 @@ function bindServicesControls(){
   if(impBtn && impFile && !impBtn.dataset.bound){ impBtn.dataset.bound='1'; impBtn.addEventListener('click', () => { if(!$('#servicesTariffFilter').value || $('#servicesTariffFilter').value==='all'){ showWarning('اختر لائحة','حدد اللائحة المستهدفة قبل الاستيراد'); return; } if(!$('#servicesEffectiveDate').value){ showWarning('حدد السريان','أدخل تاريخ سريان التحديث'); return; } impFile.click(); }); impFile.addEventListener('change', async e => { const f=e.target.files&&e.target.files[0]; if(f) await importServicesFile(f,{tariffId:$('#servicesTariffFilter').value,effectiveDate:$('#servicesEffectiveDate').value}); e.target.value=''; }); }
   const historyBtn=$('#servicesHistoryBtn'); if(historyBtn&&!historyBtn.dataset.bound){historyBtn.dataset.bound='1';historyBtn.addEventListener('click',()=>{const box=$('#tariffChangeHistory');if(box){box.style.display=box.style.display==='none'?'block':'none';renderTariffChangeHistory();}});}
   const addBtn = $('#servicesAddBtn'); if(addBtn && !addBtn.dataset.bound){ addBtn.dataset.bound='1'; addBtn.addEventListener('click', () => showServiceFormPanel()); }
+  ['sfCode','sfCurrentPrice','sfBasePrice'].forEach(id => { const el = $('#'+id); if(el && !el.dataset.impactBound){ el.dataset.impactBound='1'; el.addEventListener('input', () => renderServiceImpact()); } });
+  try { if(!showServiceFormPanel._impactHook){ showServiceFormPanel._impactHook = true; const _orig = showServiceFormPanel; showServiceFormPanel = function(t, i){ const r = _orig(t, i); try { renderServiceImpact(); } catch(e){} return r; }; } } catch(e){}
   const sfSave = $('#sfSaveBtn'); if(sfSave && !sfSave.dataset.bound){ sfSave.dataset.bound='1'; sfSave.addEventListener('click', () => saveServiceForm()); }
   const sfCancel = $('#sfCancelBtn'); if(sfCancel && !sfCancel.dataset.bound){ sfCancel.dataset.bound='1'; sfCancel.addEventListener('click', () => hideServiceFormPanel()); }
   const body = $('#servicesBody'); if(body && !body.dataset.bound){ body.dataset.bound='1'; body.addEventListener('click', e => {
     const ed = e.target.closest('[data-edit-service]'); if(ed){ const [tid, idx] = ed.dataset.editService.split('|'); showServiceFormPanel(tid, Number(idx)); return; }
     const del = e.target.closest('[data-del-service]'); if(del){ const [tid, idx] = del.dataset.delService.split('|'); deleteServiceAt(tid, Number(idx)); return; }
+    const gt = e.target.closest('[data-goto-tariff]'); if(gt){ e.preventDefault(); try { servicesTariffFilter = gt.dataset.gotoTariff; } catch(e){} try { navigateTo('tariffs'); } catch(e){} return; }
   }); }
 }

@@ -57,7 +57,7 @@ function renderTariffs(){
       <td data-label="النوع"><span class="badge ${TARIFF_TYPES[t.type].cls}">${TARIFF_TYPES[t.type].label}</span></td>
       <td data-label="الربط"><div style="font-size:12px;white-space:nowrap"><span style="color:var(--teal);font-weight:800">${(t.linkedProviderIds||[]).length}</span> جهة · <span style="color:var(--gold);font-weight:800">${(t.linkedContractIds||[]).length}</span> عقد</div></td>
       <td data-label="الحالة"><span class="badge ${ts.cls}">${ts.label}</span></td>
-      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-edit-tariff="${t.id}">تحرير</button><button class="btn-xs danger" data-delete-tariff="${t.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center"><button class="btn-xs" data-services-tariff="${t.id}">خدمات (${(t.services||[]).length})</button><button class="btn-xs" data-edit-tariff="${t.id}">تحرير</button><button class="btn-xs danger" data-delete-tariff="${t.id}">×</button></div></td>
     </tr>`;
   }).join('');
 }

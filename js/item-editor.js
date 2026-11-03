@@ -104,7 +104,8 @@ function openLineEditor(patIdx, lineIdx) {
   $('#lnModalSub').textContent = `${inv.id} · ${pat.name}`;
 
   const ctx = getContractContext(activeClaim);
-  const services = ctx.tariff?.services || [];
+  const _procD = (typeof activeClaim !== 'undefined' && activeClaim && (activeClaim.date || activeClaim.receivedDate)) || new Date().toISOString().slice(0,10);
+  const services = (typeof getTariffServicesForDate === 'function' && ctx.tariff) ? getTariffServicesForDate(ctx.tariff, _procD) : (ctx.tariff?.services || []);
 
   const sel = $('#lnServiceSelect');
   if (!services.length) {

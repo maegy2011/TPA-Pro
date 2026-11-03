@@ -146,6 +146,7 @@ function bindContractsControls(){
   });
   $('#addContractBtn').addEventListener('click', () => openContractModal());
   $('#contractsBody').addEventListener('click', e => {
+    const sc = e.target.closest('[data-services-contract]'); if(sc){ try { servicesTariffFilter = sc.dataset.servicesContract; } catch(err){} try { navigateTo('services'); } catch(err){} return; }
     const ed = e.target.closest('[data-edit-contract]'); if(ed) openContractModal(ed.dataset.editContract);
     const rn = e.target.closest('[data-renew-contract]'); if(rn){ renewContractWithDialog(rn.dataset.renewContract); return; }
     const sp = e.target.closest('[data-suspend-contract]'); if(sp){ suspendContractWithDialog(sp.dataset.suspendContract); return; }

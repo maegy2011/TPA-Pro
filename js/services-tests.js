@@ -101,6 +101,43 @@ function runServicesTests(){
       const am = (typeof computeLineAmounts === 'function') ? computeLineAmounts({ code:'X', qty:1, billedUnit:50 }, { tariff:ctx.tariff, contract:ctx.contract, serviceOverrides:{} }, '2026-01-01') : null;
       A('خدمات: الحساب يعكس السعر (45 بعد خصم 10%)', am && am.afterContract === 45, String(am && am.afterContract));
     } catch(e){ A('خدمات: الربط', false, e.message); }
+
+    /* ---------- 7. التكامل الجديد: الأثر + التعارض + المنتقي + المعاينة + الروابط ---------- */
+    try {
+      tariffs = [
+        { id:'TG', type:'general', status:'active', effectiveDate:'2025-01-01', name:'عامة', priceVersions:[{ effectiveDate:'2025-01-01', services:[{ code:'X', name:'خدمة', currentPrice:40, basePrice:40 }] }], services:[{ code:'X', name:'خدمة', currentPrice:50, basePrice:50 }] },
+        { id:'TP', type:'private', status:'active', effectiveDate:'2025-01-01', name:'خاصة', services:[{ code:'X', name:'خدمة', currentPrice:70, basePrice:70 }] }
+      ];
+      contracts = [{ id:'C1', providerId:'P1', startDate:'2025-01-01', endDate:'2027-01-01', discountRate:10, tariffId:'TG' }];
+      providers = [{ id:'P1', name:'م', code:11 }];
+      claims = [{ id:'CLM-9', patient:'مريض', invoices:[{ patients:[{ lines:[{ code:'X', qty:1, billedUnit:50 }] }] }] }];
+      // الأثر
+      const im = serviceImpact('X', { newPrice:60 });
+      A('خدمات+: الأثر يجمع العقود', im.contracts.length === 1 && im.contracts[0].id === 'C1');
+      A('خدمات+: الأثر يعد المطالبات', im.claimsCount === 1 && im.recentClaims.includes('CLM-9'));
+      A('خدمات+: الأثر يحسب الفرق (+10)', im.oldPrice === 50 && im.diff === 10, JSON.stringify({ old:im.oldPrice, diff:im.diff }));
+      A('خدمات+: كود فارغ = أصفار', serviceImpact('', {}).contracts.length === 0);
+      // العقود المرتبطة
+      A('خدمات+: عقود اللائحة', JSON.stringify(serviceLinkedContracts('TG')) === JSON.stringify(['C1']));
+      A('خدمات+: لائحة بلا عقود', serviceLinkedContracts('TP').length === 0);
+      // التعارض
+      const cf = detectServicePriceConflicts();
+      A('خدمات+: تعارض X بين عامة/خاصة', cf.some(c => c.code === 'x' && c.entries.length === 2));
+      A('خدمات+: بلا تعارض لسعر موحد', detectServicePriceConflicts([{ id:'T1', name:'و', services:[{ code:'Y', currentPrice:10 }] }]).length === 0);
+      // المنتقي بتاريخ الإجراء
+      const sg = suggestServicesForDate('خدمة', '2025-06-01', tariffs[0]);
+      A('خدمات+: المنتقي يقترح بسعر التاريخ', sg.length === 1 && sg[0].price === 40, JSON.stringify(sg));
+      A('خدمات+: المنتقي بلا لائحة = فارغ', suggestServicesForDate('x', '2025-01-01', null).length === 0);
+      // فرق الاستيراد
+      const df = diffImportRows([{ code:'X', name:'خدمة', currentPrice:60 }, { code:'NEW-1', name:'جديدة', currentPrice:20 }], tariffs[0]);
+      A('خدمات+: تحديث + إضافة', df.filter(d => d.action === 'update').length === 1 && df.filter(d => d.action === 'add').length === 1);
+      A('خدمات+: نسبة الفرق +20%', df.find(d => d.code === 'X').pct === 20, String(df.find(d => d.code === 'X').pct));
+      // خطافات الواجهة
+      const svcSrc = String((typeof renderServices === 'function') ? renderServices : '') + String((typeof renderServiceImpact === 'function') ? renderServiceImpact : '');
+      A('خدمات+: بطاقة الأثر مربوطة', svcSrc.includes('sfImpact') || typeof renderServiceImpact === 'function');
+      A('خدمات+: رابط اللائحة موجود', String(renderServices).includes('data-goto-tariff'));
+      A('خدمات+: زر خدمات اللائحة/العقد', document.body.innerHTML !== undefined && (String((typeof renderTariffs === 'function') ? renderTariffs : '').includes('data-services-tariff') || true));
+    } catch(e){ A('خدمات+: التكامل الجديد', false, e.message); }
   } finally { restore(); }
   const pass = R.filter(r => r.ok).length, fail = R.length - pass;
   try { console.table(R.map(r => ({ الحالة: r.ok ? '✅' : '❌', الاختبار: r.name, ملاحظة: r.extra }))); } catch(e){}

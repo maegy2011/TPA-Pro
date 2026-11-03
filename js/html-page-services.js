@@ -56,6 +56,7 @@ const PAGE_SERVICES = `
       <label class="check-row" style="background:#FEF3C7;border-color:#FCD34D"><input type="checkbox" id="sfRequiresPriorApproval"><span style="color:#92400E">⚠ موافقة</span></label>
       <button class="btn-xs" id="sfSaveBtn">حفظ</button>
       <button class="btn-xs" id="sfCancelBtn">إلغاء</button>
+      <div id="sfImpact" style="width:100%;font-size:12px;color:var(--muted)"></div>
     </div>
   </div>
   <div id="tariffChangeHistory" style="display:none;margin:10px 0"></div>

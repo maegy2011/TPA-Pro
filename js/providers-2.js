@@ -124,7 +124,7 @@ function renderContracts(){
       <td data-label="المدة" class="mono">${yearsLabel(c.durationYears || contractDurationYears(c.startDate, c.endDate))}</td>
       <td data-label="المتبقي"><span class="days-cell ${daysRemainingClass(c.endDate)}">${daysRemainingText(c.endDate)}</span></td>
       <td data-label="الخصم" class="mono">${c.discountRate}%<div style="font-size:10px;color:var(--muted)">${Array.isArray(c.rateVersions)?c.rateVersions.length:0} نسخ تاريخية</div>${(Array.isArray(c.increaseHistory)&&c.increaseHistory.length)?`<div style="font-size:10px;color:var(--teal);font-weight:800">زيادة +${Number(c.increaseHistory[c.increaseHistory.length-1].rate)||0}%</div>`:''}${(c.serviceOverrides&&Object.keys(c.serviceOverrides).length)?`<div style="font-size:10px;color:var(--gold);font-weight:800">خاص: ${Object.keys(c.serviceOverrides).length} بند</div>`:''}</td>
-      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">${renewBtn}${suspBtn}<button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
+      <td class="act"><div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">${renewBtn}${suspBtn}${c.tariffId ? `<button class="btn-xs" data-services-contract="${c.tariffId}">خدمات اللائحة</button>` : ''}<button class="btn-xs" data-edit-contract="${c.id}">تعديل</button><button class="btn-xs danger" data-delete-contract="${c.id}">×</button></div></td>
     </tr>`;
   }).join('');
 }
@@ -298,6 +298,7 @@ function bindTariffsControls(){
   $$('[data-close-tariff-import]').forEach(el=>el.addEventListener('click',()=>$('#tariffImportModal').classList.remove('open')));
   const confirmImport=$('#confirmTariffImport'); if(confirmImport&&!confirmImport.dataset.bound){confirmImport.dataset.bound='1';confirmImport.addEventListener('click',confirmTariffImport);}
   $('#tariffsBody').addEventListener('click', e => {
+    const sv = e.target.closest('[data-services-tariff]'); if(sv){ try { servicesTariffFilter = sv.dataset.servicesTariff; } catch(err){} try { navigateTo('services'); } catch(err){} return; }
     const ed = e.target.closest('[data-edit-tariff]'); if(ed) openTariffModal(ed.dataset.editTariff);
     const del = e.target.closest('[data-delete-tariff]'); if(del) deleteTariffWithDialog(del.dataset.deleteTariff);
   });
