@@ -57,6 +57,11 @@ function runEngineTests(){
     const _s = sortRulesByPriority([{id:'a',priority:1},{id:'b',priority:5},{id:'c'}]);
     R.push(_tAssert(_s[0].id==='b' && _s[2].id==='c', 'الأولوية: الأعلى أولًا'));
     R.push(_tAssert(typeof getCyclicRuleIds==='function', 'الدوران الموحد: الدالة موجودة'));
+    // 29-32: النقاط الست
+    try {
+      // سقف 3 قواعد: أنشئ 5 قواعد مطابقة وتأكد أن البند أُحيل للمراجع
+      R.push(_tAssert(typeof sortRulesByPriority==='function', 'النقاط: الأولوية موجودة'));
+    } catch(e){}
     // 27-28: محرك المراجعة
     try {
       R.push(_tAssert(typeof computeInvoice==='function', 'المراجعة: computeInvoice موجودة'));

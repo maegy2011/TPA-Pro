@@ -175,8 +175,20 @@ function applyClosedPackage(inv){
     }
   });
 }
+const _patCache = new Map();
+function _patCacheKey(pat, claim, refDate, invoice){
+  try {
+    return JSON.stringify({ p:pat.id, c:claim&&claim.id, i:invoice&&invoice.id, r:refDate,
+      lines:(pat.lines||[]).map(l=>({code:l.code,qty:l.qty,bu:l.billedUnit,tu:l.tariffUnit,note:l.note||'',mode:l._overrideMode||'auto',mv:l._manualValue??null,dec:l._decision||'',capM:pat._capMode||'auto',capV:pat._manualCapAmount??null,copM:pat._copayMode||'auto',copV:pat._manualCopayAmount??null,chk:(l._checksFailed||[]).join(',')})) });
+  } catch(e){ return null; }
+}
 function computePatient(pat, claim, refDate, invoice){
   refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
+  try {
+    const _k = _patCacheKey(pat, claim, refDate, invoice);
+    if(_k && _patCache.has(_k)){ const _hit = _patCache.get(_k); if(_hit && _hit.lines === (pat.lines||[]).length){ pat._subtotal=_hit.subtotal; pat._autoCapAmt=_hit.autoCap; pat._autoCapRule=_hit.capRule; pat._autoCopayAmt=_hit.autoCopay; pat._autoCopayRule=_hit.copayRule; pat._capAmt=_hit.capAmt; pat._copayAmt=_hit.copayAmt; pat._final=_hit.final; pat._cacheHit=true; return pat; } }
+  } catch(e){}
+  pat._cacheHit = false;
   const allRules = deductionRules.filter(r => r.enabled !== false && r.active !== false);
   const ctx = { claim, patient: pat, invoice: invoice || null };
   
@@ -255,7 +267,12 @@ function computePatient(pat, claim, refDate, invoice){
     let current = (l.lineBaseAfterContract !== undefined ? l.lineBaseAfterContract : l.lineBase);
     let lastRuleId = null, lastRuleName = '', lastRuleRate = 0;
     const _dedStart = pat.deductionReasons.length;
+    const MAX_LINE_RULES = 3; let _lineRuleCount = 0;
     for(const rule of lineRules){
+      if(_lineRuleCount >= MAX_LINE_RULES){
+        try { if(typeof flagLineAskReviewer==='function') flagLineAskReviewer(l, 'rule-overlap'); l._ruleCapHit = true; } catch(e){}
+        break;
+      }
       if(!checkRequires(rule, appliedIds)) continue;
       if(!ruleMatchesContext(rule, lctx, l._procedureDateUsed || refDate)) continue;
       if(rule.isComposite){
@@ -267,7 +284,7 @@ function computePatient(pat, claim, refDate, invoice){
           appliedIds.add(rule.id);
           (res.appliedChildRules||[]).forEach(cr => appliedIds.add(cr.id));
           compositeLog.push({ id: rule.id, name: rule.name, children: (res.appliedChildRules||[]).map(c=>c.id) });
-          lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = 0;
+          lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = 0; _lineRuleCount++;
           _addDed({ amount: _dedAmt, reason: rule.name || 'قاعدة مركبة', reasonCode: 'composite-rule', source: 'rule', level: 'line', ref: { lineCode: l.code, ruleId: rule.id }, note: (res.appliedChildRules||[]).map(c=>c.name).join('، ') });
         }
       } else {
@@ -276,7 +293,7 @@ function computePatient(pat, claim, refDate, invoice){
           const _dedAmt = current - res.newApproved;
           current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
-          lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = rule.rate;
+          lastRuleId = rule.id; lastRuleName = rule.name; lastRuleRate = rule.rate; _lineRuleCount++;
           _addDed({ amount: _dedAmt, reason: rule.name || 'قاعدة خصم', reasonCode: rule.action || 'rule', source: 'rule', level: 'line', ref: { lineCode: l.code, ruleId: rule.id }, note: rule.rate ? `نسبة ${rule.rate}%` : '' });
         }
       }
@@ -445,6 +462,10 @@ function computePatient(pat, claim, refDate, invoice){
   pat._refDate = refDate;
   if(pat._capMode === undefined) pat._capMode = 'auto';
   if(pat._copayMode === undefined) pat._copayMode = 'auto';
+  try {
+    const _k = _patCacheKey(pat, claim, refDate, invoice);
+    if(_k){ _patCache.set(_k, { lines:(pat.lines||[]).length, subtotal:pat._subtotal, autoCap:pat._autoCapAmt, capRule:pat._autoCapRule, autoCopay:pat._autoCopayAmt, copayRule:pat._autoCopayRule, capAmt:pat._capAmt, copayAmt:pat._copayAmt, final:pat._final }); if(_patCache.size>500){ const _f=_patCache.keys().next().value; _patCache.delete(_f); } }
+  } catch(e){}
   return pat;
 }
 /* حساب فاتورة كاملة: كل مريض مرة واحدة + تحقق الإقامة — يمنع التكرار المبعثر في العارضات. */

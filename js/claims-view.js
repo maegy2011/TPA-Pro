@@ -284,8 +284,12 @@ function renderExceptions(){
   const totalPending = pending.length + pa.length;
   if (cnt) cnt.textContent = totalPending;
   const filter = _excFilter();
-  const showPending = (filter === 'all' || filter === 'pending');
-  const showProcessed = (filter === 'all' || filter === 'processed');
+  const _isQ = e => (e.ln._checksFailed||[]).some(r => (typeof VALIDATION_REASONS!=='undefined' && VALIDATION_REASONS[r] && VALIDATION_REASONS[r].severity==='attention') || ['cap-conflict','copay-conflict','rule-overlap','rule-cycle','rule-requires-missing'].includes(r));
+  const _isAuto = e => !_isQ(e);
+  if(filter === 'needs-me'){ pending = pending.filter(_isQ); processed = []; pa = []; }
+  if(filter === 'auto-done'){ const _a = pending.filter(_isAuto).concat(processed.filter(_isAuto)); pending = []; processed = _a; pa = []; }
+  const showPending = (filter === 'all' || filter === 'pending' || filter === 'needs-me' || filter === 'auto-done');
+  const showProcessed = (filter === 'all' || filter === 'processed' || filter === 'auto-done');
   const showPA = (filter === 'all' || filter === 'pa');
 
   let html = '';
@@ -293,6 +297,8 @@ function renderExceptions(){
   html += `<div class="rv-exc-filter" style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;align-items:center">
     <input type="search" placeholder="بحث: كود/مريض/سبب…" value="${escapeHtml(_excSearch)}" oninput="setExcSearch(this.value)" style="flex:1;min-width:140px">
     <button type="button" class="btn-sm ${filter==='all'?'solid':'ghost'}" onclick="setExcFilter('all')">الكل</button>
+    <button type="button" class="btn-sm ${filter==='needs-me'?'solid':'ghost'}" onclick="setExcFilter('needs-me')">🙋 يحتاجني</button>
+    <button type="button" class="btn-sm ${filter==='auto-done'?'solid':'ghost'}" onclick="setExcFilter('auto-done')">⚙ محسوم تلقائيًا</button>
     <button type="button" class="btn-sm ${filter==='pending'?'solid':'ghost'}" onclick="setExcFilter('pending')">معلّقة (${pending.length})</button>
     <button type="button" class="btn-sm ${filter==='processed'?'solid':'ghost'}" onclick="setExcFilter('processed')">معالجة (${processed.length})</button>
     <button type="button" class="btn-sm ${filter==='pa'?'solid':'ghost'}" onclick="setExcFilter('pa')">بانتظار PA (${pa.length})</button>

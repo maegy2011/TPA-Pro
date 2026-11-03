@@ -254,13 +254,8 @@ function validateLine(line, ctx) {
     }
   }
 
+  // ترتيب الفحوص بالأخطر أولًا: الرفض (تغطية/سعر) قبل الانتباه (تكرار) حتى لا يتشتت المراجع.
   if (patient && invoice) {
-    const siblings = (patient.lines || []).filter(l => l !== line && String(l.code) === code);
-    if (siblings.length > 0) {
-      failed.push('duplicate');
-    } else {
-      passed.push('no-duplicate');
-    }
     // تكرار مفرط: نفس الكود أكثر من 3 مرات للمريض الواحد.
     const _sameCode = (patient.lines || []).filter(l => String(l.code||'').trim() === code).length;
     if (_sameCode > 3) failed.push('over-frequency');
@@ -301,6 +296,13 @@ function validateLine(line, ctx) {
     }
     if(_cycHit) failed.push('rule-cycle');
     if(_missHit) failed.push('rule-requires-missing');
+  } catch(e){}
+  // التكرار آخرًا: الأقل خطورة ولا يحجب أسباب الرفض.
+  try {
+    if(patient && invoice){
+      const _sib = (patient.lines || []).filter(l => l !== line && String(l.code||'').trim() === code);
+      if(_sib.length > 0) failed.push('duplicate'); else passed.push('no-duplicate');
+    }
   } catch(e){}
 
   let decision = 'auto-approved';

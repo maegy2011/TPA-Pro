@@ -26,14 +26,16 @@ function saveDr(){
   if(!from){ showWarning('تنبيه','أدخل السريان'); return; }
   const cts = $$('.dr-ctype').filter(cb=>cb.checked).map(cb=>cb.value);
   if(!cts.length){ showWarning('تنبيه','حدد نوع'); return; }
+  const _notes = ($('#drNotes') && $('#drNotes').value.trim()) || '';
+  if(!_notes){ showWarning('تنبيه','اكتب سبب القاعدة بالعربية (إلزامي للتخريج القانوني)'); return; }
   const _prioEl = document.getElementById('drPriority'); const _prio = _prioEl ? Number(_prioEl.value)||0 : 0;
   const data = { name, type, action: type==='coverage_cap'?'apply_cap':'apply_copay', rate, priority:_prio, effectiveFrom:from, effectiveTo:to||'', active:$('#drActive').checked, notes:$('#drNotes').value.trim(), scope:{ providerIds:[], contractIds:[], claimTypes:cts } };
-  if(editingDrId){ const r = deductionRules.find(x=>x.id===editingDrId); if(r){ r._prevVersion = { rate:r.rate, priority:(r.priority||0), at:new Date().toISOString() }; Object.assign(r, data); r.version = (Number(r.version)||1)+1; } showSuccess('تم','تم'); }
+  if(editingDrId){ const r = deductionRules.find(x=>x.id===editingDrId); if(r){ r._prevVersion = { rate:r.rate, priority:(r.priority||0), at:new Date().toISOString() }; Object.assign(r, data); r.version = (Number(r.version)||1)+1; r._simulated = false; r.enabled = false; r.active = false; } showSuccess('تم — القاعدة معطلة حتى محاكاة إجبارية', 'نفّذ «محاكاة» لعرض الأثر ثم فعّلها'); }
   else {
     const y = new Date(from).getFullYear(), pre = 'DR-'+y+'-';
     let m = 0;
     deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
-    deductionRules.push({ id:pre+String(m+1).padStart(3,'0'), version:1, ...data });
+    deductionRules.push({ id:pre+String(m+1).padStart(3,'0'), version:1, _simulated:false, enabled:false, active:false, ...data, enabled:false, active:false });
     showSuccess('تم','تمت');
   }
   closeDrModal(); renderDeductionRules();
@@ -176,7 +178,7 @@ function simulateRule(id){
   const rule = deductionRules.find(r => r.id === id);
   if(!rule){ showWarning('تنبيه','القاعدة غير موجودة'); return; }
   if(!claims.length){ showWarning('تنبيه','لا مطالبات للاختبار'); return; }
-  const sample = claims.slice(0, 50);
+  const sample = claims.slice(-10);
   let totalLines = 0, affected = 0;
   let totalBefore = 0, totalAfter = 0, totalExtraDed = 0;
   const affectedSamples = [];
@@ -224,5 +226,18 @@ function simulateRule(id){
     msg += '<br><br><b>عينة من البنود المتأثرة:</b><br>';
     affectedSamples.forEach(s => { msg += `${escapeHtml(s.claim)} — ${escapeHtml(s.service)}: ${fmt(s.before)} → ${fmt(s.after)}<br>`; });
   }
-  showInfo('محاكاة قاعدة الخصم', msg);
+  rule._simulated = true; rule._simAt = new Date().toISOString();
+  rule._simResult = { claims: sample.length, lines: totalLines, affected, extraDed: Math.round(totalExtraDed) };
+  try { if(typeof appendClaimAuditEvent==='function' && claims[0]) appendClaimAuditEvent(claims[0],{action:'rule.simulated',details:{rule:rule.id,affected,extraDed:Math.round(totalExtraDed)}}); } catch(e){}
+  msg += `<br><br><button type="button" class="btn-sm solid" data-sim-activate="${rule.id}" ${affected>0?'':'disabled'}>تفعيل القاعدة (الأثر ${fmt(totalExtraDed)})</button>`;
+  showInfo('محاكاة قاعدة الخصم — آخر 10 مطالبات', msg);
+  setTimeout(() => {
+    const b = document.querySelector(`[data-sim-activate="${rule.id}"]`);
+    if(b && !b.dataset.bound){ b.dataset.bound='1'; b.addEventListener('click', () => {
+      rule.enabled = true; rule.active = true;
+      try { if(typeof renderDeductionRules==='function') renderDeductionRules(); } catch(e){}
+      try { if(typeof persistData==='function') persistData(true); } catch(e){}
+      try { if(typeof showSuccess==='function') showSuccess('تم التفعيل', rule.name); } catch(e){}
+    }); }
+  }, 300);
 }
