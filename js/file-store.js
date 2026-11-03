@@ -34,9 +34,16 @@ async function _fsLoadHandle(){
   } catch(e){ return null; }
 }
 function claimFingerprint(claim){
-  let billed = 0;
-  (claim.invoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.lines||[]).forEach(l => { billed += (Number(l.qty)||0)*(Number(l.billedUnit)||0); })));
-  return { billed: Math.round(billed*100)/100, approved: Number(claim.approved)||0 };
+  let billed = 0, lines = 0;
+  const reasons = [];
+  (claim.invoices||[]).forEach(inv => (inv.patients||[]).forEach(p => {
+    (p.lines||[]).forEach(l => { billed += (Number(l.qty)||0)*(Number(l.billedUnit)||0); lines++; });
+    (p.deductionReasons||[]).forEach(d => { const a = Math.round((Number(d.amount)||0)*100)/100; if(a > 0) reasons.push((d.reasonCode||d.reason||'?') + ':' + a); });
+  }));
+  reasons.sort();
+  let h = 0; const s = lines + '|' + reasons.join(',');
+  for(let i = 0; i < s.length; i++){ h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+  return { billed: Math.round(billed*100)/100, approved: Number(claim.approved)||0, lines, detailHash: String(h >>> 0) };
 }
 async function fsConnect(){
   if(!fsSupported()){ if(typeof showWarning==='function') showWarning('غير مدعوم','متصفحك لا يدعم الوصول للملفات — استخدم Chrome أو Edge.'); return; }
@@ -95,6 +102,7 @@ function fsVerifyEnvelope(env){
   const fp = env.fingerprint || {};
   const real = claimFingerprint(env.claim);
   if(Math.abs((fp.billed||0) - real.billed) > 1) return { ok: true, warn: 'البصمة لا تطابق — الملف غُيّر خارجيًا. راجع الإجماليات قبل الاعتماد.' };
+  if(fp.detailHash && real.detailHash && fp.detailHash !== real.detailHash) return { ok: true, warn: 'تفاصيل البنود/الأسباب تغيّرت خارجيًا رغم ثبات الإجمالي — راجع التفاصيل قبل الاعتماد.' };
   return { ok: true };
 }
 async function fsImportFile(file){

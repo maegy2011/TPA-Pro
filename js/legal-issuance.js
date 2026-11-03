@@ -19,7 +19,8 @@ function buildLegalIssuanceHTML(claim){
       (p.deductionReasons || []).forEach(d => {
         const amt = Number(d.amount) || 0;
         if(amt <= 0) return;
-        rows.push(`<tr><td>${esc(p.name)} (حالة ${pi+1})</td><td>${esc(d.reason||'—')}${d.note?`<div style="color:#64748B;font-size:10px">${esc(d.note)}</div>`:''}</td><td>${esc(d.source==='manual'?'يدوي':d.source==='rule'?'قاعدة':'تلقائي')}</td><td style="text-align:left;font-weight:700">${fmtC(amt)}</td></tr>`);
+        const _rv = d.ref && d.ref.ruleId ? String(d.ref.ruleId) + (typeof deductionRules!=='undefined' && deductionRules.find(r=>r.id===d.ref.ruleId) && deductionRules.find(r=>r.id===d.ref.ruleId).version ? ' v' + deductionRules.find(r=>r.id===d.ref.ruleId).version : '') : '';
+      rows.push(`<tr><td>${esc(p.name)} (حالة ${pi+1})</td><td>${esc(d.reason||'—')}${_rv?`<div style="color:#64748B;font-size:10px">القاعدة: ${esc(_rv)}</div>`:''}${d.note?`<div style="color:#64748B;font-size:10px">${esc(d.note)}</div>`:''}</td><td>${esc(d.source==='manual'?'يدوي':d.source==='rule'?'قاعدة':'تلقائي')}</td><td style="text-align:left;font-weight:700">${fmtC(amt)}</td></tr>`);
       });
     });
     const b = (inv.patients || []).reduce((s,p) => s + (p.lines||[]).reduce((a,l) => a + (Number(l.qty)||0)*(Number(l.billedUnit)||0), 0), 0);
@@ -38,6 +39,16 @@ function buildLegalIssuanceHTML(claim){
     }
   })));
   const _manualTable = _manual.length ? `<div style="border:1px solid #E2E8F0;border-radius:8px;padding:12px;margin-top:16px"><div style="font-weight:800;margin-bottom:8px">ملحق القرارات اليدوية (${_manual.length})</div><table><thead><tr><th>البند</th><th>القرار</th><th>السبب</th><th>الملاحظة</th><th>التاريخ</th></tr></thead><tbody>${_manual.join('')}</tbody></table></div>` : '';
+  const _ruleVers = [];
+  try {
+    const _seen = new Set();
+    (claim.invoices||[]).forEach(inv => (inv.patients||[]).forEach(p => (p.deductionReasons||[]).forEach(d => {
+      if(d.ref && d.ref.ruleId && !_seen.has(d.ref.ruleId)){ _seen.add(d.ref.ruleId);
+        const _r = (typeof deductionRules!=='undefined' ? deductionRules : []).find(r => r.id === d.ref.ruleId);
+        _ruleVers.push(`<tr><td>${esc(d.ref.ruleId)}</td><td>${esc(_r ? (_r.name||'') : '—')}</td><td>${esc(_r && _r.version ? 'v'+_r.version : '—')}</td><td>${esc(_r ? (_r.rate+'%') : '—')}</td></tr>`); }
+    })));
+  } catch(e){}
+  const _ruleVerTable = _ruleVers.length ? `<div style="border:1px solid #E2E8F9;border-radius:8px;padding:12px;margin-top:16px"><div style="font-weight:800;margin-bottom:8px">ملحق نسخ القواعد المستخدمة (${_ruleVers.length})</div><table><thead><tr><th>القاعدة</th><th>الاسم</th><th>النسخة</th><th>النسبة</th></tr></thead><tbody>${_ruleVers.join('')}</tbody></table></div>` : '';
   const kpis = [
     { label: 'المطالبة', value: esc(claim.id) },
     { label: 'مقدم الخدمة', value: esc(provName) },
@@ -59,7 +70,8 @@ function buildLegalIssuanceHTML(claim){
         <div style="flex:1;border-top:1px solid #999;padding-top:6px">المدير المالي: ............ · التوقيع: ............ · التاريخ: ............</div>
       </div>
       ${_manualTable}
-    <div style="font-size:10px;color:#64748B;margin-top:8px">إجمالي المطالب: ${fmtC(grandBilled)} · إجمالي المستقطع: ${fmtC(grandDed)} · الصافي المعتمد: ${fmtC(grandBilled-grandDed)}</div>
+    ${_ruleVerTable}
+    <div style="font-size:10px;color:#64748B;margin-top:8px">بصمة التحقق: ${(() => { try { const _fp = (typeof claimFingerprint==='function') ? claimFingerprint(claim) : null; return _fp ? `بنود ${_fp.lines} · تفاصيل #${_fp.detailHash}` : '—'; } catch(e){ return '—'; } })()}<br>إجمالي المطالب: ${fmtC(grandBilled)} · إجمالي المستقطع: ${fmtC(grandDed)} · الصافي المعتمد: ${fmtC(grandBilled-grandDed)}</div>
     </div></div></body>`);
 }
 function printLegalIssuance(claimId){

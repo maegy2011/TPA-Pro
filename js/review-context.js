@@ -1,7 +1,9 @@
 // review-context.js — المالك الوحيد لحالة المراجعة الجارية (RC)
 // القواعد: (1) المؤشر يعيش في الجلسة لا في المطالبة. (2) مقارنة التضارب على الحقول الأصيلة فقط.
 const RC = { claimId: null };
-/* مفاتيح _ التي تمثل قرارات/بيانات مراجع (تُحفظ وتُقارن) — عدا ذلك محسوب ويُهمل في المقارنة. */
+/* مفاتيح _ التي تمثل قرارات/بيانات مراجع (تُحفظ وتُقارن) — عدا ذلك محسوب ويُهمل في المقارنة.
+   + الحقول المحسوبة غير المبدوءة بـ _ تُستثنى صراحة حتى لا يمنع الاستئناف ظلمًا بعد تحديث قاعدة. */
+const RC_COMPUTED_STRIP = new Set(['lineBase','lineBaseAfterContract','tariffUnit','approved','_autoApproved','_autoRuleId','_autoRuleName','_autoRuleRate','_appliedRuleIds','_compositeApplied','_maxlabsForced','_final','_subtotal','_autoCapAmt','_autoCapRule','_autoCopayAmt','_autoCopayRule','_capAmt','_copayAmt','_beneficiaryPays','_legalDeduction','_legalReason','legalDeduction','_ruleOverlap','_ruleCapHit','_stayExpected','_stayBilled','_opClassMax','_consShare','_refDate','_cacheHit','_procedureDateUsed','_beneficiaryTypeAtProcedure','_retirementAgeAtProcedure','_ageAtProcedure','_letterStartDateUsed','_ageAtLetterStart','_beneficiaryTypeAtLetterStart','_capLegal','_copayLegal']);
 const RC_DECISION_KEYS = ['_decision','_decidedBy','_overrideMode','_manualValue','_preConflictDecision','_conflictForced','_suggestedAction','_checksPassed','_checksFailed','_flaggedReasons','_legalDeduction','_contractRate','_contractCovered','_capMode','_copayMode','_manualCapAmount','_manualCopayAmount','_capNote','_reviewDrafts','_auditTrail','_overrideChecklist','_locked','_modelVersion'];
 function canonicalSnapshot(obj){
   if(Array.isArray(obj)) return obj.map(canonicalSnapshot);
@@ -9,6 +11,7 @@ function canonicalSnapshot(obj){
     const out = {};
     for(const k of Object.keys(obj)){
       if(k === 'reviewProgress') continue; // تلوث قديم: مؤشر داخل بيانات المطالبة
+      if(RC_COMPUTED_STRIP.has(k)) continue; // ناتج حساب — لا يمنع الاستئناف
       if(k[0] === '_' && !RC_DECISION_KEYS.includes(k)) continue;
       if(k === 'deductionReasons' && Array.isArray(obj[k])){
         out[k] = obj[k].filter(d => d && !d._generatedByCompute && !['auto','rule'].includes(d.source));

@@ -57,6 +57,14 @@ function runEngineTests(){
     const _s = sortRulesByPriority([{id:'a',priority:1},{id:'b',priority:5},{id:'c'}]);
     R.push(_tAssert(_s[0].id==='b' && _s[2].id==='c', 'الأولوية: الأعلى أولًا'));
     R.push(_tAssert(typeof getCyclicRuleIds==='function', 'الدوران الموحد: الدالة موجودة'));
+    // 33-36: التكامل
+    try {
+      const _nv = validateLine({qty:1,billedUnit:100}, { claim:{id:'C',type:'employee'}, patient:{id:'P'}, invoice:{id:'I'} });
+      R.push(_tAssert(_nv.failed.includes('incomplete-data'), 'التكامل: بند بلا كود = بيانات ناقصة'));
+      R.push(_tAssert(typeof RC_COMPUTED_STRIP!=='undefined' && RC_COMPUTED_STRIP.has('approved'), 'التكامل: الاستثناء المحسوب موجود'));
+      R.push(_tAssert(typeof claimFingerprint==='function' && claimFingerprint({invoices:[]}).detailHash!==undefined, 'التكامل: البصمة التفصيلية موجودة'));
+      R.push(_tAssert(typeof matchLineTypes==='function', 'التكامل: التصنيف متاح للمحرك'));
+    } catch(e){ R.push(_tAssert(false,'التكامل',e.message)); }
     // 29-32: النقاط الست
     try {
       // سقف 3 قواعد: أنشئ 5 قواعد مطابقة وتأكد أن البند أُحيل للمراجع

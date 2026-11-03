@@ -13,6 +13,7 @@ const VALIDATION_REASONS = {
   'admin-exempt-no-note': { label: 'إعفاء إداري بلا سبب مسجل',    severity: 'attention', category: 'coverage' },
 
   'pa-required':        { label: 'تتطلب موافقة مسبقة — لم تُطلب', severity: 'attention', category: 'pa' },
+  'incomplete-data':    { label: 'بيانات البند ناقصة (كود/كمية/سعر) — القرار للمراجع', severity: 'attention', category: 'coverage' },
   'cap-conflict':       { label: 'تعارض قواعد السقف — القرار للمراجع', severity: 'attention', category: 'rules' },
   'copay-conflict':     { label: 'تعارض قواعد التحمل — القرار للمراجع', severity: 'attention', category: 'rules' },
   'rule-cycle':         { label: 'اعتمادية دائرية — القرار للمراجع', severity: 'attention', category: 'rules' },
@@ -185,6 +186,7 @@ function clearValidationCache(){ VALIDATION_CACHE.clear(); }
  * @returns {Object} نتيجة التحقق
  */
 function validateLine(line, ctx) {
+  try { if(typeof normalizeLine === 'function' && line && typeof line === 'object') normalizeLine(line); } catch(e){}
   const _ck = _validationCacheKey(line, ctx);
   if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }
   const { claim, patient, invoice, contract, tariff, serviceOverrides } = ctx;
@@ -194,6 +196,7 @@ function validateLine(line, ctx) {
   const reductions = [];
 
   const code = String(line.code || '').trim();
+  if(!code || !(Number(line.qty) > 0) || !((Number(line.billedUnit) || 0) >= 0)) failed.push('incomplete-data');
   // نفس معادلة compute-patient — مصدر واحد للحقيقة.
   const _procDate = String(line.procedureDate || line.serviceDate || line.date || (invoice && invoice.date) || (claim && (claim.date || claim.receivedDate)) || '').slice(0,10) || null;
   const amounts = computeLineAmounts(line, ctxFull, _procDate);
@@ -265,14 +268,16 @@ function validateLine(line, ctx) {
       const _proc = String(line.procedureDate || line.serviceDate || line.date || '').slice(0,10);
       if(_letter && _proc && _proc < _letter) failed.push('waiting-period');
     } catch(e){}
-    // تفكيك: كشف + إجراء في نفس اليوم على نفس المريض — يُسأل المراجع.
+    // تفكيك عبر التصنيف الديناميكي: أتعاب بلا إجراء جراحي مستقل — أي نوع مخصص جديد يُلتقط تلقائيًا.
     try {
-      const _procDay = String(line.procedureDate || line.serviceDate || line.date || (invoice && invoice.date) || '').slice(0,10);
-      const _cat = String(line.category || '');
-      const _isConsult = /كشف|استشار|consult/i.test(_cat + ' ' + (line.name||''));
-      if(_isConsult && _procDay){
-        const _hasProc = (patient.lines||[]).some(l => l !== line && String(l.procedureDate||l.serviceDate||l.date||(invoice&&invoice.date)||'').slice(0,10) === _procDay && /جراح|عملية|procedure|منظار/i.test(String(l.category||'') + ' ' + (l.name||'')));
-        if(_hasProc) failed.push('unbundling');
+      const _myTypes = (typeof matchLineTypes === 'function') ? matchLineTypes(line) : [];
+      if(_myTypes.some(t => t.fee)){
+        const _hasProc = (patient.lines||[]).some(l => {
+          if(l === line) return false;
+          try { return (typeof matchLineTypes === 'function' ? matchLineTypes(l) : []).some(t => t.surgeryProc && !t.fee); }
+          catch(e){ return false; }
+        });
+        if(!_hasProc) failed.push('unbundling');
       }
     } catch(e){}
   }

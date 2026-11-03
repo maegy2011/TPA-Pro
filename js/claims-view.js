@@ -510,7 +510,7 @@ function recalcReview(){
     }
     (inv.patients||[]).forEach(pat => {
       eligible += pat._subtotal || 0;
-      (pat.lines||[]).forEach(l => { const f = l._checksFailed||[]; if(f.length){ _invStats[_ii].pend++; if(typeof isRejectReason === 'function' && f.some(isRejectReason)) _invStats[_ii].rej++; } });
+      (pat.lines||[]).forEach(l => { const f = l._checksFailed||[]; if(f.length){ _invStats[_ii].pend++; if(typeof isRejectReason === 'function' && f.some(isRejectReason)) _invStats[_ii].rej++; } else if(((l._appliedRuleIds||[]).length >= 2) || l._ruleCapHit){ _invStats[_ii].pend++; } });
     });
   });
   try {
