@@ -13,7 +13,7 @@ function runLifecycleTests(){
   // ---------- DOM مزيف ----------
   const els = {};
   const mkEl = (id) => ({ id, value:'', checked:false, disabled:false, style:{}, dataset:{}, innerHTML:'', textContent:'', classList:{ add(){}, remove(){}, toggle(){}, contains:() => false }, addEventListener(){}, click(){}, focus(){} });
-  ['btProvider','btPeriodType','btMonth','btClaimReceivedDate','btStatus','btBilled','btNotes','btNumber','batchModal','rvReason','rvNotes','paStatus','paRefNumber','paDate','rvSub','rvId','rvDate','rvReceivedNumber','rvReceivedDate','rvPatient','rvProvider','priorApprovalBox'].forEach(id => { els['#'+id] = mkEl(id); });
+  ['btProvider','btPeriodType','btMonth','btClaimReceivedDate','btStatus','btBilled','btNotes','btNumber','batchModal','rvReason','rvNotes','paStatus','paRefNumber','paDate','rvSub','rvId','rvDate','rvReceivedNumber','rvReceivedDate','rvPatient','rvProvider','priorApprovalBox','pvName','pvContact','pvPhone','pvEmail','pvNotes','pvType','pvProvinceSearch','providerModal'].forEach(id => { els['#'+id] = mkEl(id); });
   const hadDocument = (typeof document !== 'undefined');
   const origQS = hadDocument ? document.querySelector : null;
   const origGID = hadDocument ? document.getElementById : null;
@@ -37,38 +37,75 @@ function runLifecycleTests(){
     try { g.confirm = () => false; } catch(e){}
 
     let claimId = null;
-    /* ---------- 1. الجهة ---------- */
+    /* ---------- 1. تسجيل 5 جهات كاملة ---------- */
+    const FIVE = [
+      { name:'مستشفى النيل', type:'مستشفى', contact:'مدير الاستقبال', phone:'01001234567', email:'nile@hospital.com', notes:'جهة دورة 1' },
+      { name:'معمل الشمس', type:'معمل تحاليل', contact:'مسؤول المعمل', phone:'01112345678', email:'sun@lab.com', notes:'جهة دورة 2' },
+      { name:'مركز الأمل للأشعة', type:'مركز أشعة', contact:'منسق المركز', phone:'01223456789', email:'amal@rad.com', notes:'جهة دورة 3' },
+      { name:'مستشفى السلام', type:'مستشفى', contact:'إدارة المطالبات', phone:'01534567890', email:'salam@hospital.com', notes:'جهة دورة 4' },
+      { name:'عيادة الفجر', type:'عيادة', contact:'طبيب العيادة', phone:'01045678901', email:'fajr@clinic.com', notes:'جهة دورة 5' }
+    ];
+    const FIVE_IDS = [];
     try {
       providers = []; tariffs = []; contracts = []; batches = []; claims = []; workSessions = [];
-      const code = nextProviderCode();
-      A('دورة: أول كود جهة = 1', code === 1, String(code));
-      providers.push({ id:'P1', name:'مستشفى النيل', type:'مستشفى', code });
+      try { editingProviderId = null; } catch(e){}
+      FIVE.forEach((f, i) => {
+        els['#pvName'].value = f.name;
+        els['#pvContact'].value = f.contact;
+        els['#pvPhone'].value = f.phone;
+        els['#pvEmail'].value = f.email;
+        els['#pvNotes'].value = f.notes;
+        els['#pvType'].value = f.type;
+        lastWarn = null;
+        saveProvider();
+        const p = providers.find(x => x.name === f.name);
+        A(`دورة: جهة ${i+1} مسجلة (${f.name})`, !!p && !lastWarn, lastWarn || '');
+        if(p) FIVE_IDS.push(p.id);
+      });
+      A('دورة: 5 جهات كاملة', providers.length === 5, String(providers.length));
+      const codes = providers.map(p => p.code);
+      A('دورة: أكواد فريدة متسلسلة 1..5', JSON.stringify([...codes].sort((a,b) => a-b)) === JSON.stringify([1,2,3,4,5]));
+      A('دورة: بيانات التواصل محفوظة', providers.every(p => p.phone && p.email && p.contact));
       ensureProviderCodes();
-      A('دورة: الجهة بكود فريد', providers[0].code === 1);
-    } catch(e){ A('دورة: الجهة', false, e.message); }
+      A('دورة: الأكواد ثابتة بعد الترحيل', JSON.stringify(providers.map(p => p.code).sort((a,b) => a-b)) === JSON.stringify([1,2,3,4,5]));
+      // بوابة: تكرار الاسم مرفوض
+      els['#pvName'].value = FIVE[0].name; els['#pvPhone'].value = '01099999999'; els['#pvEmail'].value = 'x@x.com'; els['#pvContact'].value = 'س'; els['#pvNotes'].value = ''; els['#pvType'].value = 'مستشفى';
+      lastWarn = null; saveProvider();
+      A('دورة: تكرار اسم الجهة مرفوض', !!lastWarn && providers.length === 5);
+    } catch(e){ A('دورة: الجهات', false, e.message); }
 
-    /* ---------- 2. اللائحة والخدمة ---------- */
+    /* ---------- 2. خمس لوائح وخدمات ---------- */
     try {
-      tariffs.push({ id:'TG1', type:'general', status:'active', name:'عامة 2025', effectiveDate:'2025-01-01', expiryDate:'', basePriceLevel:100, priceVersions:[], changeLog:[], services:[{ code:'LAB-1', name:'تحليل دم', category:'مختبر', basePrice:100, currentPrice:100, covered:true }] });
+      FIVE_IDS.forEach((pid, i) => {
+        tariffs.push({ id:'TG'+(i+1), type:(i % 2 ? 'private' : 'general'), status:'active', name:'لائحة جهة '+(i+1), effectiveDate:'2025-01-01', expiryDate:'', basePriceLevel:100, priceVersions:[], changeLog:[],
+          services:[{ code:'LAB-'+(i+1), name:'تحليل دم '+(i+1), category:'مختبر', basePrice:100*(i+1), currentPrice:100*(i+1), covered:true }] });
+      });
+      A('دورة: 5 لوائح', tariffs.length === 5);
       const v = getTariffVersionForDate(tariffs[0], '2026-03-01');
       A('دورة: نسخة اللائحة سارية بتاريخ الإجراء', !!v);
       const svc = getTariffServicesForDate(tariffs[0], '2026-03-01').find(s => s.code === 'LAB-1');
       A('دورة: الخدمة بسعرها 100', svc && svc.currentPrice === 100);
-    } catch(e){ A('دورة: اللائحة', false, e.message); }
+    } catch(e){ A('دورة: اللوائح', false, e.message); }
 
-    /* ---------- 3. العقد ---------- */
+    /* ---------- 3. خمسة عقود ---------- */
     try {
-      contracts.push({ id:'C1', providerId:'P1', startDate:'2025-01-01', endDate:'2027-01-01', discountRate:10, tariffId:'TG1' });
+      FIVE_IDS.forEach((pid, i) => {
+        contracts.push({ id:'C'+(i+1), providerId:pid, startDate:'2025-01-01', endDate:'2027-01-01', discountRate:10, tariffId:'TG'+(i+1) });
+      });
+      A('دورة: 5 عقود', contracts.length === 5);
       const ctx = getContractContext({ providerCode:1, date:'2026-03-01' });
       A('دورة: سياق العقد (جهة+تاريخ)', !!(ctx && ctx.contract && ctx.tariff));
       A('دورة: العقد يخصم 10%', ctx.contract.discountRate === 10);
-    } catch(e){ A('دورة: العقد', false, e.message); }
+      const allCtx = providers.every(p => { const c = getContractContext({ providerCode:p.code, date:'2026-03-01' }); return !!(c && c.contract && c.tariff); });
+      A('دورة: كل جهة لها سياق عقد', allCtx);
+    } catch(e){ A('دورة: العقود', false, e.message); }
 
     /* ---------- 4. الوارد → مطالبة ---------- */
     try {
-      const vchk = validateBatchInput({ providerId:'P1', month:'2026-03', billed:100, contractsList:contracts });
+      const pid0 = FIVE_IDS[0];
+      const vchk = validateBatchInput({ providerId:pid0, month:'2026-03', billed:100, contractsList:contracts });
       A('دورة: الوارد صالح', vchk.ok, vchk.msg || '');
-      els['#btProvider'].value = 'P1';
+      els['#btProvider'].value = FIVE_IDS[0];
       els['#btPeriodType'].value = 'monthly';
       els['#btMonth'].value = '2026-03';
       els['#btClaimReceivedDate'].value = '2026-03-05';
