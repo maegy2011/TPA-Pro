@@ -1,4 +1,31 @@
 // review-bind.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
+/* تبديل مستند مريض — منطق خالص (يُختبر آليًا). لا يرمي أبدًا؛ يعيد {ok,msg}. */
+function togglePatientDoc(invIdx, patIdx, key, checked){
+  try {
+    if(typeof workingInvoices === 'undefined' || !Array.isArray(workingInvoices)) return { ok:false, msg:'لا توجد مساحة مراجعة نشطة' };
+    const inv = workingInvoices[Number(invIdx)];
+    if(!inv) return { ok:false, msg:'المذكرة غير موجودة — حدّث الصفحة وأعد فتح المراجعة' };
+    const pi = Number(patIdx);
+    const pat = inv.patients && inv.patients[pi];
+    if(!pat) return { ok:false, msg:'المريض غير موجود في هذه المذكرة' };
+    if(!key) return { ok:false, msg:'مفتاح المستند مفقود' };
+    if(!pat.documents) pat.documents = {};
+    pat.documents[key] = !!checked;
+    return { ok:true, msg:'' };
+  } catch(e){ return { ok:false, msg:String((e && e.message) || e) }; }
+}
+/* تبديل مستند مذكرة — منطق خالص (يُختبر آليًا). */
+function toggleInvoiceDoc(invIdx, key, checked){
+  try {
+    if(typeof workingInvoices === 'undefined' || !Array.isArray(workingInvoices)) return { ok:false, msg:'لا توجد مساحة مراجعة نشطة' };
+    const inv = workingInvoices[Number(invIdx)];
+    if(!inv) return { ok:false, msg:'المذكرة غير موجودة — حدّث الصفحة وأعد فتح المراجعة' };
+    if(!key) return { ok:false, msg:'مفتاح المستند مفقود' };
+    if(!inv.documents) inv.documents = {};
+    inv.documents[key] = !!checked;
+    return { ok:true, msg:'' };
+  } catch(e){ return { ok:false, msg:String((e && e.message) || e) }; }
+}
 function bindReviewModal(){
   $$('[data-close]').forEach(el => el.addEventListener('click', () => closeReview()));
   const pa = document.getElementById('paStatus') || document.getElementById('rvPagePaStatus');
@@ -115,22 +142,22 @@ function bindReviewModal(){
     if(e.target.matches('[data-manual-cap-note]')){ const inv=workingInvoices[rvActiveInvoiceIdx]; if(!inv)return; const p=inv.patients[rvActivePatientIdx]; if(!p)return; p._capNote=e.target.value; markSessionDirty(); if(typeof learnRuleFromReviewer === 'function' && p._capMode==='manual') learnRuleFromReviewer('manual-cap', { claim:(typeof activeClaim !== 'undefined' ? activeClaim : null), subtotal:p._subtotal||0, value:p._manualCapAmount, auto:p._capAmt||0, note:p._capNote||'' }); return; }
     if(e.target.matches('[data-manual-copay-note]')){ const inv=workingInvoices[rvActiveInvoiceIdx]; if(!inv)return; const p=inv.patients[rvActivePatientIdx]; if(!p)return; p._copayNote=e.target.value; markSessionDirty(); if(typeof learnRuleFromReviewer === 'function' && p._copayMode==='manual') learnRuleFromReviewer('manual-copay', { claim:(typeof activeClaim !== 'undefined' ? activeClaim : null), subtotal:p._subtotal||0, value:p._manualCopayAmount, auto:p._copayAmt||0, note:p._copayNote||'' }); return; }
     const doc = e.target.closest('[data-doc]'); if(doc){
-      const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
-      if(!inv.documents) inv.documents = {};
-      inv.documents[doc.dataset.doc] = doc.checked;
-      doc.closest('.rv-doc').classList.toggle('ok', doc.checked);
-      doc.closest('.rv-doc').classList.toggle('miss', !doc.checked);
+      const _dr = (typeof toggleInvoiceDoc === 'function') ? toggleInvoiceDoc(rvActiveInvoiceIdx, doc.dataset.doc, doc.checked) : { ok:false, msg:'غير متاح' };
+      if(!_dr.ok){ if(typeof showWarning === 'function') showWarning('تعذّر تحديد المستند', _dr.msg || 'تعذّر حفظ التحديد'); else if(typeof showToast === 'function') showToast('⚠ تعذّر تحديد المستند'); return; }
+      try {
+        const _lbl = doc.closest('.rv-doc');
+        if(_lbl){ _lbl.classList.toggle('ok', !!doc.checked); _lbl.classList.toggle('miss', !doc.checked); }
+      } catch(e){}
       markSessionDirty();
       return;
     }
     const pdoc = e.target.closest('[data-pat-doc]'); if(pdoc){
-      const inv = workingInvoices[rvActiveInvoiceIdx]; if(!inv) return;
-      const pi = Number(pdoc.dataset.patIdx);
-      const pat = inv.patients && inv.patients[pi]; if(!pat) return;
-      if(!pat.documents) pat.documents = {};
-      pat.documents[pdoc.dataset.patDoc] = pdoc.checked;
-      pdoc.closest('.rv-doc').classList.toggle('ok', pdoc.checked);
-      pdoc.closest('.rv-doc').classList.toggle('miss', !pdoc.checked);
+      const _dr = (typeof togglePatientDoc === 'function') ? togglePatientDoc(rvActiveInvoiceIdx, pdoc.dataset.patIdx, pdoc.dataset.patDoc, pdoc.checked) : { ok:false, msg:'غير متاح' };
+      if(!_dr.ok){ if(typeof showWarning === 'function') showWarning('تعذّر تحديد المستند', _dr.msg || 'تعذّر حفظ التحديد'); else if(typeof showToast === 'function') showToast('⚠ تعذّر تحديد المستند'); return; }
+      try {
+        const _lbl = pdoc.closest('.rv-doc');
+        if(_lbl){ _lbl.classList.toggle('ok', !!pdoc.checked); _lbl.classList.toggle('miss', !pdoc.checked); }
+      } catch(e){}
       markSessionDirty();
       return;
     }

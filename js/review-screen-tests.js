@@ -104,6 +104,23 @@ function runReviewScreenTests(){
         A('مراجعة-شاشة: الفشل لا يترك مسودة ناقصة', activeClaim._reviewDrafts.length === 0);
         workingInvoices = [];
       } catch(e){ A('مراجعة-شاشة: اللاصمت', false, e.message); }
+
+      /* ---------- 6. تبديل مستندات المريض والمذكرة ---------- */
+      try {
+        workingInvoices = [{ id:'I1', patients:[{ name:'م', lines:[] }] }, { id:'I2', patients:[{ name:'ن', lines:[] }] }];
+        let t1 = togglePatientDoc(0, 0, 'patientId', true);
+        A('مراجعة-شاشة: تحديد مستند مريض', t1.ok === true && workingInvoices[0].patients[0].documents.patientId === true);
+        t1 = togglePatientDoc(0, 0, 'patientId', false);
+        A('مراجعة-شاشة: إلغاء التحديد', t1.ok === true && workingInvoices[0].patients[0].documents.patientId === false);
+        A('مراجعة-شاشة: مذكرة مفقودة = رسالة', togglePatientDoc(9, 0, 'patientId', true).ok === false);
+        A('مراجعة-شاشة: مريض مفقود = رسالة', togglePatientDoc(0, 9, 'patientId', true).ok === false);
+        A('مراجعة-شاشة: مفتاح مفقود = رسالة', togglePatientDoc(0, 0, '', true).ok === false);
+        A('مراجعة-شاشة: العزل بين المذكرات', (() => { togglePatientDoc(1, 0, 'referral', true); return workingInvoices[1].patients[0].documents.referral === true && !workingInvoices[0].patients[0].documents.referral; })());
+        let t2 = toggleInvoiceDoc(0, 'medicalReport', true);
+        A('مراجعة-شاشة: تحديد مستند مذكرة', t2.ok === true && workingInvoices[0].documents.medicalReport === true);
+        A('مراجعة-شاشة: مذكرة مفقودة = رسالة', toggleInvoiceDoc(9, 'x', true).ok === false);
+        workingInvoices = [];
+      } catch(e){ A('مراجعة-شاشة: المستندات', false, e.message); }
     } finally { Object.keys(shell).forEach(k => { try { g[k] = shell[k]; } catch(e){} }); }
   } finally {
     Object.keys(dlg).forEach(k => { try { g[k] = dlg[k]; } catch(e){} });
