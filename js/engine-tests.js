@@ -44,6 +44,20 @@ function runEngineTests(){
   try {
     R.push(_tAssert(typeof appendClaimAuditEvent==='function', 'التدقيق: الدالة موجودة'));
   } catch(e){ R.push(_tAssert(false,'التدقيق',e.message)); }
+  // 21-26: الفحوص الجديدة (التوسعة)
+  try {
+    const _mkCtx = (lines) => ({ claim:{id:'C',date:'2026-03-01',type:'employee'}, patient:{id:'P',lines}, invoice:{id:'I',date:'2026-03-01'} });
+    const _over = [1,2,3,4].map(() => ({code:'LAB-1',qty:1,billedUnit:100}));
+    R.push(_tAssert(validateLine(_over[0], _mkCtx(_over)).failed.includes('over-frequency'), 'تكرار مفرط: 4 مرات نفس الكود'));
+    const _wctx = { claim:{id:'C',date:'2026-03-01',type:'employee'}, patient:{id:'P',letterDate:'2026-02-01',lines:[{code:'X',qty:1,billedUnit:100,procedureDate:'2026-01-05'}]}, invoice:{id:'I',date:'2026-03-01'} };
+    R.push(_tAssert(validateLine({code:'X',qty:1,billedUnit:100,procedureDate:'2026-01-05'}, _wctx).failed.includes('waiting-period'), 'فترة انتظار: إجراء قبل الخطاب'));
+    const _unb = [{code:'C1',name:'كشف',category:'كشف',qty:1,billedUnit:100,procedureDate:'2026-03-01'},{code:'S1',name:'عملية جراحية',category:'جراحة',qty:1,billedUnit:500,procedureDate:'2026-03-01'}];
+    R.push(_tAssert(validateLine(_unb[0], _mkCtx(_unb)).failed.includes('unbundling'), 'تفكيك: كشف + جراحة نفس اليوم'));
+    R.push(_tAssert(typeof sortRulesByPriority==='function', 'الأولوية: دالة الترتيب موجودة'));
+    const _s = sortRulesByPriority([{id:'a',priority:1},{id:'b',priority:5},{id:'c'}]);
+    R.push(_tAssert(_s[0].id==='b' && _s[2].id==='c', 'الأولوية: الأعلى أولًا'));
+    R.push(_tAssert(typeof getCyclicRuleIds==='function', 'الدوران الموحد: الدالة موجودة'));
+  } catch(e){ R.push(_tAssert(false,'الفحوص الجديدة',e.message)); }
   const pass = R.filter(r=>r.ok).length, fail = R.length - pass;
   try { console.table(R.map(r=>({الحالة:r.ok?'✅':'❌',الاختبار:r.name,ملاحظة:r.extra}))); } catch(e){}
   return { pass, fail, total: R.length, results: R };

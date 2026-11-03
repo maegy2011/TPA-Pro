@@ -50,22 +50,18 @@ function ruleMatchesContext(rule, ctx, refDate){
   }
   return true;
 }
-/** القواعد الداخلة في اعتمادية دائرية — أي تعارض يُرجع بسؤال المراجع بدل الحسم الصامت. */
+/** القواعد الداخلة في اعتمادية دائرية — مصدر واحد: topoSortRules يستبعدها، وهنا نعيد أسماءها فقط. */
 function getCyclicRuleIds(){
-  const rules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r && r.enabled !== false && r.active !== false);
-  const byId = {}; rules.forEach(r => byId[r.id] = r);
-  const state = {}, cyclic = new Set(), stack = [];
-  function visit(id){
-    if(state[id] === 2) return;
-    if(state[id] === 1){ const i = stack.indexOf(id); if(i >= 0) stack.slice(i).forEach(x => cyclic.add(x)); return; }
-    state[id] = 1; stack.push(id);
-    const r = byId[id];
-    ((r && r.requires && r.requires.ruleIds) || []).forEach(dep => { if(byId[dep]) visit(dep); });
-    stack.pop(); state[id] = 2;
-  }
-  rules.forEach(r => visit(r.id));
-  return cyclic;
+  try {
+    const rules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r && r.enabled !== false && r.active !== false);
+    const sorted = (typeof topoSortRules === 'function') ? topoSortRules(rules) : rules;
+    const kept = new Set(sorted.map(r => r.id));
+    return new Set(rules.map(r => r.id).filter(id => !kept.has(id)));
+  } catch(e){ return new Set(); }
 }
+/* أولوية القاعدة: الأعلى يُطبَّق أولًا؛ الافتراضي 0. */
+function rulePriority(r){ const p = Number(r && r.priority); return isNaN(p) ? 0 : p; }
+function sortRulesByPriority(rules){ return (rules||[]).slice().sort((a,b) => rulePriority(b) - rulePriority(a)); }
 function evaluateRuleAction(rule, ctx, baseAmount){
   const amt = baseAmount !== undefined ? baseAmount : (ctx.line ? ctx.line.lineBase : 0);
   let rate = Number(rule.rate) || 0;

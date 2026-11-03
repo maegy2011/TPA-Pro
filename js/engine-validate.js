@@ -260,6 +260,25 @@ function validateLine(line, ctx) {
     } else {
       passed.push('no-duplicate');
     }
+    // تكرار مفرط: نفس الكود أكثر من 3 مرات للمريض الواحد.
+    const _sameCode = (patient.lines || []).filter(l => String(l.code||'').trim() === code).length;
+    if (_sameCode > 3) failed.push('over-frequency');
+    // فترة الانتظار: الإجراء قبل بداية خطاب التغطية.
+    try {
+      const _letter = String((patient && patient.letterDate) || (invoice && invoice.letterDate) || (claim && claim.letterStartDate) || '').slice(0,10);
+      const _proc = String(line.procedureDate || line.serviceDate || line.date || '').slice(0,10);
+      if(_letter && _proc && _proc < _letter) failed.push('waiting-period');
+    } catch(e){}
+    // تفكيك: كشف + إجراء في نفس اليوم على نفس المريض — يُسأل المراجع.
+    try {
+      const _procDay = String(line.procedureDate || line.serviceDate || line.date || (invoice && invoice.date) || '').slice(0,10);
+      const _cat = String(line.category || '');
+      const _isConsult = /كشف|استشار|consult/i.test(_cat + ' ' + (line.name||''));
+      if(_isConsult && _procDay){
+        const _hasProc = (patient.lines||[]).some(l => l !== line && String(l.procedureDate||l.serviceDate||l.date||(invoice&&invoice.date)||'').slice(0,10) === _procDay && /جراح|عملية|procedure|منظار/i.test(String(l.category||'') + ' ' + (l.name||'')));
+        if(_hasProc) failed.push('unbundling');
+      }
+    } catch(e){}
   }
 
   // أي تعارض أو اعتماد دائري يُرجع بسؤال المراجع بدل الحسم الصامت.

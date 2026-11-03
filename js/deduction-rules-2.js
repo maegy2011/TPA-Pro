@@ -26,13 +26,14 @@ function saveDr(){
   if(!from){ showWarning('تنبيه','أدخل السريان'); return; }
   const cts = $$('.dr-ctype').filter(cb=>cb.checked).map(cb=>cb.value);
   if(!cts.length){ showWarning('تنبيه','حدد نوع'); return; }
-  const data = { name, type, action: type==='coverage_cap'?'apply_cap':'apply_copay', rate, effectiveFrom:from, effectiveTo:to||'', active:$('#drActive').checked, notes:$('#drNotes').value.trim(), scope:{ providerIds:[], contractIds:[], claimTypes:cts } };
-  if(editingDrId){ const r = deductionRules.find(x=>x.id===editingDrId); if(r) Object.assign(r, data); showSuccess('تم','تم'); }
+  const _prioEl = document.getElementById('drPriority'); const _prio = _prioEl ? Number(_prioEl.value)||0 : 0;
+  const data = { name, type, action: type==='coverage_cap'?'apply_cap':'apply_copay', rate, priority:_prio, effectiveFrom:from, effectiveTo:to||'', active:$('#drActive').checked, notes:$('#drNotes').value.trim(), scope:{ providerIds:[], contractIds:[], claimTypes:cts } };
+  if(editingDrId){ const r = deductionRules.find(x=>x.id===editingDrId); if(r){ r._prevVersion = { rate:r.rate, priority:(r.priority||0), at:new Date().toISOString() }; Object.assign(r, data); r.version = (Number(r.version)||1)+1; } showSuccess('تم','تم'); }
   else {
     const y = new Date(from).getFullYear(), pre = 'DR-'+y+'-';
     let m = 0;
     deductionRules.forEach(x => { if(x.id.startsWith(pre)){ const n = parseInt(x.id.split('-').pop(), 10); if(!isNaN(n)) m = Math.max(m,n); } });
-    deductionRules.push({ id:pre+String(m+1).padStart(3,'0'), ...data });
+    deductionRules.push({ id:pre+String(m+1).padStart(3,'0'), version:1, ...data });
     showSuccess('تم','تمت');
   }
   closeDrModal(); renderDeductionRules();

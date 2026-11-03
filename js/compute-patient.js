@@ -243,7 +243,7 @@ function computePatient(pat, claim, refDate, invoice){
     l._contractRejected = false;
   });
   const compositeChildren = new Set((allRules.filter(r => r.isComposite)).flatMap(r => r.compositeConfig?.childRuleIds || []));
-  const lineRules = topoSortRules(allRules.filter(r => r.isComposite || (isLineLevelAction(r.action) && !compositeChildren.has(r.id))));
+  const lineRules = (typeof sortRulesByPriority==='function' ? sortRulesByPriority(topoSortRules(allRules.filter(r => r.isComposite || (isLineLevelAction(r.action) && !compositeChildren.has(r.id))))) : topoSortRules(allRules.filter(r => r.isComposite || (isLineLevelAction(r.action) && !compositeChildren.has(r.id)))));
   pat.lines.forEach(l => {
     const lctx = { ...ctx, line: l, contract: getContractContext(claim, l._procedureDateUsed).contract, tariff: getContractContext(claim, l._procedureDateUsed).tariff };
     const appliedIds = new Set();
