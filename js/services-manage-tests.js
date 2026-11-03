@@ -130,6 +130,36 @@ function runServicesManageTests(){
       A('إدارة: تحذير التراجع', !!lastWarn);
       g.persistData = () => true;
     } catch(e){ A('إدارة: التراجع', false, e.message); }
+    /* ---------- النواة الموحدة ---------- */
+    try {
+      const n1 = normalizeServicePayload({ code:'  X1 ', name:' أشعة ', nameEn:'', category:'', basePrice:100, currentPrice:'', covered:undefined, requiresPriorApproval:undefined });
+      A('نواة: التطبيع والقص', n1.code === 'X1' && n1.name === 'أشعة' && n1.currentPrice === 100 && n1.covered === true);
+      A('نواة: الاسم الإنجليزي الفارغ يُحذف', !('nameEn' in n1));
+      const n2 = normalizeServicePayload({ code:'X2', name:'س', nameEn:'X Ray', category:'أشعة', basePrice:100, currentPrice:120 });
+      A('نواة: الاسم الإنجليزي يُحفظ', n2.nameEn === 'X Ray' && n2.currentPrice === 120);
+      const t0 = { id:'TG', name:'عامة', effectiveDate:'2025-01-01', services:[{ code:'A-1', name:'أ', category:'مختبر', basePrice:50, currentPrice:50, covered:true }] };
+      const bad = (d) => validateServicePayload(Object.assign({ tariffId:'TG', tariff:t0, tariffEffectiveDate:'2025-01-01', editingIndex:null, editingTariffId:'TG', services:t0.services }, d));
+      A('نواة: بلا لائحة', bad({ code:'B', name:'ب', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'2025-02-01', tariff:null, tariffId:'' }).ok === false);
+      A('نواة: بلا كود', bad({ code:'', name:'ب', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'2025-02-01' }).ok === false);
+      A('نواة: بلا اسم', bad({ code:'B', name:'', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'2025-02-01' }).ok === false);
+      A('نواة: سعر أساسي صفري', bad({ code:'B', name:'ب', category:'مختبر', basePrice:0, currentPrice:0, effectiveDate:'2025-02-01' }).ok === false);
+      A('نواة: سعر حالي سالب', bad({ code:'B', name:'ب', category:'مختبر', basePrice:50, currentPrice:-5, effectiveDate:'2025-02-01' }).ok === false);
+      A('نواة: بلا سريان', bad({ code:'B', name:'ب', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'' }).ok === false);
+      A('نواة: تكرار الكود (حساسية الحالة)', bad({ code:'a-1', name:'ب', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'2025-02-01' }).msg.includes('مستخدم'));
+      A('نواة: السريان قبل النسخة', bad({ code:'B', name:'ب', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'2025-01-01' }).msg.includes('بعد تاريخ'));
+      A('نواة: النقل بين اللوائح مرفوض', bad({ code:'B', name:'ب', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'2025-02-01', editingIndex:0, editingTariffId:'TG', tariffId:'OTHER' }).ok === false);
+      A('نواة: تعديل نفس الصف مسموح', bad({ code:'A-1', name:'أ2', category:'مختبر', basePrice:60, currentPrice:60, effectiveDate:'2025-02-01', editingIndex:0, editingTariffId:'TG' }).ok === true);
+      A('نواة: صالح', bad({ code:'B-2', name:'ب', category:'مختبر', basePrice:50, currentPrice:50, effectiveDate:'2025-02-01' }).ok === true);
+      // التطبيق
+      const t1 = { id:'TG', name:'عامة', effectiveDate:'2025-01-01', services:[], priceVersions:[], changeLog:[] };
+      const p1 = normalizeServicePayload({ code:'N-1', name:'جديدة', category:'مختبر', basePrice:100, currentPrice:120 });
+      const ap1 = applyServicePayload(t1, null, p1, '2025-02-01');
+      A('نواة: التطبيق إضافة', ap1.ok === true && ap1.action === 'service-add' && t1.services.length === 1);
+      A('نواة: الأرشفة سُجلت', t1.changeLog.length === 1 && t1.effectiveDate === '2025-02-01');
+      const p2 = normalizeServicePayload({ code:'n-1', name:'محدثة', category:'مختبر', basePrice:100, currentPrice:150 });
+      const ap2 = applyServicePayload(t1, null, p2, '2025-03-01');
+      A('نواة: التطبيق تحديث بلا تكرار', ap2.ok === true && ap2.action === 'service-update' && t1.services.length === 1 && t1.services[0].currentPrice === 150);
+    } catch(e){ A('نواة: الخدمات الموحدة', false, e.message); }
   } finally {
     try { if(hadDocument){ try { if(origQS) document.querySelector = origQS; } catch(e){} try { if(origGID) document.getElementById = origGID; } catch(e){} } else { try { delete g.document; } catch(e){} } } catch(e){}
     uiStubs.forEach(k => { try { if(origUi[k] === undefined) delete g[k]; else g[k] = origUi[k]; } catch(e){} });

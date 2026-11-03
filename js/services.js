@@ -160,6 +160,50 @@ function renderServices(){
   if(kpi){ kpi.innerHTML = `<div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الخدمات</div><div class="kpi-val">${list.length} <small>خدمة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">من أصل ${getAllServicesFlat().length}</div></div>`; }
 }
 
+/* ---------- نواة الخدمات الموحدة: مصدر واحد للتطبيع والفحص والتطبيق ---------- */
+const SERVICE_FORM_CATEGORIES = ['استشارة','مختبر','أشعة','عمليات','أدوية','طوارئ','علاج طبيعي','أسنان','أخرى'];
+/* تطبيع حمولة الخدمة — منطق خالص (يُختبر آليًا). لا يرمي أبدًا. */
+function normalizeServicePayload(d){
+  d = d || {};
+  const code = String(d.code || '').trim();
+  const name = String(d.name || '').trim();
+  const nameEn = String(d.nameEn || '').trim();
+  let category = String(d.category || '').trim() || 'أخرى';
+  const basePrice = Number(d.basePrice);
+  let currentPrice = (d.currentPrice === '' || d.currentPrice === null || d.currentPrice === undefined) ? basePrice : Number(d.currentPrice);
+  if(!Number.isFinite(currentPrice)) currentPrice = Number.isFinite(basePrice) ? basePrice : 0;
+  return { code, name, ...(nameEn ? { nameEn } : {}), category, basePrice, currentPrice,
+    covered: d.covered === undefined ? true : !!d.covered,
+    requiresPriorApproval: !!d.requiresPriorApproval };
+}
+/* فحص حمولة الخدمة — منطق خالص (يُختبر آليًا). */
+function validateServicePayload(d){
+  d = d || {};
+  if(!d.tariff) return { ok:false, msg:'اختر اللائحة' };
+  if(!String(d.code || '').trim()) return { ok:false, msg:'أدخل الكود' };
+  if(!String(d.name || '').trim()) return { ok:false, msg:'أدخل الاسم' };
+  if(!String(d.category || '').trim()) return { ok:false, msg:'اختر الفئة' };
+  if(!(Number(d.basePrice) > 0)) return { ok:false, msg:'أدخل سعراً أساسياً صحيحاً' };
+  if(!Number.isFinite(Number(d.currentPrice)) || Number(d.currentPrice) < 0) return { ok:false, msg:'أدخل سعراً حالياً صحيحاً' };
+  if(!d.effectiveDate) return { ok:false, msg:'حدد تاريخ السريان' };
+  if(d.editingIndex !== null && d.editingIndex !== undefined && d.editingTariffId !== d.tariffId) return { ok:false, msg:'نقل الخدمة بين اللوائح غير متاح من شاشة التعديل؛ أضفها للائحة الجديدة ثم احذف القديمة بتاريخ سريان مستقل' };
+  const codeKey = String(d.code).trim().toLowerCase();
+  const dup = (d.services || []).some((x, i) => i !== d.editingIndex && String(x.code || '').trim().toLowerCase() === codeKey);
+  if(dup) return { ok:false, msg:'الكود مستخدم بالفعل في هذه اللائحة' };
+  if(d.tariffEffectiveDate && d.effectiveDate <= d.tariffEffectiveDate) return { ok:false, msg:'يجب أن يكون بعد تاريخ سريان النسخة الحالية حتى لا تتغير الأسعار التاريخية' };
+  return { ok:true, msg:'' };
+}
+/* تطبيق الحمولة على اللائحة مع الأرشفة — يعيد {ok,action,before} ولا يلمس التخزين. */
+function applyServicePayload(tariff, editingIndex, payload, effectiveDate){
+  if(!tariff || !Array.isArray(tariff.services)) return { ok:false, msg:'اللائحة غير صالحة' };
+  const idx = (editingIndex !== null && editingIndex !== undefined) ? editingIndex : tariff.services.findIndex(x => String(x.code || '').trim().toLowerCase() === String(payload.code || '').trim().toLowerCase());
+  const before = (idx >= 0 && tariff.services[idx]) ? { ...tariff.services[idx] } : null;
+  archiveTariffVersion(tariff, effectiveDate, before ? 'service-update' : 'service-add',
+    [{ code: payload.code, action: before ? 'update' : 'add', before, after: { ...payload } }]);
+  if(before) tariff.services[idx] = { ...payload };
+  else tariff.services.push({ ...payload });
+  return { ok:true, msg:'', action: before ? 'service-update' : 'service-add', before };
+}
 function showServiceFormPanel(tariffId, idx){
   if(typeof tariffs === 'undefined') return;
   if(!tariffs.length){
@@ -206,20 +250,16 @@ function hideServiceFormPanel(){ const panel = $('#serviceFormPanel'); if(panel)
 function saveServiceForm(){
   const tid=$('#sfTariff').value, t=tariffs.find(x=>x.id===tid); if(!t){showWarning('تنبيه','اختر اللائحة');return;}
   if(!t.services)t.services=[];
-  const code=$('#sfCode').value.trim(),name=$('#sfName').value.trim(),cat=$('#sfCategory').value;
-  const bp=Number($('#sfBasePrice').value)||0,cp=Number($('#sfCurrentPrice').value)||0,eff=$('#servicesEffectiveDate').value;
-  const _sv = (typeof validateServiceForm === 'function') ? validateServiceForm({ tariffId:tid, tariff:t, code, name, basePrice:bp, effectiveDate:eff, tariffEffectiveDate:t.effectiveDate, editingIndex:editingServiceForm.index, editingTariffId:editingServiceForm.tariffId, services:t.services }) : { ok:true };
+  const eff=$('#servicesEffectiveDate').value;
+  const data=normalizeServicePayload({ code:$('#sfCode').value, name:$('#sfName').value, nameEn:$('#sfNameEn')?.value,
+    category:$('#sfCategory').value, basePrice:Number($('#sfBasePrice').value)||0, currentPrice:$('#sfCurrentPrice').value,
+    covered:$('#sfCovered').checked, requiresPriorApproval:$('#sfRequiresPriorApproval').checked });
+  const _sv=validateServicePayload({ tariffId:tid, tariff:t, ...data, effectiveDate:eff,
+    tariffEffectiveDate:t.effectiveDate, editingIndex:editingServiceForm.index, editingTariffId:editingServiceForm.tariffId, services:t.services });
   if(!_sv.ok){ showWarning(_sv.msg === 'يجب أن يكون بعد تاريخ سريان النسخة الحالية حتى لا تتغير الأسعار التاريخية' ? 'تاريخ السريان' : 'تنبيه', _sv.msg); return; }
-  const nameEn=$('#sfNameEn')?.value.trim()||'';const data={code,name,...(nameEn?{nameEn}:{}),category:cat,basePrice:bp,currentPrice:cp||bp,covered:$('#sfCovered').checked,requiresPriorApproval:$('#sfRequiresPriorApproval').checked};
-  const idx=editingServiceForm.index;
-  if(idx!==null && editingServiceForm.tariffId!==tid){showWarning('تنبيه','نقل الخدمة بين اللوائح غير متاح من شاشة التعديل؛ أضفها للائحة الجديدة ثم احذف القديمة بتاريخ سريان مستقل');return;}
-  const at=idx!==null?idx:t.services.findIndex(x=>String(x.code).toLowerCase()===code.toLowerCase());
-  if(idx===null && at>=0){showWarning('تنبيه','الكود مستخدم بالفعل في هذه اللائحة');return;}
-  if(t.effectiveDate && eff<=t.effectiveDate){showWarning('تاريخ السريان','يجب أن يكون بعد تاريخ سريان النسخة الحالية حتى لا تتغير الأسعار التاريخية');return;}
-  const before=at>=0?{...t.services[at]}:null, action=before?'service-update':'service-add';
   const snapshot={services:JSON.parse(JSON.stringify(t.services)),priceVersions:JSON.parse(JSON.stringify(t.priceVersions||[])),changeLog:JSON.parse(JSON.stringify(t.changeLog||[])),effectiveDate:t.effectiveDate};
-  archiveTariffVersion(t,eff,action,[{code,action:before?'update':'add',before,after:{...data}}]);
-  if(before)t.services[at]=data;else t.services.push(data);
+  const _ap=applyServicePayload(t, editingServiceForm.index, data, eff);
+  if(!_ap.ok){ showWarning('خطأ', _ap.msg); return; }
   const saved=typeof persistData==='function'?persistData(true):true;
   if(saved===false){t.services=snapshot.services;t.priceVersions=snapshot.priceVersions;t.changeLog=snapshot.changeLog;t.effectiveDate=snapshot.effectiveDate;showWarning('خطأ','تعذر الحفظ؛ تم التراجع عن التعديل');return;}
   hideServiceFormPanel();renderServices();renderTariffs();renderTariffChangeHistory();showSuccess('تم','تم حفظ الخدمة بتاريخ سريان مستقل');

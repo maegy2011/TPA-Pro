@@ -322,5 +322,9 @@ function bindTariffsControls(){
 
   $$('[data-close-tariff]').forEach(el => el.addEventListener('click', closeTariffModal));
   $('#saveTariff').addEventListener('click', saveTariff);
+  // ربط مودال الخدمة: كان ميتًا (بلا مستمعات) — الإضافة والتعديل من المودال لم يعملا
+  $$('[data-close-service]').forEach(el => { if(!el.dataset.bound){ el.dataset.bound='1'; el.addEventListener('click', () => { if(typeof closeServiceModal==='function') closeServiceModal(); }); } });
+  const _svcSave = $('#saveService'); if(_svcSave && !_svcSave.dataset.bound){ _svcSave.dataset.bound='1'; _svcSave.addEventListener('click', () => { if(typeof saveService==='function') saveService(); }); }
+  try { if(typeof bindServiceModalLive==='function') bindServiceModalLive(); } catch(e){}
   $('#deleteTariff').addEventListener('click', () => { if(editingTariffId) deleteTariffWithDialog(editingTariffId); });
 }
