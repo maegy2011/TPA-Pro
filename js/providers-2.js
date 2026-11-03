@@ -190,7 +190,24 @@ function applyContractIncrease(){
 }
 function serviceOverridesToArray(ov){
   if(!ov || typeof ov !== 'object') return [];
-  return Object.keys(ov).map(code => ({ code, name: (typeof svcNameByCode === 'function' && svcNameByCode(code)) || code, covered: !(ov[code] && ov[code].covered === false), discountRate: (ov[code] && ov[code].discountRate !== null && ov[code].discountRate !== undefined) ? Number(ov[code].discountRate) : '', requiresPA: !!(ov[code] && ov[code].requiresPA) }));
+  return Object.keys(ov).map(code => ({ code, name: (typeof svcNameByCode === 'function' && svcNameByCode(code)) || code, covered: !(ov[code] && ov[code].covered === false), discountRate: (ov[code] && ov[code].discountRate !== null && ov[code].discountRate !== undefined) ? Number(ov[code].discountRate) : '', requiresPA: !!(ov[code] && ov[code].requiresPA),
+    price: (ov[code] && ov[code].price !== null && ov[code].price !== undefined && ov[code].price !== '') ? Number(ov[code].price) : '',
+    effectiveFrom: (ov[code] && ov[code].effectiveFrom) ? String(ov[code].effectiveFrom).slice(0,10) : '',
+    effectiveTo: (ov[code] && ov[code].effectiveTo) ? String(ov[code].effectiveTo).slice(0,10) : '' }));
+}
+/* تطبيع صف تجاوز واحد — منطق خالص (يُختبر آليًا). */
+function normalizeOverrideRow(o){
+  o = o || {};
+  const price = (o.price === '' || o.price === null || o.price === undefined) ? null : Number(o.price);
+  const from = String(o.effectiveFrom || '').slice(0,10), to = String(o.effectiveTo || '').slice(0,10);
+  if(price !== null && (!Number.isFinite(price) || price < 0)) return { ok:false, msg:'سعر خاص غير صالح لـ ' + (o.code || '') };
+  if(from && to && from > to) return { ok:false, msg:'نهاية السريان قبل البداية لـ ' + (o.code || '') };
+  const out = { covered: !!o.covered, requiresPA: !!o.requiresPA,
+    discountRate: (o.discountRate === '' || o.discountRate === null || o.discountRate === undefined) ? null : Number(o.discountRate) };
+  if(price !== null) out.price = price;
+  if(from) out.effectiveFrom = from;
+  if(to) out.effectiveTo = to;
+  return { ok:true, entry: out };
 }
 function renderServiceOverrides(){
   const box = $('#ctrOvList'); if(!box) return;
@@ -203,11 +220,13 @@ function renderServiceOverrides(){
     sel.innerHTML = list.map(s => `<option value="${escapeHtml(s.code)}">${escapeHtml(s.name)} (${escapeHtml(s.code)})</option>`).join('') || '<option value="">لا بنود متاحة</option>';
   }
   if(!workingServiceOverrides.length){ box.innerHTML = '<span style="color:var(--muted)">لا بنود خاصة — يُطبق خصم العقد العام</span>'; return; }
-  box.innerHTML = workingServiceOverrides.map((o,i) => `<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap"><b style="flex:1;min-width:120px">${escapeHtml(o.name)} <span style="color:var(--muted);font-size:11px">(${escapeHtml(o.code)})</span></b><label style="font-size:12px"><input type="checkbox" data-ov="covered" data-i="${i}" ${o.covered?'checked':''}> مغطاة</label><label style="font-size:12px">خصم % <input type="number" min="0" max="100" step="0.5" data-ov="discountRate" data-i="${i}" value="${o.discountRate===''?'':Number(o.discountRate)}" placeholder="عام" style="width:64px"></label><label style="font-size:12px"><input type="checkbox" data-ov="requiresPA" data-i="${i}" ${o.requiresPA?'checked':''}> موافقة مسبقة</label><button type="button" class="btn-xs danger" data-ov-del="${i}">×</button></div>`).join('');
+  box.innerHTML = workingServiceOverrides.map((o,i) => `<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap"><b style="flex:1;min-width:120px">${escapeHtml(o.name)} <span style="color:var(--muted);font-size:11px">(${escapeHtml(o.code)})</span></b><label style="font-size:12px"><input type="checkbox" data-ov="covered" data-i="${i}" ${o.covered?'checked':''}> مغطاة</label><label style="font-size:12px">خصم % <input type="number" min="0" max="100" step="0.5" data-ov="discountRate" data-i="${i}" value="${o.discountRate===''?'':Number(o.discountRate)}" placeholder="عام" style="width:64px"></label><label style="font-size:12px"><input type="checkbox" data-ov="requiresPA" data-i="${i}" ${o.requiresPA?'checked':''}> موافقة</label><label style="font-size:12px">سعر خاص <input type="number" min="0" step="1" data-ov="price" data-i="${i}" value="${o.price===''?'':Number(o.price)}" placeholder="اللائحة" style="width:76px"></label><label style="font-size:12px">من <input type="date" data-ov="effectiveFrom" data-i="${i}" value="${escapeHtml(o.effectiveFrom||'')}" style="width:130px"></label><label style="font-size:12px">إلى <input type="date" data-ov="effectiveTo" data-i="${i}" value="${escapeHtml(o.effectiveTo||'')}" style="width:130px"></label><button type="button" class="btn-xs danger" data-ov-del="${i}">×</button></div>`).join('');
   box.querySelectorAll('[data-ov]').forEach(el => {
     el.addEventListener('change', () => {
       const i = Number(el.dataset.i), f = el.dataset.ov, o = workingServiceOverrides[i]; if(!o) return;
       if(f === 'discountRate') o.discountRate = el.value === '' ? '' : Number(el.value);
+      else if(f === 'price') o.price = el.value === '' ? '' : Number(el.value);
+      else if(f === 'effectiveFrom' || f === 'effectiveTo') o[f] = el.value;
       else o[f] = el.checked;
     });
   });
@@ -220,7 +239,7 @@ function addServiceOverride(){
   const code = sel.value;
   if(workingServiceOverrides.some(o => o.code === code)) return;
   const s = getAllServicesDistinct().find(x => x.code === code);
-  workingServiceOverrides.push({ code, name: s ? s.name : code, covered:true, discountRate:'', requiresPA:false });
+  workingServiceOverrides.push({ code, name: s ? s.name : code, covered:true, discountRate:'', requiresPA:false, price:'', effectiveFrom:'', effectiveTo:'' });
   const si = $('#ctrOvSearch'); if(si) si.value = '';
   renderServiceOverrides();
 }
@@ -232,7 +251,13 @@ function saveContract(){
   const chk = (typeof validateContractInput === 'function') ? validateContractInput({ providerId:$('#ctrProvider').value, startDate:$('#ctrStart').value, duration:$('#ctrDuration').value, versionFrom:$('#ctrVersionEffective').value }) : { ok:true };
   if(!chk.ok){ showWarning(chk.msg === 'اختر جهة' || chk.msg === 'أدخل تاريخ البداية' || chk.msg === 'تعذر حساب النهاية' ? 'تنبيه' : 'تاريخ السريان', chk.msg); return; }
   const pid = $('#ctrProvider').value, s = $('#ctrStart').value, dur = chk.dur, e = chk.end, versionFrom = chk.versionFrom;
-  const data = { providerId:pid, startDate:s, endDate:e, durationYears:dur, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], increaseHistory:workingContractIncreases.map(h=>({...h})), serviceOverrides:Object.fromEntries(workingServiceOverrides.map(o => [o.code, { covered:!!o.covered, discountRate:(o.discountRate===''||o.discountRate==null)?null:Number(o.discountRate), requiresPA:!!o.requiresPA }])), notes:$('#ctrNotes').value.trim() };
+  const _ovNorm = [];
+  for(const o of workingServiceOverrides){
+    const _n = (typeof normalizeOverrideRow === 'function') ? normalizeOverrideRow(o) : { ok:true, entry:{ covered:!!o.covered, discountRate:(o.discountRate===''||o.discountRate==null)?null:Number(o.discountRate), requiresPA:!!o.requiresPA } };
+    if(!_n.ok){ showWarning('تنبيه', _n.msg); return; }
+    _ovNorm.push([o.code, _n.entry]);
+  }
+  const data = { providerId:pid, startDate:s, endDate:e, durationYears:dur, discountRate:Math.min(100,Math.max(0,Number($('#ctrDiscount').value)||0)), excludedServices:[...selectedExcludedServices], increaseHistory:workingContractIncreases.map(h=>({...h})), serviceOverrides:Object.fromEntries(_ovNorm), notes:$('#ctrNotes').value.trim() };
   if(editingContractId){
     const c = getContractById(editingContractId); if(!c) return;
     c.rateVersions = (typeof splitRateVersions === 'function') ? splitRateVersions(c.rateVersions, versionFrom, e, { discountRate:data.discountRate, excludedServices:data.excludedServices }, c.startDate, c.discountRate, (Array.isArray(c.excludedServices)?[...c.excludedServices]:(c.coveredServices||''))) : (Array.isArray(c.rateVersions) ? c.rateVersions : []);

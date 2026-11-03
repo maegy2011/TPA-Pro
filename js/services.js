@@ -179,7 +179,10 @@ function applyBulkServiceOverride(code, patch, targets, contractsList){
     if(!c.serviceOverrides || typeof c.serviceOverrides !== 'object') c.serviceOverrides = {};
     const prev = c.serviceOverrides[code] ? { ...c.serviceOverrides[code] } : null;
     const next = { ...(prev || {}), ...(patch.covered !== null && patch.covered !== undefined ? { covered: !!patch.covered } : {}),
-      ...(patch.requiresPA !== null && patch.requiresPA !== undefined ? { requiresPA: !!patch.requiresPA } : {}) };
+      ...(patch.requiresPA !== null && patch.requiresPA !== undefined ? { requiresPA: !!patch.requiresPA } : {}),
+      ...(patch.price !== null && patch.price !== undefined ? { price: Number(patch.price) } : {}),
+      ...(patch.effectiveFrom ? { effectiveFrom: patch.effectiveFrom } : {}),
+      ...(patch.effectiveTo ? { effectiveTo: patch.effectiveTo } : {}) };
     if(prev) { if(prev.discountRate !== null && prev.discountRate !== undefined) next.discountRate = prev.discountRate; }
     c.serviceOverrides[code] = next;
     try { if(typeof appendContractAuditEvent === 'function') appendContractAuditEvent(c, { action:'contract.bulk-service-override', details:{ code, prev, next } }); } catch(e){}
@@ -611,12 +614,38 @@ function renderTariffChangeHistory(){
 }
 
 let bulkOvServiceCode = '', bulkOvProviderIds = [];
+/* أكواد التخصيص الجماعي: بند جديد يدوي أو كل خدمات لائحة أو خدمة واحدة. منطق خالص. */
+function resolveBulkCodes(opts){
+  opts = opts || {};
+  const _ts = opts.tariffs || (function(){ try { return (typeof tariffs !== 'undefined') ? tariffs : []; } catch(e){ return []; } })() || [];
+  if(opts.wholeTariff && opts.tariffId){
+    const t = _ts.find(x => x.id === opts.tariffId);
+    if(!t) return { ok:false, msg:'اللائحة غير موجودة', codes:[] };
+    const codes = [...new Set((t.services || []).map(s => String(s.code || '').trim()).filter(Boolean))];
+    if(!codes.length) return { ok:false, msg:'اللائحة بلا بنود', codes:[] };
+    return { ok:true, msg:'', codes };
+  }
+  if(opts.newCode){
+    const c = String(opts.newCode).trim();
+    if(!c) return { ok:false, msg:'أدخل كود البند الجديد', codes:[] };
+    if(!String(opts.newName || '').trim()) return { ok:false, msg:'أدخل اسم البند الجديد', codes:[] };
+    if(!(Number(opts.newPrice) > 0)) return { ok:false, msg:'البند الجديد يتطلب سعرًا خاصًا' };
+    return { ok:true, msg:'', codes:[c], isNew:true };
+  }
+  if(!String(opts.code || '').trim()) return { ok:false, msg:'اختر الخدمة', codes:[] };
+  return { ok:true, msg:'', codes:[String(opts.code).trim()] };
+}
 function renderBulkOvPanel(){
   const svcSel = $('#bulkOvService');
   if(svcSel){
     const all = (typeof getAllServicesDistinct === 'function') ? getAllServicesDistinct() : [];
     svcSel.innerHTML = '<option value="">اختر الخدمة…</option>' + all.map(s => `<option value="${escapeHtml(s.code)}">${escapeHtml(s.name)} (${escapeHtml(s.code)})</option>`).join('');
     if(bulkOvServiceCode) svcSel.value = bulkOvServiceCode;
+  }
+  const trSel = $('#bulkOvTariff');
+  if(trSel){
+    const ts = (typeof tariffs !== 'undefined' ? tariffs : []) || [];
+    trSel.innerHTML = ts.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
   }
   const box = $('#bulkOvProviders');
   if(box){
@@ -633,32 +662,68 @@ function renderBulkOvPanel(){
   }
   renderBulkOvPreview();
 }
+function bulkOvReadPatch(){
+  const cov = $('#bulkOvCovered')?.value || '', cpa = $('#bulkOvPA')?.value || '';
+  const pr = $('#bulkOvPrice')?.value;
+  const from = ($('#bulkOvFrom')?.value || '').slice(0,10), to = ($('#bulkOvTo')?.value || '').slice(0,10);
+  return { covered: cov === '' ? null : cov === 'on', requiresPA: cpa === '' ? null : cpa === 'on',
+    price: (pr === '' || pr === null || pr === undefined) ? null : Number(pr), effectiveFrom: from || null, effectiveTo: to || null };
+}
 function renderBulkOvPreview(){
   const box = $('#bulkOvPreview'); if(!box) return;
-  if(!bulkOvServiceCode || !bulkOvProviderIds.length){ box.innerHTML = 'اختر الخدمة والجهات لعرض الأثر قبل التطبيق.'; return; }
-  const targets = resolveBulkOverrideTargets(bulkOvProviderIds, { code: bulkOvServiceCode });
-  const cov = $('#bulkOvCovered')?.value || '', cpa = $('#bulkOvPA')?.value || '';
-  const covTxt = cov === 'on' ? 'تفعيل' : cov === 'off' ? 'تعطيل' : '—';
-  const paTxt = cpa === 'on' ? 'اشتراط موافقة' : cpa === 'off' ? 'إلغاء الاشتراط' : '—';
-  box.innerHTML = `<b>معاينة:</b> ${escapeHtml(String(targets.length))} جهة — التغطية: <b>${covTxt}</b> · الموافقة: <b>${paTxt}</b><br>` +
-    targets.map(t => {
-      const cur = t.current ? `${t.current.covered ? 'مغطاة' : 'معطلة'}${t.current.requiresPA ? ' + موافقة' : ''}` : 'افتراضي اللائحة';
-      const flag = t.hasContract ? '' : ' <b style="color:var(--bad)">(بلا عقد — ستُتخطى)</b>';
-      return `· ${escapeHtml(t.providerName)}: حاليًا ${escapeHtml(cur)}${flag}`;
-    }).join('<br>');
+  const whole = $('#bulkOvWholeTariff')?.checked;
+  const rc = resolveBulkCodes({ code: bulkOvServiceCode, wholeTariff: whole, tariffId: $('#bulkOvTariff')?.value,
+    newCode: $('#bulkOvNewCode')?.value, newName: $('#bulkOvNewName')?.value, newPrice: $('#bulkOvPrice')?.value });
+  if(!rc.ok || !bulkOvProviderIds.length){ box.innerHTML = 'اختر البنود والجهات لعرض الأثر قبل التطبيق.'; return; }
+  const patch = bulkOvReadPatch();
+  const covTxt = patch.covered === true ? 'تفعيل' : patch.covered === false ? 'تعطيل' : '—';
+  const paTxt = patch.requiresPA === true ? 'اشتراط موافقة' : patch.requiresPA === false ? 'إلغاء الاشتراط' : '—';
+  const priceTxt = patch.price !== null ? fmt(patch.price) : '—';
+  const dateTxt = (patch.effectiveFrom || patch.effectiveTo) ? `${patch.effectiveFrom || '…'} → ${patch.effectiveTo || 'مفتوح'}` : '—';
+  // الأثر السعري: قديم اللائحة مقابل الجديد لكل بند
+  const priceLines = rc.codes.slice(0, 8).map(code => {
+    const im = (typeof serviceImpact === 'function') ? serviceImpact(code, { newPrice: patch.price !== null ? patch.price : '' }) : null;
+    const oldP = im && im.oldPrice !== null ? fmt(im.oldPrice) : 'بلا سعر لائحة';
+    const diff = im && im.diff !== null && im.diff !== 0 ? ` (الفرق <b style="color:${im.diff > 0 ? 'var(--bad)' : 'var(--ok)'}">${im.diff > 0 ? '+' : ''}${fmt(im.diff)}</b>)` : '';
+    return `· ${escapeHtml(code)}: ${oldP} ← <b>${priceTxt}</b>${diff}`;
+  }).join('<br>');
+  const targets = bulkOvProviderIds.length ? resolveBulkOverrideTargets(bulkOvProviderIds, { code: rc.codes[0] }) : [];
+  const noContract = targets.filter(t => !t.hasContract).length;
+  box.innerHTML = `<b>معاينة الأثر:</b> ${rc.codes.length} بند × ${bulkOvProviderIds.length} جهة = <b>${rc.codes.length * bulkOvProviderIds.length}</b> تخصيص — ` +
+    `التغطية: <b>${covTxt}</b> · الموافقة: <b>${paTxt}</b> · السعر: <b>${priceTxt}</b> · السريان: <b>${escapeHtml(dateTxt)}</b>` +
+    (noContract ? `<br><b style="color:var(--bad)">${noContract} جهة بلا عقد ستُتخطى</b>` : '') +
+    (priceLines ? `<br>${priceLines}${rc.codes.length > 8 ? `<br>… و${rc.codes.length - 8} بنود أخرى` : ''}` : '');
 }
 function applyBulkOverrideFromUI(){
-  const code = bulkOvServiceCode;
-  const cov = $('#bulkOvCovered')?.value || '', cpa = $('#bulkOvPA')?.value || '';
-  const patch = { covered: cov === '' ? null : cov === 'on', requiresPA: cpa === '' ? null : cpa === 'on' };
-  const targets = resolveBulkOverrideTargets(bulkOvProviderIds, { code });
-  const _v = validateBulkOverride({ code, providerIds: bulkOvProviderIds, covered: patch.covered, requiresPA: patch.requiresPA, targets });
-  if(!_v.ok){ showWarning('تنبيه', _v.msg); return; }
-  const ts = (typeof tariffs !== 'undefined' ? tariffs : []).find(t => (t.services || []).some(s => String(s.code) === String(code)));
-  const svcName = (typeof svcNameByCode === 'function' && svcNameByCode(code)) || code;
-  showDelete('تطبيق جماعي', `سيُطبق على ${code} — ${svcName}: ${cov === 'on' ? 'تفعيل' : cov === 'off' ? 'تعطيل' : 'التغطية بلا تغيير'} / ${cpa === 'on' ? 'اشتراط موافقة' : cpa === 'off' ? 'إلغاء الاشتراط' : 'الموافقة بلا تغيير'} — في ${_v.applicable} عقد${_v.skipped ? ` (${_v.skipped} جهة بلا عقد ستُتخطى)` : ''}.`, () => {
+  const rc = resolveBulkCodes({ code: bulkOvServiceCode, wholeTariff: $('#bulkOvWholeTariff')?.checked, tariffId: $('#bulkOvTariff')?.value,
+    newCode: $('#bulkOvNewCode')?.value, newName: $('#bulkOvNewName')?.value, newPrice: $('#bulkOvPrice')?.value });
+  if(!rc.ok){ showWarning('تنبيه', rc.msg); return; }
+  const patch = bulkOvReadPatch();
+  if(patch.price !== null && (!Number.isFinite(patch.price) || patch.price < 0)){ showWarning('تنبيه', 'سعر خاص غير صالح'); return; }
+  if(patch.effectiveFrom && patch.effectiveTo && patch.effectiveFrom > patch.effectiveTo){ showWarning('تنبيه', 'نهاية السريان قبل البداية'); return; }
+  if(patch.covered === null && patch.requiresPA === null && patch.price === null){
+    // بند جديد يتطلب سعرًا — غطاها resolveBulkCodes؛ هنا لا تغيير مطلقًا
+    showWarning('تنبيه', 'حدد تغييرًا واحدًا على الأقل (تغطية أو موافقة أو سعر)'); return;
+  }
+  let firstTargets = resolveBulkOverrideTargets(bulkOvProviderIds, { code: rc.codes[0] });
+  const _v = validateBulkOverride({ code: rc.codes[0], providerIds: bulkOvProviderIds, covered: patch.covered, requiresPA: patch.requiresPA, targets: firstTargets });
+  if(!_v.ok){
+    // السعر وحده تغيير صالح حتى لو التغطية/الموافقة بلا تغيير
+    const onlyPrice = patch.price !== null && patch.covered === null && patch.requiresPA === null;
+    if(!(onlyPrice && firstTargets.some(t => t.hasContract))){ showWarning('تنبيه', _v.msg); return; }
+  }
+  const label = rc.isNew ? `بند جديد ${rc.codes[0]}` : rc.codes.length === 1 ? rc.codes[0] : `${rc.codes.length} بند`;
+  const covT = patch.covered === true ? 'تفعيل' : patch.covered === false ? 'تعطيل' : 'بلا تغيير';
+  const paT = patch.requiresPA === true ? 'اشتراط موافقة' : patch.requiresPA === false ? 'إلغاء الاشتراط' : 'بلا تغيير';
+  const prT = patch.price !== null ? `سعر ${fmt(patch.price)}` : 'السعر بلا تغيير';
+  showDelete('تطبيق جماعي', `سيُطبق ${label} على ${bulkOvProviderIds.length} جهة: ${covT} / ${paT} / ${prT}${patch.effectiveFrom || patch.effectiveTo ? ` — سريان ${patch.effectiveFrom || '…'} → ${patch.effectiveTo || 'مفتوح'}` : ''}.`, () => {
     const snapshot = JSON.parse(JSON.stringify(contracts));
-    const res = applyBulkServiceOverride(code, patch, targets);
+    let applied = 0, skipped = 0;
+    rc.codes.forEach(code => {
+      const tg = resolveBulkOverrideTargets(bulkOvProviderIds, { code });
+      const res = applyBulkServiceOverride(code, patch, tg);
+      applied += res.applied.length; skipped += res.skipped.length;
+    });
     const saved = typeof persistData === 'function' ? persistData(true) : true;
     if(saved === false){
       try { contracts.length = 0; snapshot.forEach(c => contracts.push(c)); } catch(e){}
@@ -667,7 +732,7 @@ function applyBulkOverrideFromUI(){
     }
     renderBulkOvPreview();
     if(typeof renderContracts === 'function') renderContracts();
-    showSuccess('تم', `طُبق على ${res.applied.length} عقد${res.skipped.length ? ` — تُخطيت ${res.skipped.length} بلا عقد` : ''}`);
+    showSuccess('تم', `طُبق ${applied} تخصيص${skipped ? ` — تُخطيت ${skipped} (بلا عقد)` : ''}`);
   });
 }
 function bindServicesControls(){
@@ -687,6 +752,11 @@ function bindServicesControls(){
   const addBtn = $('#servicesAddBtn'); if(addBtn && !addBtn.dataset.bound){ addBtn.dataset.bound='1'; addBtn.addEventListener('click', () => showServiceFormPanel()); }
   const bulkT = $('#servicesBulkToggle'); if(bulkT && !bulkT.dataset.bound){ bulkT.dataset.bound='1'; bulkT.addEventListener('click', () => { const p = $('#bulkOvPanel'); if(!p) return; const open = p.style.display !== 'block'; p.style.display = open ? 'block' : 'none'; if(open) renderBulkOvPanel(); }); }
   const bulkS = $('#bulkOvService'); if(bulkS && !bulkS.dataset.bound){ bulkS.dataset.bound='1'; bulkS.addEventListener('change', () => { bulkOvServiceCode = bulkS.value; renderBulkOvPreview(); }); }
+  const bulkW = $('#bulkOvWholeTariff'); if(bulkW && !bulkW.dataset.bound){ bulkW.dataset.bound='1'; bulkW.addEventListener('change', renderBulkOvPreview); }
+  const bulkT2 = $('#bulkOvTariff'); if(bulkT2 && !bulkT2.dataset.bound){ bulkT2.dataset.bound='1'; bulkT2.addEventListener('change', renderBulkOvPreview); }
+  ['bulkOvNewCode','bulkOvNewName','bulkOvPrice','bulkOvFrom','bulkOvTo'].forEach(id => { const el = $('#'+id); if(el && !el.dataset.bound){ el.dataset.bound='1'; el.addEventListener('input', renderBulkOvPreview); } });
+  const bulkAll = $('#bulkOvAllProv'); if(bulkAll && !bulkAll.dataset.bound){ bulkAll.dataset.bound='1'; bulkAll.addEventListener('click', () => { try { bulkOvProviderIds = ((typeof providers !== 'undefined' ? providers : []) || []).map(p => p.id); renderBulkOvPanel(); } catch(e){} }); }
+  const bulkNo = $('#bulkOvNoProv'); if(bulkNo && !bulkNo.dataset.bound){ bulkNo.dataset.bound='1'; bulkNo.addEventListener('click', () => { bulkOvProviderIds = []; renderBulkOvPanel(); }); }
   const bulkC = $('#bulkOvCovered'); if(bulkC && !bulkC.dataset.bound){ bulkC.dataset.bound='1'; bulkC.addEventListener('change', renderBulkOvPreview); }
   const bulkP = $('#bulkOvPA'); if(bulkP && !bulkP.dataset.bound){ bulkP.dataset.bound='1'; bulkP.addEventListener('change', renderBulkOvPreview); }
   const bulkA = $('#bulkOvApply'); if(bulkA && !bulkA.dataset.bound){ bulkA.dataset.bound='1'; bulkA.addEventListener('click', applyBulkOverrideFromUI); }

@@ -123,6 +123,25 @@ function isServiceCovered(ctx, code) {
   return true;
 }
 
+/* نافذة سريان التجاوز الخاص — منطق خالص (يُختبر آليًا). */
+function isOverrideActive(entry, dateStr){
+  if(!entry || typeof entry !== 'object') return false;
+  const d = String(dateStr || '').slice(0,10);
+  const from = String(entry.effectiveFrom || '').slice(0,10);
+  const to = String(entry.effectiveTo || '').slice(0,10);
+  if(from && (!d || d < from)) return false;
+  if(to && (!d || d > to)) return false;
+  return true;
+}
+/* السعر الخاص الساري — يعيد null عند غيابه أو عدم سريانه. منطق خالص. */
+function getActiveOverridePrice(entry, dateStr){
+  if(!entry || typeof entry !== 'object') return null;
+  if(entry.price === null || entry.price === undefined || entry.price === '') return null;
+  const p = Number(entry.price);
+  if(!Number.isFinite(p) || p < 0) return null;
+  if(!isOverrideActive(entry, dateStr)) return null;
+  return p;
+}
 /* ---------- مصدر الحقيقة الوحيد لحساب البند (السعر/التغطية/الخصم) ----------
 أي تعديل مستقبلي على معادلة البند يتم هنا فقط — compute-patient و validateLine يستهلكانها. */
 function resolveLineTariff(line, baseCtx, procedureDate){
@@ -150,6 +169,10 @@ function computeLineAmounts(line, ctx, procedureDate){
     const svc = (tariff.services||[]).find(s => String(s.code) === String(line.code));
     if(svc && svc.currentPrice !== undefined && svc.currentPrice !== null) tariffUnit = Number(svc.currentPrice);
   }
+  const _ovEntry = (ctx.serviceOverrides || {})[String(line.code)] || null;
+  const _procDate = procedureDate || line.procedureDate || line.serviceDate || line.date || (ctx.claim && (ctx.claim.date || ctx.claim.receivedDate)) || '';
+  const _ovPrice = (typeof getActiveOverridePrice === 'function') ? getActiveOverridePrice(_ovEntry, _procDate) : null;
+  if(_ovPrice !== null && _ovPrice !== undefined) tariffUnit = _ovPrice;
   const hasT = (tariffUnit !== null && tariffUnit !== undefined);
   const tariffTotal = hasT ? (Number(line.qty)||0) * tariffUnit : null;
   const lesser = (tariffTotal !== null) ? Math.min(billedTotal, tariffTotal) : billedTotal;

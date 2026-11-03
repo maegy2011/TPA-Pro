@@ -63,11 +63,15 @@ const PAGE_SERVICES = `
   <div id="tariffChangeHistory" style="display:none;margin:10px 0"></div>
   <div id="bulkOvPanel" style="display:none;margin-bottom:12px;padding:12px;border:1px solid var(--line,#E2E8F0);border-radius:8px">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
-      <div><label style="font-size:12px;color:var(--muted)">الخدمة *</label><select id="bulkOvService" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"></select></div>
+      <div><label style="font-size:12px;color:var(--muted)">الخدمة *</label><select id="bulkOvService" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"></select><label style="font-size:12px"><input type="checkbox" id="bulkOvWholeTariff"> كل خدمات لائحة</label> <select id="bulkOvTariff" style="max-width:150px;padding:6px;border:1px solid var(--line);border-radius:7px"></select></div>
+      <div><label style="font-size:12px;color:var(--muted)">بند جديد (كود + اسم + سعر)</label><div style="display:flex;gap:4px"><input id="bulkOvNewCode" placeholder="كود" style="width:70px;padding:6px;border:1px solid var(--line);border-radius:7px"><input id="bulkOvNewName" placeholder="اسم" style="flex:1;padding:6px;border:1px solid var(--line);border-radius:7px"></div></div>
       <div><label style="font-size:12px;color:var(--muted)">التغطية</label><select id="bulkOvCovered" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"><option value="">بدون تغيير</option><option value="on">مفعّلة في الجهات</option><option value="off">معطّلة في الجهات</option></select></div>
       <div><label style="font-size:12px;color:var(--muted)">الموافقة المسبقة</label><select id="bulkOvPA" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"><option value="">بدون تغيير</option><option value="on">مشروطة في الجهات</option><option value="off">غير مشروطة في الجهات</option></select></div>
+      <div><label style="font-size:12px;color:var(--muted)">سعر خاص (اختياري)</label><input id="bulkOvPrice" type="number" min="0" step="1" placeholder="بلا تغيير" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"></div>
+      <div><label style="font-size:12px;color:var(--muted)">سريان من</label><input id="bulkOvFrom" type="date" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"></div>
+      <div><label style="font-size:12px;color:var(--muted)">سريان إلى</label><input id="bulkOvTo" type="date" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px"></div>
     </div>
-    <div style="margin-top:8px"><label style="font-size:12px;color:var(--muted)">الجهات *</label><div id="bulkOvProviders" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"></div></div>
+    <div style="margin-top:8px"><label style="font-size:12px;color:var(--muted)">الجهات * <button type="button" class="btn-xs" id="bulkOvAllProv">كل الجهات</button> <button type="button" class="btn-xs" id="bulkOvNoProv">إلغاء الكل</button></label><div id="bulkOvProviders" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"></div></div>
     <div id="bulkOvPreview" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
     <div style="margin-top:8px;display:flex;gap:8px"><button class="btn-xs" id="bulkOvApply">تطبيق على الجهات</button><button class="btn-xs" id="bulkOvCancel">إلغاء</button></div>
   </div>

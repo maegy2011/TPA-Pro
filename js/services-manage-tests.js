@@ -195,6 +195,51 @@ function runServicesManageTests(){
       const ctx = { serviceOverrides: c1.serviceOverrides, tariff: { services:[{ code:'X-1', covered:true }] }, contract: c1 };
       A('جماعي: المحرك يرى التعطيل', (typeof isServiceCovered === 'function' ? isServiceCovered(ctx, 'X-1') : null) === false);
     } catch(e){ A('جماعي: التخصيص للجهات', false, e.message); }
+    /* ---------- السعر الخاص والنوافذ الزمنية ---------- */
+    try {
+      A('نافذة: داخل', isOverrideActive({ effectiveFrom:'2026-01-01', effectiveTo:'2026-12-31' }, '2026-06-01') === true);
+      A('نافذة: قبل البداية', isOverrideActive({ effectiveFrom:'2026-01-01', effectiveTo:'2026-12-31' }, '2025-12-31') === false);
+      A('نافذة: بعد النهاية', isOverrideActive({ effectiveFrom:'2026-01-01', effectiveTo:'2026-12-31' }, '2027-01-01') === false);
+      A('نافذة: مفتوحة النهاية', isOverrideActive({ effectiveFrom:'2026-01-01' }, '2028-01-01') === true);
+      A('نافذة: بلا قيود', isOverrideActive({}, '2026-06-01') === true);
+      A('سعر: سارٍ', getActiveOverridePrice({ price:80, effectiveFrom:'2026-01-01', effectiveTo:'2026-12-31' }, '2026-06-01') === 80);
+      A('سعر: خارج النافذة', getActiveOverridePrice({ price:80, effectiveFrom:'2026-01-01', effectiveTo:'2026-06-01' }, '2026-07-01') === null);
+      A('سعر: غائب', getActiveOverridePrice({}, '2026-06-01') === null);
+      A('سعر: سالب مرفوض', getActiveOverridePrice({ price:-5 }, '2026-06-01') === null);
+      // المحرك: السعر الخاص يغلب اللائحة
+      const _ctx = { tariff:{ services:[{ code:'X-9', currentPrice:100 }] }, contract:{ discountRate:0, serviceOverrides:{} },
+        serviceOverrides:{ 'X-9':{ price:80 } }, claim:{ date:'2026-03-02' } };
+      const _am = computeLineAmounts({ code:'X-9', qty:2, billedUnit:200 }, _ctx, '2026-03-02');
+      A('محرك: السعر الخاص يغلب', _am.tariffUnit === 80 && _am.tariffTotal === 160, JSON.stringify({ u:_am.tariffUnit, t:_am.tariffTotal }));
+      // بند جديد خاص بلا لائحة
+      const _ctx2 = { tariff:{ services:[] }, contract:{ discountRate:0 }, serviceOverrides:{ 'NEW-1':{ price:50, covered:true } }, claim:{ date:'2026-03-02' } };
+      const _am2 = computeLineAmounts({ code:'NEW-1', qty:1, billedUnit:500 }, _ctx2, '2026-03-02');
+      A('محرك: بند جديد خاص مغطى', _am2.hasT === true && _am2.covered === true && _am2.tariffUnit === 50);
+      const _ctx3 = { tariff:{ services:[] }, contract:{ discountRate:0 },
+        serviceOverrides:{ 'NEW-1':{ price:50, effectiveFrom:'2026-01-01', effectiveTo:'2026-02-01' } }, claim:{ date:'2026-03-02' } };
+      const _am3 = computeLineAmounts({ code:'NEW-1', qty:1, billedUnit:500 }, _ctx3, '2026-03-02');
+      A('محرك: خارج النافذة بلا تغطية', _am3.hasT === false && _am3.covered === false);
+      // تطبيع صف العقد
+      const _nr = normalizeOverrideRow({ code:'X', covered:true, discountRate:'', requiresPA:false, price:70, effectiveFrom:'2026-01-01', effectiveTo:'2026-12-31' });
+      A('صف: صالح', _nr.ok === true && _nr.entry.price === 70);
+      A('صف: سعر سالب', normalizeOverrideRow({ code:'X', price:-1 }).ok === false);
+      A('صف: نهاية قبل البداية', normalizeOverrideRow({ code:'X', effectiveFrom:'2026-05-01', effectiveTo:'2026-01-01' }).ok === false);
+      // أكواد المجموعة
+      const _ts = [{ id:'T1', name:'عامة', services:[{ code:'A' }, { code:'B' }] }];
+      const _r1 = resolveBulkCodes({ wholeTariff:true, tariffId:'T1', tariffs:_ts });
+      A('مجموعة: كل اللائحة', _r1.ok === true && _r1.codes.length === 2);
+      A('مجموعة: لائحة مفقودة', resolveBulkCodes({ wholeTariff:true, tariffId:'XX', tariffs:_ts }).ok === false);
+      A('جديد: بلا سعر مرفوض', resolveBulkCodes({ newCode:'N1', newName:'بند', newPrice:'' }).ok === false);
+      const _r2 = resolveBulkCodes({ newCode:' N1 ', newName:'بند', newPrice:90 });
+      A('جديد: صالح', _r2.ok === true && _r2.isNew === true && _r2.codes[0] === 'N1');
+      A('خدمة: بلا اختيار', resolveBulkCodes({ code:'' }).ok === false);
+      // تطبيق جماعي بسعر ونافذة
+      const _cs3 = [{ id:'C9', providerId:'P1', startDate:'2025-01-01', endDate:'2027-01-01', serviceOverrides:{}, changeLog:[] }];
+      const _tg = resolveBulkOverrideTargets(['P1'], { code:'A', providers:[{ id:'P1', name:'ج1' }], contracts:_cs3 });
+      const _rr = applyBulkServiceOverride('A', { covered:true, requiresPA:false, price:60, effectiveFrom:'2026-01-01', effectiveTo:'2026-12-31' }, _tg, _cs3);
+      const _e = _cs3[0].serviceOverrides['A'];
+      A('جماعي: سعر ونافذة', _rr.applied.length === 1 && _e.price === 60 && _e.effectiveFrom === '2026-01-01' && _e.effectiveTo === '2026-12-31');
+    } catch(e){ A('سعر خاص ونوافذ', false, e.message); }
   } finally {
     try { if(hadDocument){ try { if(origQS) document.querySelector = origQS; } catch(e){} try { if(origGID) document.getElementById = origGID; } catch(e){} } else { try { delete g.document; } catch(e){} } } catch(e){}
     uiStubs.forEach(k => { try { if(origUi[k] === undefined) delete g[k]; else g[k] = origUi[k]; } catch(e){} });
