@@ -2,16 +2,34 @@
 let intakeMonthFilter = 'all', intakeStatusFilter = 'all', intakeSearch = '', editingBatchId = null;
 let workingBatchClaim = null;
 /* ترشيح الوارد — منطق خالص (يُختبر آليًا). يشمل دعم الفترات المركبة (a,b). */
-function filterBatchesList(list, monthFilter, statusFilter, term, providersList){
+function filterBatchesList(list, monthFilter, statusFilter, term, providersList, claimsList){
   const q = String(term || '').trim().toLowerCase();
   const byId = {};
   (providersList || []).forEach(p => { byId[p.id] = p; });
   return (list || []).filter(b => {
     if(monthFilter && monthFilter !== 'all' && String(b.month) !== monthFilter && !(String(b.month).split(',').includes(monthFilter))) return false;
-    if(statusFilter && statusFilter !== 'all' && b.status !== statusFilter) return false;
+    if(statusFilter === 'archived'){
+      if(typeof isBatchArchived === 'function' ? !isBatchArchived(b, claimsList) : b.archived !== true) return false;
+    }
+    else if(statusFilter && statusFilter !== 'all' && b.status !== statusFilter) return false;
     if(q){ const p = byId[b.providerId]; const hay = String(b.receivedNumber || '') + ' ' + String(b.id || ''); return hay.toLowerCase().includes(q) || (p && String(p.name||'').toLowerCase().includes(q)); }
     return true;
   });
+}
+let intakeArchiveTab = 'active';
+/* الدفعة مؤرشفة إذا أُرشفت صراحة أو أُرشفت كل مطالباتها — منطق خالص (يُختبر آليًا). */
+function isBatchArchived(batch, claimsList){
+  if(!batch) return false;
+  if(batch.archived === true) return true;
+  const linked = (claimsList || []).filter(c => c.batchId && c.batchId === batch.id);
+  if(!linked.length) return false;
+  return linked.every(c => c.archived === true || c.archiveStatus === 'read-only');
+}
+/* تقسيم الدفعات نشطة/مؤرشفة — منطق خالص (يُختبر آليًا). */
+function splitBatchesByArchive(list, claimsList){
+  const active = [], archived = [];
+  (list || []).forEach(b => { ((typeof isBatchArchived === 'function' ? isBatchArchived(b, claimsList) : !!b.archived) ? archived : active).push(b); });
+  return { active, archived };
 }
 /* فرز الوارد بالأحدث استلامًا — منطق خالص (يُختبر آليًا). */
 function sortBatchesByReceived(list){
@@ -37,6 +55,8 @@ function renderProviderOptions(filter){
 }
 function bindIntakeControls(){
   $('#intakeSearch').addEventListener('input', e => { intakeSearch = e.target.value.trim().toLowerCase(); renderIntake(); });
+  const _archTabs = $('#intakeArchiveTabs');
+  if(_archTabs && !_archTabs.dataset.bound){ _archTabs.dataset.bound = '1'; _archTabs.addEventListener('click', e => { const t = e.target.closest('[data-archtab]'); if(!t) return; intakeArchiveTab = t.dataset.archtab; renderIntake(); }); }
   $('#intakeStatusChips').addEventListener('click', e => {
     const chip = e.target.closest('.chip'); if(!chip) return;
     $$('#intakeStatusChips .chip').forEach(c => c.classList.remove('active'));
@@ -59,23 +79,33 @@ function bindIntakeControls(){
   $('#btProviderSearch').addEventListener('input', e => renderProviderOptions(e.target.value));
 }
 function renderIntake(){
-  const total = batches.length;
-  const tc = batches.reduce((s,b)=>s+(b.claimsCount||0),0);
-  const tv = batches.reduce((s,b)=>s+(b.totalBilled||0),0);
-  const nc = batches.filter(b=>b.status==='new').length;
-  const ic = batches.filter(b=>b.status==='istifa').length;
+  const _claims0 = (typeof claims !== 'undefined' ? claims : []) || [];
+  const _split0 = (typeof splitBatchesByArchive === 'function') ? splitBatchesByArchive(batches, _claims0) : { active: batches, archived: [] };
+  const _tab0 = (typeof intakeArchiveTab !== 'undefined' ? intakeArchiveTab : 'active');
+  const _view = _tab0 === 'archived' ? _split0.archived : _split0.active;
+  const total = _view.length;
+  const tc = _view.reduce((s,b)=>s+(b.claimsCount||0),0);
+  const tv = _view.reduce((s,b)=>s+(b.totalBilled||0),0);
+  const nc = _view.filter(b=>b.status==='new').length;
+  const ic = _view.filter(b=>b.status==='istifa').length;
   $('#intakeKpi').innerHTML = `
     <div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الدفعات</div><div class="kpi-val">${total} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('inbox')}</div></div><div class="kpi-foot">${nc} جديدة · ${ic} استيفا</div></div>
     <div class="kpi k2"><div class="kpi-top"><div><div class="kpi-label">المطالبات</div><div class="kpi-val">${fmt(tc)} <small>مطالبة</small></div></div><div class="kpi-ico">${kpiIcon('file')}</div></div><div class="kpi-foot">${total} دفعة</div></div>
     <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">القيمة</div><div class="kpi-val">${fmt(tv)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">مجموع الوارد</div></div>
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">استيفا</div><div class="kpi-val">${ic} <small>دفعة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">بانتظار الاستكمال</div></div>`;
-  const months = [...new Set(batches.map(b=>b.month))].sort().reverse();
+  const months = [...new Set(_view.map(b=>b.month))].sort().reverse();
   const mHtml = ['<button class="month-chip '+(intakeMonthFilter==='all'?'active':'')+'" data-month="all">الكل <span class="mc-count">'+total+'</span></button>']
-    .concat(months.map(m => { const cnt = batches.filter(b=>b.month===m).length; return `<button class="month-chip ${intakeMonthFilter===m?'active':''}" data-month="${m}">${formatMonth(String(m).split(',')[0])} <span class="mc-count">${cnt}</span></button>`; }));
+    .concat(months.map(m => { const cnt = _view.filter(b=>b.month===m).length; return `<button class="month-chip ${intakeMonthFilter===m?'active':''}" data-month="${m}">${formatMonth(String(m).split(',')[0])} <span class="mc-count">${cnt}</span></button>`; }));
   $('#monthChips').innerHTML = mHtml.join('');
+  const _claims = _claims0;
+  const _split = _split0;
+  const _tab = _tab0;
+  const _base = _view;
   const list = (typeof sortBatchesByReceived === 'function' && typeof filterBatchesList === 'function')
-    ? sortBatchesByReceived(filterBatchesList(batches, intakeMonthFilter, intakeStatusFilter, intakeSearch, (typeof providers !== 'undefined' ? providers : [])))
-    : batches.slice();
+    ? sortBatchesByReceived(filterBatchesList(_base, intakeMonthFilter, _tab === 'archived' ? 'all' : intakeStatusFilter, intakeSearch, (typeof providers !== 'undefined' ? providers : []), _claims))
+    : _base.slice();
+  const _archTab = $('#intakeArchiveTabs');
+  if(_archTab){ _archTab.innerHTML = `<button class="tf-tab ${_tab === 'active' ? 'active' : ''}" data-archtab="active">النشطة (${_split.active.length})</button><button class="tf-tab ${_tab === 'archived' ? 'active' : ''}" data-archtab="archived">الأرشيف (${_split.archived.length})</button>`; }
   const body = $('#batchesBody');
   if(!list.length){ body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--muted)">لا دفعات</td></tr>'; return; }
   body.innerHTML = list.map(b => {

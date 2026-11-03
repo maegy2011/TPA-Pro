@@ -6,6 +6,7 @@ const PAGE_CLAIMS = `
         <div class="toolbar">
         <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input type="text" id="searchInput" placeholder="بحث برقم أو وارد أو مريض أو بند..." data-i18n-placeholder="claims.searchPlaceholder"></div>
+        <div class="tf-tabs" id="claimsArchiveTabs"></div>
         <div class="chips" id="filterChips">
           <button class="chip active" data-filter="all" data-i18n="common.all">الكل</button>
           <button class="chip" data-filter="pending">قيد المراجعة</button>
@@ -13,7 +14,6 @@ const PAGE_CLAIMS = `
           <button class="chip" data-filter="approved">معتمدة</button>
           <button class="chip" data-filter="rejected">مرفوضة</button>
           <button class="chip" data-filter="pa-required">⚠ تحتاج موافقة</button>
-          <button class="chip" data-filter="archived">أرشيف المطالبات</button>
         </div>
         <select id="claimsSort" class="sort-select" title="فرز المطالبات" style="height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;padding:0 12px;font-size:13px;font-weight:600">
           <option value="default">الترتيب الافتراضي</option>

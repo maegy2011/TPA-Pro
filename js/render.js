@@ -16,7 +16,7 @@ function kpiIcon(name){
   return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${svgs[name]||''}</svg>`;
 }
 let dashSearchTerm = '', reportsSearchTerm = '';
-let currentFilter = 'all', currentSearch = '', claimsSort = 'default';
+let currentFilter = 'all', currentSearch = '', claimsSort = 'default', claimsArchiveTab = 'active';
 function renderKPIs(){
   const s = stats();
   const paCount = claims.filter(c => c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved').length;
@@ -68,6 +68,8 @@ function updateClaimsBulkBar(){
 }
 function bindClaimsControls(){
   $('#searchInput').addEventListener('input', e => { currentSearch = e.target.value.trim().toLowerCase(); renderClaims(); });
+  const _carchTabs = $('#claimsArchiveTabs');
+  if(_carchTabs && !_carchTabs.dataset.bound){ _carchTabs.dataset.bound='1'; _carchTabs.addEventListener('click', e => { const t = e.target.closest('[data-carchtab]'); if(!t) return; claimsArchiveTab = t.dataset.carchtab; if(claimsArchiveTab === 'active' && currentFilter === 'archived') currentFilter = 'all'; renderClaims(); }); }
   $('#filterChips').addEventListener('click', e => {
     const chip = e.target.closest('.chip'); if(!chip) return;
     $$('#filterChips .chip').forEach(c => c.classList.remove('active'));

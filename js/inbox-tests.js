@@ -102,6 +102,21 @@ function runInboxTests(){
       const v = (typeof validateBatchInput === 'function') ? validateBatchInput({ providerId:'P1', month:'2026-09', billed:100, contractsList:contracts }) : null;
       A('وارد: شرط التعاقد فقط (الحالة لا تمنع)', v && v.ok === true);
     } catch(e){ A('وارد: الحالات', false, e.message); }
+    /* ---------- تبويب الأرشيف ---------- */
+    try {
+      const bs = [{ id:'B1', status:'new' }, { id:'B2', status:'new', archived:true }, { id:'B3', status:'istifa' }];
+      const cs = [{ id:'C1', batchId:'B1', archiveStatus:'read-only' }, { id:'C2', batchId:'B3', status:'new' }];
+      A('أرشيف: صريحة', isBatchArchived(bs[1], cs) === true);
+      A('أرشيف: كل مطالباتها مؤرشفة', isBatchArchived(bs[0], cs) === true);
+      A('أرشيف: مطالبتها نشطة', isBatchArchived(bs[2], cs) === false);
+      A('أرشيف: بلا مطالبات = نشطة', isBatchArchived({ id:'B9', status:'new' }, cs) === false);
+      const sp = splitBatchesByArchive(bs, cs);
+      A('أرشيف: التقسيم 1/2', sp.active.length === 1 && sp.archived.length === 2, JSON.stringify({ a: sp.active.length, r: sp.archived.length }));
+      const f = filterBatchesList(bs, 'all', 'archived', '', [], cs);
+      A('أرشيف: الترشيح', f.length === 2 && f.every(b => b.id !== 'B3'));
+      const f2 = filterBatchesList(bs, 'all', 'new', '', [], cs);
+      A('أرشيف: الجديد لا يتأثر', f2.length === 2);
+    } catch(e){ A('وارد: تبويب الأرشيف', false, e.message); }
   } finally { restore(); }
   const pass = R.filter(r => r.ok).length, fail = R.length - pass;
   try { console.table(R.map(r => ({ الحالة: r.ok ? '✅' : '❌', الاختبار: r.name, ملاحظة: r.extra }))); } catch(e){}

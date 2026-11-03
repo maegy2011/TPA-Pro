@@ -10,7 +10,8 @@ function runClaimsTests(){
       A('مطالبات: القالب موجود', S.length > 200);
       if(S){
         A('مطالبات: بحث + فرز + تصدير', S.includes('id="searchInput"') && S.includes('id="claimsSort"') && S.includes('data-export="claims"'));
-        ['all','pending','partial','approved','rejected','pa-required','archived'].forEach(f => A(`مطالبات: فلتر ${f}`, S.includes(`data-filter="${f}"`)));
+        ['all','pending','partial','approved','rejected','pa-required'].forEach(f => A(`مطالبات: فلتر ${f}`, S.includes(`data-filter="${f}"`)));
+        A('مطالبات: فلتر archived', S.includes('id="claimsArchiveTabs"') && String((typeof renderClaims === 'function') ? renderClaims : '').includes('data-carchtab="archived"'));
         ['date-desc','date-asc','billed-desc','billed-asc'].forEach(m => A(`مطالبات: فرز ${m}`, S.includes(`value="${m}"`)));
         ['رقم / وارد','المريض','مقدم الخدمة','التواريخ','المطالب به','المعتمد','الحالة'].forEach(h => A(`مطالبات: عمود ${h}`, S.includes(h)));
         A('مطالبات: تحديد جماعي + شريط مجمع', S.includes('id="claimsSelectAll"') && S.includes('id="claimsBulkBar"'));
@@ -83,6 +84,18 @@ function runClaimsTests(){
       A('مطالبات: المؤرشفة للعرض فقط (قفل + شارة)', src.includes('read-only') && src.includes('مقفلة'));
       A('مطالبات: زر المراجعة موجود', src.includes('data-review'));
     } catch(e){ A('مطالبات: الصف', false, e.message); }
+    /* ---------- تبويب الأرشيف ---------- */
+    try {
+      const cs = [{ id:'A', status:'partial' }, { id:'B', status:'approved', archiveStatus:'read-only' }, { id:'C', status:'new', archived:true }];
+      const sp = (typeof splitClaimsByArchive === 'function') ? splitClaimsByArchive(cs) : null;
+      A('مطالبات: التقسيم 1/2', sp && sp.active === 1 && sp.archived === 2, JSON.stringify(sp));
+      const f = filterClaimsList(cs, 'archived', '');
+      A('مطالبات: ترشيح الأرشيف', f.length === 2);
+      const f2 = filterClaimsList(cs, 'all', '');
+      A('مطالبات: الكل يستبعد الأرشيف', f2.length === 1 && f2[0].id === 'A');
+      const src2 = String((typeof renderClaims === 'function') ? renderClaims : '');
+      A('مطالبات: تبويب النشطة/الأرشيف', src2.includes('claimsArchiveTabs') && src2.includes('data-carchtab'));
+    } catch(e){ A('مطالبات: تبويب الأرشيف', false, e.message); }
   } catch(e){ A('مطالبات', false, e.message); }
   const pass = R.filter(r => r.ok).length, fail = R.length - pass;
   try { console.table(R.map(r => ({ الحالة: r.ok ? '✅' : '❌', الاختبار: r.name, ملاحظة: r.extra }))); } catch(e){}

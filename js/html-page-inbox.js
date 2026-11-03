@@ -10,6 +10,7 @@ const PAGE_INBOX = `
       </div>
       </div>
       <div class="grid-kpi" id="intakeKpi"></div>
+      <div class="tf-tabs" id="intakeArchiveTabs"></div>
       <div class="month-chips" id="monthChips"></div>
       <div class="chips" id="intakeStatusChips" style="margin-bottom:14px">
         <button class="chip active" data-istatus="all" data-i18n="common.all">الكل</button>

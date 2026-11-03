@@ -29,9 +29,21 @@ function sortClaimsList(list, mode){
   else if(mode === 'billed-asc') a.sort((x,y) => (Number(x.billed)||0) - (Number(y.billed)||0));
   return a;
 }
+/* عد نشطة/مؤرشفة — منطق خالص (يُختبر آليًا). */
+function splitClaimsByArchive(list){
+  let active = 0, archived = 0;
+  (list || []).forEach(c => { ((c.archived === true || c.archiveStatus === 'read-only') ? archived += 1 : active += 1); });
+  return { active, archived };
+}
 function renderClaims(){
   const _prevSel = new Set($$('#claimsBody .claim-cb:checked:not(:disabled)').map(cb => cb.dataset.id));
-  const _flt = (typeof filterClaimsList === 'function') ? filterClaimsList(claims, currentFilter, currentSearch) : claims.slice();
+  const _tab = (typeof claimsArchiveTab !== 'undefined' ? claimsArchiveTab : 'active');
+  const _effFilter = _tab === 'archived' ? 'archived' : (currentFilter === 'archived' ? 'all' : currentFilter);
+  let _flt = (typeof filterClaimsList === 'function') ? filterClaimsList(claims, _effFilter, currentSearch) : claims.slice();
+  if(_tab === 'archived' && currentFilter && currentFilter !== 'all' && currentFilter !== 'archived'){
+    if(currentFilter === 'pa-required') _flt = _flt.filter(c => c.priorApproval && c.priorApproval.required && c.priorApproval.status !== 'approved');
+    else _flt = _flt.filter(c => c.status === currentFilter);
+  }
   const _mode = (typeof claimsSort !== 'undefined' ? claimsSort : 'default');
   const list = (typeof sortClaimsList === 'function') ? sortClaimsList(_flt, _mode) : _flt;
   const body = $('#claimsBody');
@@ -59,6 +71,11 @@ function renderClaims(){
   }).join('');
   $$('#claimsBody .claim-cb').forEach(cb => { if(_prevSel.has(cb.dataset.id)) cb.checked = true; });
   updateClaimsBulkBar();
+  const _archTab = $('#claimsArchiveTabs');
+  if(_archTab){
+    const _sp = (typeof splitClaimsByArchive === 'function') ? splitClaimsByArchive((typeof claims !== 'undefined' ? claims : [])) : { active:0, archived:0 };
+    _archTab.innerHTML = `<button class="tf-tab ${_tab === 'active' ? 'active' : ''}" data-carchtab="active">النشطة (${_sp.active})</button><button class="tf-tab ${_tab === 'archived' ? 'active' : ''}" data-carchtab="archived">الأرشيف (${_sp.archived})</button>`;
+  }
 }
 function openView(type, id){
   if(currentPage === 'view'){
