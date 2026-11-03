@@ -8,7 +8,8 @@ let currentSessionTimer = null;
 let lastUserActivityTimestamp = Date.now();
 let activeSessionTimer = null;
 let lastActivityTime = Date.now();
-function genSessionId(){ return 'SES-'+Date.now().toString(36).toUpperCase()+'-'+Math.floor(Math.random()*1000); }
+let _sessSeq = 0;
+function genSessionId(){ _sessSeq = (_sessSeq + 1) % 100000; return 'SES-'+Date.now().toString(36).toUpperCase()+'-'+String(_sessSeq).padStart(3,'0')+'-'+Math.floor(Math.random()*10000); }
 function loadSessions(){
   try {
     const raw = localStorage.getItem(SESSIONS_KEY);
@@ -52,8 +53,15 @@ function getSessionClaimInfo(s){
 function captureCurrentSessionState(){
   if(!activeClaim) return null;
   const ex = findSessionByClaim(activeClaim.id);
+  // المعرف: جلسة المطالبة نفسها، أو النشطة فقط لو لنفس المطالبة — وإلا معرف جديد (لا دمج صامت).
+  let _sid = (ex && ex.id) || null;
+  if(!_sid && activeSessionId){
+    const _cur = workSessions.find(x => x.id === activeSessionId);
+    if(_cur && _cur.claimId === activeClaim.id) _sid = activeSessionId;
+  }
+  if(!_sid) _sid = genSessionId();
   return {
-    id:(ex&&ex.id)||activeSessionId||genSessionId(),
+    id:_sid,
     claimId:activeClaim.id,
     claimSnapshot:JSON.parse(JSON.stringify(activeClaim)),
     baseClaimSnapshot:(ex && ex.baseClaimSnapshot) ? JSON.parse(JSON.stringify(ex.baseClaimSnapshot)) : JSON.parse(JSON.stringify(getClaimById(activeClaim.id) || activeClaim)),

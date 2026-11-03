@@ -99,6 +99,73 @@ function runSessionsTests(){
         A('جلسات: بلا أساس = unknown', getSessionConflictState({}, mod) === 'unknown');
       } finally { Object.keys(dlg).forEach(k => { try { g[k] = dlg[k]; } catch(e){} }); }
     } catch(e){ A('جلسات: الالتقاط', false, e.message); }
+
+    let lastWarn2 = null;
+    /* ---------- 6. دورة الجلسات المتعددة ---------- */
+    const shell2 = {};
+    ['renderReviewInvoices','_fillReviewPage','renderReviewDrafts','navigateTo','updatePAWarning','renderSessions','updateSessionsBadge'].forEach(k => { try { shell2[k] = g[k]; g[k] = () => {}; } catch(e){} });
+    const keepDel = g.showDelete;
+    try {
+      g.showDelete = (t, m, fn) => { try { if(typeof fn === 'function') fn(); } catch(e){} };
+      workSessions = []; activeSessionId = null;
+      claims = [
+        { id:'CLM-A', patient:'أحمد', provider:'م', type:'employee', date:'2026-03-01', priorApproval:{ required:false }, status:'pending', invoices:[] },
+        { id:'CLM-B', patient:'منى', provider:'م', type:'employee', date:'2026-03-02', priorApproval:{ required:false }, status:'pending', invoices:[] }
+      ];
+      // جلسة أولى + استئناف
+      activeClaim = JSON.parse(JSON.stringify(claims[0]));
+      workingInvoices = []; rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
+      const s1 = upsertCurrentSession();
+      A('جلسات+: جلسة أولى', !!(s1 && s1.claimId === 'CLM-A'));
+      let okR = resumeSession(s1.id);
+      A('جلسات+: استئناف يفعّل', okR === true && activeSessionId === s1.id && s1.status === 'active');
+      // جلسة ثانية مع بقاء الأولى
+      activeClaim = JSON.parse(JSON.stringify(claims[1]));
+      workingInvoices = []; rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
+      const s2 = upsertCurrentSession();
+      A('جلسات+: جلستان متوازيتان', workSessions.length === 2 && s2.id !== s1.id);
+      okR = resumeSession(s2.id);
+      A('جلسات+: التبديل للثانية', okR === true && activeSessionId === s2.id);
+      // التعارض: تعديل المطالبة الحية يمنع الاستئناف
+      claims[1].patient = 'مبدلة';
+      lastWarn2 = null;
+      const gWarn = g.showWarning; g.showWarning = (t, m) => { lastWarn2 = String(t || '') + ': ' + String(m || ''); };
+      let okC = false;
+      try { okC = resumeSession(s2.id); } finally { g.showWarning = gWarn; }
+      A('جلسات+: التعارض يمنع الاستئناف', okC === false && (lastWarn2 || '').includes('تعارض'));
+      A('جلسات+: الجلسة النشطة لا تتغير', activeSessionId === s2.id);
+      // المفقودة: حذف المطالبة ثم استردادها من اللقطة
+      claims[1].patient = 'منى';
+      claims = claims.filter(c => c.id !== 'CLM-B');
+      A('جلسات+: المطالبة مفقودة', !claims.some(c => c.id === 'CLM-B'));
+      okR = resumeSession(s2.id);
+      A('جلسات+: الاسترداد من اللقطة', okR === true && claims.some(c => c.id === 'CLM-B'));
+      // نقطة التقدم تعيش في الجلسة لا المطالبة
+      updateCurrentReviewProgressPoint('CLM-B', 2, 1, 7);
+      const s2u = workSessions.find(x => x.id === s2.id);
+      A('جلسات+: نقطة الحفظ محدثة', s2u && s2u.lastSavedPoint.invoiceIdx === 2 && s2u.lastSavedPoint.lineIdx === 7);
+      A('جلسات+: المؤشر لا يتسرب', !('reviewProgress' in getClaimById('CLM-B')));
+      // الاستئناف من آخر نقطة يضبط المؤشرات
+      rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
+      resumeSessionFromLastPoint(s2.id);
+      A('جلسات+: القفز لآخر نقطة', rvActiveInvoiceIdx === 2 && rvActivePatientIdx === 1);
+      // البطاقة نص خالص يحمل الرقم
+      const card = renderSessionCard(s2u);
+      A('جلسات+: البطاقة تحمل الرقم والحالة', card.includes('CLM-B') && (card.includes('نشطة') || card.includes('موقوفة')));
+      // الحذف: النشطة تصفّر النشاط
+      deleteSessionWithDialog(s1.id);
+      A('جلسات+: حذف الأولى', workSessions.length === 1 && workSessions[0].id === s2.id);
+      deleteSessionWithDialog(s2.id);
+      A('جلسات+: حذف النشطة يصفّر', workSessions.length === 0 && activeSessionId === null);
+      // المؤقت: بدء/إيقاف بلا رمي
+      let timerOk = true;
+      try { startSessionTimeTracker({ id:'T', status:'active', elapsedSeconds:0 }); stopSessionTimeTracker(); } catch(e){ timerOk = false; }
+      A('جلسات+: المؤقت بدء/إيقاف', timerOk);
+    } catch(e){ A('جلسات+: الدورة', false, e.message); }
+    finally {
+      try { g.showDelete = keepDel; } catch(e){}
+      Object.keys(shell2).forEach(k => { try { g[k] = shell2[k]; } catch(e){} });
+    }
   } finally { restore(); }
   const pass = R.filter(r => r.ok).length, fail = R.length - pass;
   try { console.table(R.map(r => ({ الحالة: r.ok ? '✅' : '❌', الاختبار: r.name, ملاحظة: r.extra }))); } catch(e){}
