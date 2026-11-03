@@ -23,7 +23,7 @@
 .cond-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
 .cond-item{display:grid;grid-template-columns:minmax(80px,.9fr) minmax(90px,1fr) minmax(100px,1.2fr) minmax(80px,.9fr) minmax(90px,1.3fr) 28px;gap:4px;align-items:center;padding:7px 8px;background:#fff;border:1px solid var(--line);border-radius:9px;transition:.15s}
 .cond-item:hover{border-color:#CBD5E1;box-shadow:0 1px 4px rgba(11,37,69,.05)}
-.cond-item select,.cond-item input{height:30px;border-radius:6px;border:1px solid var(--line);background:#F8FAFC;padding:0 6px;font-size:10.5px;font-weight:600;transition:.15s}
+.cond-item select,.cond-item input:not([type="checkbox"]):not([type="radio"]){height:30px;border-radius:6px;border:1px solid var(--line);background:#F8FAFC;padding:0 6px;font-size:10.5px;font-weight:600;transition:.15s}
 .cond-item select:focus,.cond-item input:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 2px rgba(14,124,123,.1)}
 .cond-item .sel-scope{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE;font-weight:800}
 .cond-item .sel-mode{background:#F5F3FF;color:#6D28D9;border-color:#DDD6FE;font-weight:800}

@@ -107,6 +107,8 @@ input:focus, textarea:focus, select:focus{
 }
 input::placeholder, textarea::placeholder{ color: var(--muted,#64748B); opacity: .7; }
 
+/* ---------- Checkboxes / radios: مقاس طبيعي دائمًا في كل الشاشات ---------- */
+input[type="checkbox"], input[type="radio"]{width:18px !important;height:18px !important;accent-color:var(--teal,#0E7C7B);cursor:pointer;flex:none;vertical-align:middle}
 /* ---------- Drop menus / selects ---------- */
 select{ appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 10px center; padding-left: 30px; }
 .dropdown, .tb-user-menu, .rv-session-switcher{

@@ -169,5 +169,5 @@
 .rv-internal-review>summary{cursor:pointer;font-weight:800;color:var(--navy);padding:3px 0}
 .rv-internal-check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:12px}
 .rv-internal-check-grid label{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;border:1px solid var(--line,#e2e8f0);border-radius:8px;font-size:12px;line-height:1.5}
-.rv-internal-check-grid input{flex:0 0 auto;margin-top:2px}
+.rv-internal-check-grid input{flex:0 0 auto;width:16px;height:16px;margin-top:2px;accent-color:var(--teal);cursor:pointer}
 @media(max-width:420px){.rv-patient-calc{gap:3px;padding:7px 4px}.rv-pcalc-item b{font-size:clamp(8px,2.5vw,11px)}}
