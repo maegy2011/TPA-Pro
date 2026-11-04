@@ -146,6 +146,11 @@ function validateBackupPayload(p){
   }
   return {ok:true};
 }
+/* يزيل BOM (تصدير التطبيق نفسه يضيف \ufeff) ثم يفسر JSON — منطق خالص يُختبر آليًا. */
+function parseBackupText(t){
+  const s = String(t == null ? '' : t).replace(/^\uFEFF/, '');
+  return JSON.parse(s);
+}
 function importBackupFile(file){
   if(!file) return;
   if(!Number.isFinite(file.size) || file.size <= 0 || file.size > 20 * 1024 * 1024){ showWarning('ملف غير صالح','يجب أن يكون حجم الملف بين 1 بايت و20MB'); return; }
@@ -153,7 +158,7 @@ function importBackupFile(file){
   const r = new FileReader();
   r.onload = e => {
     try {
-      const p = JSON.parse(e.target.result);
+      const p = parseBackupText(e.target.result);
       const validation = validateBackupPayload(p);
       if(!validation.ok){ showWarning('نسخة غير صالحة', validation.message); return; }
       if(p.type === 'sessions') confirmSessionsImport(p);
