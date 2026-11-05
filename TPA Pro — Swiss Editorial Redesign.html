@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<!--
+  System: Swiss Editorial (Pentagram lineage)
+  Type: Helvetica Neue / system sans · 11 (small) / 12 (body) / 14 (h3) / 20 (h1) / 28 (kpi)
+  Color: #111 on #f8f6f2 · accent #c0392b (sparingly, callouts only) · rules #111 / #e5e5e5
+  Grid: 12-col feel, 80px gutters, hairline rules between sections, numbered sections
+  Rhythm: left-flush headlines, 70ch body columns, numbered sections 01/02/03
+  Motion: none (static, editorial)
+-->
+<head>
+<meta charset="utf-8">
+<title>TPA Pro — Swiss Editorial redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{--ink:#111;--paper:#f8f6f2;--rule:#e5e5e5;--muted:#666;--accent:#c0392b}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+.app{display:grid;grid-template-columns:200px 1fr;height:100vh}
+.sb{background:var(--ink);color:var(--paper);padding:22px 16px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.sb .brand{font-size:12px;font-weight:800;letter-spacing:.14em;padding-bottom:16px;border-bottom:1px solid #333;margin-bottom:12px}
+.sb .nav{font-size:12px;font-weight:600;color:#999;padding:8px 0;letter-spacing:.02em;cursor:pointer;border-bottom:1px solid transparent}
+.sb .nav.active{color:var(--paper);border-bottom-color:var(--paper)}
+.sb .nav:hover{color:var(--paper)}
+.main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:56px;border-bottom:1px solid var(--ink);display:flex;align-items:center;padding:0 28px;gap:16px;flex:none;background:var(--paper)}
+.topbar h1{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.topbar .sub{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-inline-start:12px}
+.topbar .right{margin-inline-start:auto;display:flex;gap:8px;align-items:center}
+.topbar .pill{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--ink)}
+.content{flex:1;overflow-y:auto;padding:28px 32px 48px}
+.screen{display:none}.screen.active{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-bottom:32px}
+.kpi{padding:18px 14px;border-inline-end:1px solid var(--rule)}
+.kpi:last-child{border-inline-end:0}
+.kpi .lbl{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.kpi .val{font-size:30px;font-weight:800;margin-top:8px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi .foot{font-size:11px;color:var(--muted);margin-top:4px}
+.section{margin-bottom:36px}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:14px}
+.section-head h2{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.section-head .meta{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.section-head .num{font-size:10px;color:var(--accent);font-weight:800;margin-inline-end:8px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:start;padding:10px 8px;border-bottom:1px solid var(--ink)}
+td{padding:12px 8px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:2px 9px;font-size:10px;font-weight:700;letter-spacing:.08em;border:1px solid var(--ink)}
+.badge.ok{background:var(--ink);color:var(--paper)}
+.badge.warn{background:var(--paper);color:var(--ink)}
+.modal-overlay{position:fixed;inset:0;background:rgba(17,17,17,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--paper);width:100%;max-width:640px;padding:32px;border:1px solid var(--ink)}
+.modal h3{font-size:18px;font-weight:800;margin-bottom:6px;letter-spacing:-.01em}
+.modal .sub{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px}
+.modal .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px}
+.modal label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.modal input,.modal select{width:100%;padding:9px 10px;border:1px solid var(--ink);background:#fff;font-size:13px;font-family:inherit}
+.modal .actions{display:flex;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--rule)}
+.btn{background:var(--ink);color:var(--paper);padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer}
+.btn.out{background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
+.btn.accent{background:var(--accent);color:#fff}
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-bar input{flex:1;min-width:200px;padding:9px 10px;border:1px solid var(--ink);background:#fff;font-size:12px;font-family:inherit}
+.filter-bar select{padding:9px 10px;border:1px solid var(--ink);background:#fff;font-size:12px;font-family:inherit}
+.note{font-size:11px;color:var(--muted);margin-top:12px;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sb">
+    <div class="brand">TPA PRO · v2</div>
+    <div class="nav active" data-screen="dashboard">01 · لوحة التحكم</div>
+    <div class="nav" data-screen="claims">02 · المطالبات</div>
+    <div class="nav" data-screen="services">03 · الخدمات</div>
+    <div class="nav" data-screen="tariffs">04 · اللوائح</div>
+    <div class="nav" data-screen="reports">05 · التقارير</div>
+    <div class="nav" data-screen="settings">06 · الإعدادات</div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <h1 id="title">لوحة التحكم</h1>
+      <span class="sub" id="sub">Dashboard · 01</span>
+      <div class="right">
+        <span class="pill">1,284 مطالبة</span>
+        <button class="btn" onclick="openModal()">+ مطالبة</button>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- 01 Dashboard -->
+      <section class="screen active" id="dashboard">
+        <div class="kpi-row">
+          <div class="kpi"><div class="lbl">المطالبات</div><div class="val">1,284</div><div class="foot">+12% هذا الشهر</div></div>
+          <div class="kpi"><div class="lbl">قيد المراجعة</div><div class="val">47</div><div class="foot">تحتاج إجراء</div></div>
+          <div class="kpi"><div class="lbl">الجهات</div><div class="val">38</div><div class="foot">نشطة</div></div>
+          <div class="kpi"><div class="lbl">الخدمات</div><div class="val">612</div><div class="foot">في 14 لائحة</div></div>
+        </div>
+        <div class="section">
+          <div class="section-head"><h2><span class="num">01</span>آخر المطالبات</h2><span class="meta">عرض الكل →</span></div>
+          <table>
+            <thead><tr><th>الرقم</th><th>الجهة</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+            <tbody>
+              <tr><td>#1042</td><td>مستشفى الأمل</td><td>12,400</td><td><span class="badge ok">معتمد</span></td><td>2026-10-28</td></tr>
+              <tr><td>#1041</td><td>عيادة النور</td><td>3,120</td><td><span class="badge warn">مراجعة</span></td><td>2026-10-27</td></tr>
+              <tr><td>#1040</td><td>مختبر الفجر</td><td>890</td><td><span class="badge ok">معتمد</span></td><td>2026-10-27</td></tr>
+              <tr><td>#1039</td><td>مستشفى الشفاء</td><td>24,800</td><td><span class="badge warn">مراجعة</span></td><td>2026-10-26</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="section">
+          <div class="section-head"><h2><span class="num">02</span>الجهات (أعلى 4)</h2><span class="meta">حسب المبلغ</span></div>
+          <table>
+            <thead><tr><th>الجهة</th><th>المطالبات</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>مستشفى الشفاء</td><td>42</td><td>312,400</td><td><span class="badge ok">نشط</span></td></tr>
+              <tr><td>مستشفى الأمل</td><td>38</td><td>289,100</td><td><span class="badge ok">نشط</span></td></tr>
+              <tr><td>عيادة النور</td><td>21</td><td>64,320</td><td><span class="badge ok">نشط</span></td></tr>
+              <tr><td>مختبر الفجر</td><td>15</td><td>12,890</td><td><span class="badge warn">قيد التفعيل</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">01 · KPIs are live aggregates. 02 · Click a row to open the claim review modal.</p>
+      </section>
+
+      <!-- 02 Claims -->
+      <section class="screen" id="claims">
+        <div class="filter-bar">
+          <input placeholder="بحث: رقم، جهة، خدمة…">
+          <select><option>الكل</option><option>قيد المراجعة</option><option>معتمد</option><option>مرفوض</option></select>
+          <select><option>كل الجهات</option></select>
+          <button class="btn">بحث</button>
+        </div>
+        <div class="section">
+          <div class="section-head"><h2><span class="num">01</span>المطالبات</h2><span class="meta">1,284 سجل</span></div>
+          <table>
+            <thead><tr><th>الرقم</th><th>الجهة</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th><th>الإجراء</th></tr></thead>
+            <tbody>
+              <tr><td>#1042</td><td>مستشفى الأمل</td><td>2026-10-28</td><td>12,400</td><td><span class="badge ok">معتمد</span></td><td><button class="btn out" style="padding:4px 10px;font-size:10px" onclick="openModal()">مراجعة</button></td></tr>
+              <tr><td>#1041</td><td>عيادة النور</td><td>2026-10-27</td><td>3,120</td><td><span class="badge warn">مراجعة</span></td><td><button class="btn out" style="padding:4px 10px;font-size:10px" onclick="openModal()">مراجعة</button></td></tr>
+              <tr><td>#1040</td><td>مختبر الفجر</td><td>2026-10-27</td><td>890</td><td><span class="badge ok">معتمد</span></td><td><button class="btn out" style="padding:4px 10px;font-size:10px" onclick="openModal()">مراجعة</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 03 Services -->
+      <section class="screen" id="services">
+        <div class="section">
+          <div class="section-head"><h2><span class="num">01</span>الخدمات</h2><span class="meta">612 خدمة · 14 لائحة</span></div>
+          <table>
+            <thead><tr><th>الكود</th><th>الخدمة</th><th>اللائحة</th><th>السعر الأساسي</th><th>السعر الحالي</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>LAB-001</td><td>تحليل دم كامل</td><td>لائحة عامة</td><td>45</td><td>45</td><td><span class="badge ok">مغطاة</span></td></tr>
+              <tr><td>RAD-014</td><td>أشعة صدر</td><td>لائحة عامة</td><td>120</td><td>135</td><td><span class="badge ok">مغطاة</span></td></tr>
+              <tr><td>CONS-002</td><td>استشارة أخصائي</td><td>لائحة خاصة</td><td>200</td><td>200</td><td><span class="badge warn">غير مغطاة</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 04 Tariffs -->
+      <section class="screen" id="tariffs">
+        <div class="section">
+          <div class="section-head"><h2><span class="num">01</span>اللوائح</h2><span class="meta">14 لائحة · 3 إصدارات</span></div>
+          <table>
+            <thead><tr><th>الاسم</th><th>النوع</th><th>الخدمات</th><th>تاريخ السريان</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>لائحة عامة 2026</td><td>عامة</td><td>248</td><td>2026-01-01</td><td><span class="badge ok">سارية</span></td></tr>
+              <tr><td>لائحة خاصة — شفاء</td><td>خاصة</td><td>120</td><td>2026-03-15</td><td><span class="badge ok">سارية</span></td></tr>
+              <tr><td>لائحة مختبرات</td><td>مختبر</td><td>84</td><td>2025-09-01</td><td><span class="badge warn">أرشفة</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 05 Reports -->
+      <section class="screen" id="reports">
+        <div class="section">
+          <div class="section-head"><h2><span class="num">01</span>التقارير</h2><span class="meta">فرز حسب الفترة / الجهة / الحالة</span></div>
+          <div class="filter-bar" style="margin-bottom:16px">
+            <select><option>آخر 30 يوم</option><option>هذا الشهر</option><option>هذا العام</option></select>
+            <select><option>كل الجهات</option></select>
+            <select><option>كل الحالات</option></select>
+            <button class="btn">تصدير CSV</button>
+          </div>
+          <table>
+            <thead><tr><th>الجهة</th><th>المطالبات</th><th>المبلغ</th><th>الموافقة</th><th>الرفض</th></tr></thead>
+            <tbody>
+              <tr><td>مستشفى الشفاء</td><td>42</td><td>312,400</td><td>38</td><td>4</td></tr>
+              <tr><td>مستشفى الأمل</td><td>38</td><td>289,100</td><td>36</td><td>2</td></tr>
+              <tr><td>عيادة النور</td><td>21</td><td>64,320</td><td>18</td><td>3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 06 Settings -->
+      <section class="screen" id="settings">
+        <div class="section">
+          <div class="section-head"><h2><span class="num">01</span>الإعدادات</h2><span class="meta">المستخدم · التخزين · النسخ الاحتياطي</span></div>
+          <div class="modal" style="max-width:100%;margin:0;padding:24px 0;border:0">
+            <div class="row"><div><label>اسم المراجع</label><input value="محمد"></div><div><label>اللغة</label><select><option>العربية</option><option>English</option></select></div></div>
+            <div class="row"><div><label>مسار التخزين</label><input value="localStorage + file system"></div><div><label>آخر نسخة احتياطية</label><input value="2026-10-28 · 14:22" readonly></div></div>
+            <div class="actions" style="border:0;padding:0;margin-top:8px"><button class="btn">حفظ</button><button class="btn out">تصدير نسخة</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- Review modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>مراجعة مطالبة #1041</h3>
+    <div class="sub">02 · Claim review · عيادة النور · 3,120</div>
+    <div class="row">
+      <div><label>الجهة</label><input value="عيادة النور"></div>
+      <div><label>المبلغ</label><input value="3,120"></div>
+    </div>
+    <div class="row">
+      <div><label>التاريخ</label><input value="2026-10-27"></div>
+      <div><label>الحالة</label><select><option>قيد المراجعة</option><option>معتمد</option><option>مرفوض</option></select></div>
+    </div>
+    <div class="actions">
+      <button class="btn accent">اعتماد</button>
+      <button class="btn out">رفض</button>
+      <button class="btn out" onclick="closeModal()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const titles = {
+  dashboard: ['لوحة التحكم','Dashboard · 01'],
+  claims: ['المطالبات','Claims · 02'],
+  services: ['الخدمات','Services · 03'],
+  tariffs: ['اللوائح','Tariffs · 04'],
+  reports: ['التقارير','Reports · 05'],
+  settings: ['الإعدادات','Settings · 06'],
+};
+document.querySelectorAll('.sb .nav').forEach(n => {
+  n.addEventListener('click', () => {
+    document.querySelectorAll('.sb .nav').forEach(x=>x.classList.remove('active'));
+    n.classList.add('active');
+    const s = n.dataset.screen;
+    document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+    document.getElementById(s).classList.add('active');
+    document.getElementById('title').textContent = titles[s][0];
+    document.getElementById('sub').textContent = titles[s][1];
+  });
+});
+function openModal(){ document.getElementById('modal').classList.add('show'); }
+function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').addEventListener('click', e => { if(e.target.id==='modal') closeModal(); });
+</script>
+</body>
+</html>
