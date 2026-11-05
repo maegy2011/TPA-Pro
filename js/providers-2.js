@@ -7,7 +7,7 @@ function getAllServiceNames(){
 }
 function getAllServicesDistinct(){
   const map = new Map();
-  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s && s.code && !map.has(String(s.code))) map.set(String(s.code), { code:String(s.code), name:s.name||String(s.code) }); }));
+  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s?.code && !map.has(String(s.code))) map.set(String(s.code), { code:String(s.code), name:s.name||String(s.code) }); }));
   if(!map.size){ ['CONS-01','LAB-01','RAD-01','DENT-01'].forEach((c,i) => map.set(c, { code:c, name:['كشف','تحاليل','أشعة','أسنان'][i] })); }
   return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ar'));
 }
@@ -79,7 +79,7 @@ function splitRateVersions(versions, versionFrom, endDate, newEntry, contractSta
   const current = vs.find(v => v.effectiveFrom === versionFrom);
   if(current){ Object.assign(current, { effectiveTo:endDate, discountRate:newEntry.discountRate, excludedServices:newEntry.excludedServices }); return vs; }
   const previous = vs.filter(v => v.effectiveTo === '' || v.effectiveTo >= versionFrom).sort((a,b) => String(b.effectiveFrom).localeCompare(String(a.effectiveFrom)))[0];
-  if(previous && previous.effectiveFrom < versionFrom){
+  if(previous?.effectiveFrom < versionFrom){
     const d = new Date(versionFrom+'T12:00:00'); d.setDate(d.getDate()-1);
     previous.effectiveTo = d.toISOString().slice(0,10);
   } else if(!previous && contractStart < versionFrom){

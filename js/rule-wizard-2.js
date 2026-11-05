@@ -70,7 +70,7 @@ function wizConditionRowHTML(cond, idPrefix, inGroup, parentPath){
 }
 function renderNodeHTML(node, path, parentPath){
   parentPath = parentPath || '';
-  if(node && node.logic && Array.isArray(node.rules)){
+  if(node?.logic && Array.isArray(node.rules)){
     const inner = node.rules.map((ic,iidx) => renderNodeHTML(ic, path + '_c' + iidx, path)).join('');
     return `<div class="cond-group" data-drag-path="${path}" data-drop-into="${path}" data-drop-container="${parentPath}">
       <div class="cond-group-head">
@@ -135,7 +135,7 @@ function wizBindConditionHandlers(){
     root.querySelectorAll('[data-cond-del]').forEach(el => el.addEventListener('click', e => { const p = parsePath(e.currentTarget.dataset.condDel); if(!p) return; const g = getParentByPath(p); if(!g) return; showDelete('حذف شرط', 'سيتم حذف الشرط المحدد من القاعدة.', () => { const current=getParentByPath(p); if(current) current.parent.rules.splice(current.idx,1); wizRenderConditions(); }); }));
   root.querySelectorAll('[data-group-del]').forEach(el => el.addEventListener('click', e => { const path = parsePath(e.currentTarget.dataset.groupDel); if(!path) return; const g = getParentByPath(path); if(!g) return; showDelete('حذف مجموعة شروط', 'سيتم حذف المجموعة وكل الشروط التابعة لها.', () => { const current=getParentByPath(path); if(current) current.parent.rules.splice(current.idx,1); wizRenderConditions(); }); }));
   root.querySelectorAll('[data-group-logic]').forEach(el => el.addEventListener('change', e => { const path = parsePath(e.target.dataset.groupLogic); const g = getNodeByPath(path); if(g){ g.logic = e.target.value; } }));
-  root.querySelectorAll('[data-group-add-cond]').forEach(el => el.addEventListener('click', e => { const path = parsePath(e.target.dataset.groupAddCond); const g = getNodeByPath(path); if(g && g.rules) g.rules.push({ field:'line.category', op:'eq', value:'مختبر' }); wizRenderConditions(); }));
-  root.querySelectorAll('[data-group-add-group]').forEach(el => el.addEventListener('click', e => { const path = parsePath(e.target.dataset.groupAddGroup); const g = getNodeByPath(path); if(g && g.rules) g.rules.push({ logic:'OR', rules:[{ field:'line.billedUnit', op:'gt', value:500 }] }); wizRenderConditions(); }));
+  root.querySelectorAll('[data-group-add-cond]').forEach(el => el.addEventListener('click', e => { const path = parsePath(e.target.dataset.groupAddCond); const g = getNodeByPath(path); if(g?.rules) g.rules.push({ field:'line.category', op:'eq', value:'مختبر' }); wizRenderConditions(); }));
+  root.querySelectorAll('[data-group-add-group]').forEach(el => el.addEventListener('click', e => { const path = parsePath(e.target.dataset.groupAddGroup); const g = getNodeByPath(path); if(g?.rules) g.rules.push({ logic:'OR', rules:[{ field:'line.billedUnit', op:'gt', value:500 }] }); wizRenderConditions(); }));
   if(typeof bindReorderButtons === 'function') bindReorderButtons();
 }

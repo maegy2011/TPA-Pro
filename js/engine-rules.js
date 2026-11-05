@@ -58,7 +58,7 @@ function ruleMatchesContext(rule, ctx, refDate){
 /** القواعد الداخلة في اعتمادية دائرية — مصدر واحد: topoSortRules يستبعدها، وهنا نعيد أسماءها فقط. */
 function getCyclicRuleIds(){
   try {
-    const rules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r && r.enabled !== false && r.active !== false);
+    const rules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r?.enabled !== false && r.active !== false);
     const sorted = (typeof topoSortRules === 'function') ? topoSortRules(rules) : rules;
     const kept = new Set(sorted.map(r => r.id));
     return new Set(rules.map(r => r.id).filter(id => !kept.has(id)));
@@ -104,7 +104,7 @@ function summarizeRuleImpact(rule, claimsSample){
             const matched = (typeof ruleMatchesContext === 'function') ? ruleMatchesContext(rule, ctx, refDate) : false;
             if(!matched){ out.before += base; out.after += base; return; }
             const res = (rule.isComposite && typeof evaluateCompositeRule === 'function') ? evaluateCompositeRule(rule, ctx, refDate) : ((typeof evaluateRuleAction === 'function') ? evaluateRuleAction(rule, ctx, base) : {});
-            const nv = res && res.newApproved !== undefined ? res.newApproved : (base - (res && res.deduct ? res.deduct : 0));
+            const nv = res?.newApproved !== undefined ? res.newApproved : (base - (res?.deduct ? res.deduct : 0));
             out.before += base; out.after += nv;
             if(nv < base){ out.affected++; out.extraDed += (base - nv);
               if(out.samples.length < 8) out.samples.push({ claim:claim.id, service:line.name || line.code, before:base, after:nv }); }
@@ -129,7 +129,7 @@ function toggleRuleEnabled(rule){
   return { ok:true, enabled:false };
 }
 /* أولوية القاعدة: الأعلى يُطبَّق أولًا؛ الافتراضي 0. */
-function rulePriority(r){ const p = Number(r && r.priority); return isNaN(p) ? 0 : p; }
+function rulePriority(r){ const p = Number(r?.priority); return isNaN(p) ? 0 : p; }
 function sortRulesByPriority(rules){ return (rules||[]).slice().sort((a,b) => rulePriority(b) - rulePriority(a)); }
 function evaluateRuleAction(rule, ctx, baseAmount){
   const amt = baseAmount !== undefined ? baseAmount : (ctx.line ? ctx.line.lineBase : 0);
@@ -151,7 +151,7 @@ function evaluateRuleAction(rule, ctx, baseAmount){
 }
 function evaluateCompositeRule(rule, ctx, refDate){
   const cfg = rule.compositeConfig || {};
-  const childRules = (cfg.childRuleIds||[]).map(id => deductionRules.find(r => r.id === id)).filter(r => r && r.enabled !== false && r.active !== false && isLineLevelAction(r.action));
+  const childRules = (cfg.childRuleIds||[]).map(id => deductionRules.find(r => r.id === id)).filter(r => r?.enabled !== false && r.active !== false && isLineLevelAction(r.action));
   if(!childRules.length) return null;
   const requireAll = cfg.requireAllMatch !== false;
   const matched = childRules.map(child => ({ rule:child, matched: ruleMatchesContext(child, ctx, refDate) })).filter(r => r.matched);
@@ -214,7 +214,7 @@ function detectRuleConflicts(newRule, existingRules){
   // 2. circular dependencies
   reqIds.forEach(rid => {
     const dep = existingRules.find(r => r.id === rid);
-    if(dep && dep.requires && Array.isArray(dep.requires.ruleIds)){
+    if(dep?.requires && Array.isArray(dep.requires.ruleIds)){
       if(dep.requires.ruleIds.includes(newRule.id)){
         conflicts.push({ type:'CIRCULAR_DEPENDENCY', severity:'error', message:`حلقة دائرية محتملة بين القاعدة الجديدة والقاعدة ${rid}` });
       }

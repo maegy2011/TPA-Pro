@@ -100,7 +100,7 @@ function runInboxTests(){
       providers = [{ id:'P1', name:'مستشفى النيل' }];
       contracts = [{ id:'C1', providerId:'P1' }];
       const v = (typeof validateBatchInput === 'function') ? validateBatchInput({ providerId:'P1', month:'2026-09', billed:100, contractsList:contracts }) : null;
-      A('وارد: شرط التعاقد فقط (الحالة لا تمنع)', v && v.ok === true);
+      A('وارد: شرط التعاقد فقط (الحالة لا تمنع)', v?.ok === true);
     } catch(e){ A('وارد: الحالات', false, e.message); }
     /* ---------- تبويب الأرشيف ---------- */
     try {

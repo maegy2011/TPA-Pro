@@ -32,12 +32,12 @@ function openDrModal(id){
   $('#drFrom').value = r ? r.effectiveFrom : daysFromNow(0); $('#drTo').value = r ? (r.effectiveTo||'') : daysFromNow(365);
   $('#drActive').checked = r ? r.active : true; $('#drNotes').value = r ? r.notes||'' : '';
   try {
-    const _pr = document.getElementById('drPriority'); if(_pr) _pr.value = (r && r.priority) || 0;
-    const _rt = document.getElementById('drRetro'); if(_rt) _rt.checked = !!(r && r.retroactive);
-    const _sa = document.getElementById('drScopeAll'); if(_sa) _sa.checked = !!(r && r.scopeExplicitAll);
+    const _pr = document.getElementById('drPriority'); if(_pr) _pr.value = (r?.priority) || 0;
+    const _rt = document.getElementById('drRetro'); if(_rt) _rt.checked = !!(r?.retroactive);
+    const _sa = document.getElementById('drScopeAll'); if(_sa) _sa.checked = !!(r?.scopeExplicitAll);
     const _box = document.getElementById('drScopeProviders');
     if(_box && typeof providers !== 'undefined'){
-      const _sel = (r && r.scope && r.scope.providerIds) || [];
+      const _sel = (r?.scope && r.scope.providerIds) || [];
       _box.innerHTML = providers.map(p => `<label class="scope-chk"><input type="checkbox" class="dr-scope-p" value="${p.id}" ${_sel.includes(p.id)?'checked':''}> ${escapeHtml(p.name||p.id)}</label>`).join('') || '<span style="color:var(--muted)">لا جهات</span>';
     }
   } catch(e){}
@@ -108,7 +108,7 @@ function nextLearnedRuleId(){
 }
 function ruleAlreadyCovers(action, providerId, conditions){
   const key = JSON.stringify(conditions || {});
-  return (typeof deductionRules !== 'undefined' ? deductionRules : []).some(r => r && r.action === action && r.enabled !== false && r.active !== false
+  return (typeof deductionRules !== 'undefined' ? deductionRules : []).some(r => r?.action === action && r.enabled !== false && r.active !== false
     && (!providerId || ((r.scope||{}).providerIds||[]).includes(providerId))
     && JSON.stringify((r||{}).conditions || {}) === key);
 }
@@ -120,7 +120,7 @@ function learnRuleFromReviewer(kind, d){
     const provider = plist.find(x => (claim.providerCode != null && x.code === claim.providerCode) || x.name === claim.provider || x.id === claim.provider) || null;
     const providerIds = provider ? [provider.id] : [];
     let contractIds = [];
-    try { const cx = (typeof getContractContext === 'function') ? getContractContext(claim) : null; if(cx && cx.contract) contractIds = [cx.contract.id]; } catch(e){}
+    try { const cx = (typeof getContractContext === 'function') ? getContractContext(claim) : null; if(cx?.contract) contractIds = [cx.contract.id]; } catch(e){}
     const claimTypes = [claim.type || 'employee'];
     const today = new Date().toISOString().slice(0,10);
     const pname = provider ? provider.name : (claim.provider || '');
@@ -150,7 +150,7 @@ function learnRuleFromReviewer(kind, d){
     } else return null;
     if(ruleAlreadyCovers(action, provider ? provider.id : null, conditions)) return 'exists';
     const originNote = `مسودة مستفادة من ${claim.id}${d.line ? ' بند '+d.line.code : ''} بتاريخ ${today}${d.note ? ' — '+d.note : ''}`;
-    const sameSig = (r) => r && r.source === 'learned' && r.enabled === false && r.action === action
+    const sameSig = (r) => r?.source === 'learned' && r.enabled === false && r.action === action
       && JSON.stringify(((r.scope)||{}).providerIds||[]) === JSON.stringify(providerIds)
       && JSON.stringify(((r.scope)||{}).contractIds||[]) === JSON.stringify(contractIds)
       && JSON.stringify(((r.scope)||{}).claimTypes||[]) === JSON.stringify(claimTypes)
@@ -168,7 +168,7 @@ function learnRuleFromReviewer(kind, d){
 function applyLearnedRuleNow(id){
   try {
     if(typeof deductionRules === 'undefined' || !id) return false;
-    const r = deductionRules.find(x => x && x.id === id && x.source === 'learned');
+    const r = deductionRules.find(x => x?.id === id && x.source === 'learned');
     if(!r || r.enabled !== false) return false;
     if(typeof detectRuleConflicts === 'function'){
       const cf = detectRuleConflicts(r, deductionRules);
@@ -189,7 +189,7 @@ function offerApplyLearnedRule(result){
   try {
     if(typeof result !== 'string' || !result || result === 'exists' || result === 'updated') return result;
     if(typeof deductionRules === 'undefined') return result;
-    const r = deductionRules.find(x => x && x.id === result);
+    const r = deductionRules.find(x => x?.id === result);
     if(!r) return result;
     const scopeN = ((r.scope || {}).providerIds || []).length;
     const msg = `${r.name || result} — النسبة ${Number(r.rate) || 0}% — النطاق: ${scopeN ? scopeN + ' جهة' : 'عام'}.<br><br>تطبيقها الآن على المراجعات؟ (إلغاء = تبقى مسودة معطلة بانتظار التفعيل من صفحة القواعد)`;

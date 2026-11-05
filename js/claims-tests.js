@@ -88,7 +88,7 @@ function runClaimsTests(){
     try {
       const cs = [{ id:'A', status:'partial' }, { id:'B', status:'approved', archiveStatus:'read-only' }, { id:'C', status:'new', archived:true }];
       const sp = (typeof splitClaimsByArchive === 'function') ? splitClaimsByArchive(cs) : null;
-      A('مطالبات: التقسيم 1/2', sp && sp.active === 1 && sp.archived === 2, JSON.stringify(sp));
+      A('مطالبات: التقسيم 1/2', sp?.active === 1 && sp.archived === 2, JSON.stringify(sp));
       const f = filterClaimsList(cs, 'archived', '');
       A('مطالبات: ترشيح الأرشيف', f.length === 2);
       const f2 = filterClaimsList(cs, 'all', '');

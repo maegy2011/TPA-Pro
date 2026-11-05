@@ -22,7 +22,7 @@ function runReviewModelTests(){
     try {
       workSessions = [];
       const c0 = (typeof RC_cursorForClaim === 'function') ? RC_cursorForClaim('NOPE') : null;
-      A('نموذج: مؤشر افتراضي {0,0}', c0 && c0.invoice === 0 && c0.patient === 0);
+      A('نموذج: مؤشر افتراضي {0,0}', c0?.invoice === 0 && c0.patient === 0);
       if(typeof RC_applyCursor === 'function'){ RC_applyCursor({ invoice:2, patient:3 }); }
       A('نموذج: تطبيق المؤشر', rvActiveInvoiceIdx === 2 && rvActivePatientIdx === 3);
       rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
@@ -45,14 +45,14 @@ function runReviewModelTests(){
       workingInvoices = [];
       rvActiveInvoiceIdx = 1; rvActivePatientIdx = 2;
       const s = upsertCurrentSession();
-      A('نموذج: إنشاء جلسة من الحالة', !!(s && s.claimId === 'CLM-T'));
+      A('نموذج: إنشاء جلسة من الحالة', !!(s?.claimId === 'CLM-T'));
       A('نموذج: المؤشر في الجلسة لا المطالبة', s.lastSavedPoint && s.lastSavedPoint.invoiceIdx === 1 && !('reviewProgress' in activeClaim));
       const cur = RC_cursorForClaim('CLM-T');
       A('نموذج: قراءة المؤشر من الجلسة', cur.invoice === 1 && cur.patient === 2);
       if(typeof saveReviewProgress === 'function' && typeof getReviewProgress === 'function'){
         saveReviewProgress(activeClaim, { invoiceIdx:3, patientIdx:4, lineIdx:0 });
         const p = getReviewProgress(activeClaim);
-        A('نموذج: حفظ/قراءة التقدم', p && p.invoiceIdx === 3 && p.patientIdx === 4);
+        A('نموذج: حفظ/قراءة التقدم', p?.invoiceIdx === 3 && p.patientIdx === 4);
       }
       if(typeof updateCurrentReviewProgressPoint === 'function'){
         activeSessionId = s.id; s.status = 'active';

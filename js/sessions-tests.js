@@ -70,7 +70,7 @@ function runSessionsTests(){
     try {
       claims = [{ id:'CLM-1', patient:'أحمد', provider:'مستشفى النيل', billed:1000, approved:700 }];
       const i1 = (typeof getSessionClaimInfo === 'function') ? getSessionClaimInfo({ claimId:'CLM-1', claimSnapshot:{ patient:'قديم' } }) : null;
-      A('جلسات: الحية تغلب اللقطة', i1 && i1.patient === 'أحمد' && i1.stale === false);
+      A('جلسات: الحية تغلب اللقطة', i1?.patient === 'أحمد' && i1.stale === false);
       const i2 = getSessionClaimInfo({ claimId:'CLM-X', claimSnapshot:{ patient:'لقطة', provider:'جهة', billed:500, approved:100 } });
       A('جلسات: المفقودة stale باللقطة', i2.stale === true && i2.patient === 'لقطة');
       A('جلسات: معرف فريد', (() => { const a = genSessionId(), b = genSessionId(); return a !== b && a.startsWith('SES-'); })());
@@ -88,7 +88,7 @@ function runSessionsTests(){
       ['showWarning','showSuccess','showToast','showInfo'].forEach(k => { try { dlg[k] = g[k]; g[k] = () => {}; } catch(e){} });
       try {
         const s = upsertCurrentSession();
-        A('جلسات: إنشاء جلسة', !!(s && s.claimId === 'CLM-1'));
+        A('جلسات: إنشاء جلسة', !!(s?.claimId === 'CLM-1'));
         A('جلسات: لقطة أساس + مخطط v2', !!(s.baseClaimSnapshot && s.sessionSchemaVersion === 2));
         A('جلسات: نقطة الحفظ في الجلسة', !!(s.lastSavedPoint && typeof s.lastSavedPoint.invoiceIdx === 'number'));
         A('جلسات: المؤشر لا يتسرب للمطالبة', !('reviewProgress' in activeClaim));
@@ -116,7 +116,7 @@ function runSessionsTests(){
       activeClaim = JSON.parse(JSON.stringify(claims[0]));
       workingInvoices = []; rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;
       const s1 = upsertCurrentSession();
-      A('جلسات+: جلسة أولى', !!(s1 && s1.claimId === 'CLM-A'));
+      A('جلسات+: جلسة أولى', !!(s1?.claimId === 'CLM-A'));
       let okR = resumeSession(s1.id);
       A('جلسات+: استئناف يفعّل', okR === true && activeSessionId === s1.id && s1.status === 'active');
       // جلسة ثانية مع بقاء الأولى
@@ -143,7 +143,7 @@ function runSessionsTests(){
       // نقطة التقدم تعيش في الجلسة لا المطالبة
       updateCurrentReviewProgressPoint('CLM-B', 2, 1, 7);
       const s2u = workSessions.find(x => x.id === s2.id);
-      A('جلسات+: نقطة الحفظ محدثة', s2u && s2u.lastSavedPoint.invoiceIdx === 2 && s2u.lastSavedPoint.lineIdx === 7);
+      A('جلسات+: نقطة الحفظ محدثة', s2u?.lastSavedPoint.invoiceIdx === 2 && s2u.lastSavedPoint.lineIdx === 7);
       A('جلسات+: المؤشر لا يتسرب', !('reviewProgress' in getClaimById('CLM-B')));
       // الاستئناف من آخر نقطة يضبط المؤشرات
       rvActiveInvoiceIdx = 0; rvActivePatientIdx = 0;

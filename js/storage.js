@@ -63,7 +63,7 @@ function loadPersistedData(){
     _dataStorageState = 'loaded'; _dataStorageError = null;
     return true;
   } catch(e){
-    _dataStorageState = 'corrupt'; _dataStorageError = e && e.message ? e.message : 'بيانات تالفة';
+    _dataStorageState = 'corrupt'; _dataStorageError = e?.message ? e.message : 'بيانات تالفة';
     console.error('loadPersistedData rejected stored data; original value preserved', e);
     return false;
   }
@@ -117,7 +117,7 @@ function inspectDataRelationships(data, sessions){
   };
   ['providers','contracts','tariffs','batches','claims','deductionRules','paProcedures'].forEach(k => checkUnique(source[k], k));
   const claimRows = Array.isArray(source.claims) ? source.claims : [];
-  const claimIds = new Set(claimRows.filter(c=>c && c.id != null).map(c=>String(c.id)));
+  const claimIds = new Set(claimRows.filter(c=>c?.id != null).map(c=>String(c.id)));
   const sessionRows = Array.isArray(sessions) ? sessions : (Array.isArray(source.workSessions) ? source.workSessions : []);
   checkUnique(sessionRows, 'workSessions');
   sessionRows.forEach((s, index) => {

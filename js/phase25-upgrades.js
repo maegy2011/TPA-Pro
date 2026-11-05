@@ -33,7 +33,7 @@
 
   function getReviewProgress(claim){
     try {
-      if(typeof RC_cursorForClaim === 'function' && claim && claim.id){
+      if(typeof RC_cursorForClaim === 'function' && claim?.id){
         const _c = RC_cursorForClaim(claim.id);
         return { invoiceIdx: _c.invoice, patientIdx: _c.patient, lineIdx: 0 };
       }

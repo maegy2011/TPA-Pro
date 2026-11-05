@@ -66,7 +66,7 @@ function renderLineTypeSettings(){
   const box = document.getElementById('lineTypesBox'); if(!box) return;
   const tax = getLineTaxonomy();
   const customs = (typeof appSettings !== 'undefined' && Array.isArray(appSettings.customLineTypes)) ? appSettings.customLineTypes : [];
-  const isCustom = k => customs.some(c => c && c.key === k);
+  const isCustom = k => customs.some(c => c?.key === k);
   box.innerHTML = tax.map(t => {
     const beh = [];
     if(t.requiresChecklist) beh.push('تدقيق:' + (t.checklistKey || t.key));

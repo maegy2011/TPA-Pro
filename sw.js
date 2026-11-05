@@ -23,7 +23,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(req).then((cached) => {
       if (cached) return cached;
       return fetch(req).then((res) => {
-        if (res && res.status === 200 && res.type === 'basic') {
+        if (res?.status === 200 && res.type === 'basic') {
           const clone = res.clone();
           caches.open(CACHE_NAME).then((c) => c.put(req, clone));
         }

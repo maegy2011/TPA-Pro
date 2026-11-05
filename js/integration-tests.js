@@ -79,7 +79,7 @@ function runIntegrationTests(){
       ];
       const ctx = getContractContext({ providerCode:11, date:'2026-01-01' });
       const svc = (ctx.tariff.services||[]).find(s => s.code === 'X');
-      A('لوائح: الخاصة تغلب العامة عند الدمج', svc && svc.currentPrice === 80, String(svc && svc.currentPrice));
+      A('لوائح: الخاصة تغلب العامة عند الدمج', svc?.currentPrice === 80, String(svc?.currentPrice));
     } catch(e){ A('لوائح', false, e.message); }
 
     /* ---------- 5. التغطية: خاص يغلب مستثنى + استثناء يوقف ---------- */

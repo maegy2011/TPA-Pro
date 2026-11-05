@@ -12,7 +12,7 @@ function togglePatientDoc(invIdx, patIdx, key, checked){
     if(!pat.documents) pat.documents = {};
     pat.documents[key] = !!checked;
     return { ok:true, msg:'' };
-  } catch(e){ return { ok:false, msg:String((e && e.message) || e) }; }
+  } catch(e){ return { ok:false, msg:String((e?.message) || e) }; }
 }
 /* تبديل مستند مذكرة — منطق خالص (يُختبر آليًا). */
 function toggleInvoiceDoc(invIdx, key, checked){
@@ -24,7 +24,7 @@ function toggleInvoiceDoc(invIdx, key, checked){
     if(!inv.documents) inv.documents = {};
     inv.documents[key] = !!checked;
     return { ok:true, msg:'' };
-  } catch(e){ return { ok:false, msg:String((e && e.message) || e) }; }
+  } catch(e){ return { ok:false, msg:String((e?.message) || e) }; }
 }
 function bindReviewModal(){
   $$('[data-close]').forEach(el => el.addEventListener('click', () => closeReview()));
@@ -102,7 +102,7 @@ function bindReviewModal(){
     const delL = e.target.closest('[data-del-line]'); if(delL){ const inv = workingInvoices[rvActiveInvoiceIdx]; const pat = inv&&inv.patients?inv.patients[rvActivePatientIdx]:null; if(!pat) return; const idx = Number(delL.dataset.delLine); showDelete('حذف البند','سيتم حذف هذا البند.', () => { markSessionDirty(); pat.lines.splice(idx,1); renderActiveInvoice(); recalcReview(); }); return; }
 
     const inv = workingInvoices[rvActiveInvoiceIdx];
-    const pat = inv && inv.patients ? inv.patients[rvActivePatientIdx] : null;
+    const pat = inv?.patients ? inv.patients[rvActivePatientIdx] : null;
     if(!pat) return;
 
     // تجاوزات المريض
@@ -239,7 +239,7 @@ function bindReviewModal(){
       if (reopen) {
         const key = reopen.dataset.excReopen;
         const [ii, pi, li] = key.split('-').map(Number);
-        const inv = workingInvoices[ii]; const pat = inv && inv.patients ? inv.patients[pi] : null; const ln = pat && pat.lines ? pat.lines[li] : null;
+        const inv = workingInvoices[ii]; const pat = inv?.patients ? inv.patients[pi] : null; const ln = pat?.lines ? pat.lines[li] : null;
         if (!ln) return;
         markSessionDirty();
         delete ln._decidedBy; delete ln._decidedAt; delete ln._decisionNote; delete ln._manualValue;
@@ -255,9 +255,9 @@ function bindReviewModal(){
       const btn = e.target.closest('[data-exc-act]'); if(!btn) return;
       const key = btn.dataset.excKey;
       const [ii, pi, li] = key.split('-').map(Number);
-      const inv = workingInvoices[ii]; const pat = inv && inv.patients ? inv.patients[pi] : null; const ln = pat && pat.lines ? pat.lines[li] : null;
+      const inv = workingInvoices[ii]; const pat = inv?.patients ? inv.patients[pi] : null; const ln = pat?.lines ? pat.lines[li] : null;
       if (!ln) return;
-      const _scopeBox = (btn && btn.closest && (btn.closest('#rvExceptions') || btn.closest('#rvPageExceptions'))) || document;
+      const _scopeBox = (btn?.closest && (btn.closest('#rvExceptions') || btn.closest('#rvPageExceptions'))) || document;
       const noteInput = _scopeBox.querySelector(`[data-exc-note="${key}"]`);
       const note = noteInput ? noteInput.value.trim() : '';
       const act = btn.dataset.excAct;
@@ -361,7 +361,7 @@ function bindReviewModal(){
         const overrideReason = prompt('سبب التجاوز (إلزامي):');
         if (!overrideReason || !overrideReason.trim()) { showWarning('تنبيه','سبب التجاوز إلزامي'); return; }
         if (!activeClaim._overrideChecklist) activeClaim._overrideChecklist = [];
-        activeClaim._overrideChecklist.push({ by: (appSettings && appSettings.reviewer && appSettings.reviewer.name) || 'المراجع', at: new Date().toISOString(), reason: overrideReason.trim(), missing: missing.slice() });
+        activeClaim._overrideChecklist.push({ by: (appSettings?.reviewer && appSettings.reviewer.name) || 'المراجع', at: new Date().toISOString(), reason: overrideReason.trim(), missing: missing.slice() });
       }
 
       // signature dialog
@@ -373,7 +373,7 @@ function bindReviewModal(){
 
       // apply decision to claim
       activeClaim._signedOff = true;
-      activeClaim._reviewedBy = (appSettings && appSettings.reviewer && appSettings.reviewer.name) || 'المراجع';
+      activeClaim._reviewedBy = (appSettings?.reviewer && appSettings.reviewer.name) || 'المراجع';
       activeClaim._reviewedAt = new Date().toISOString();
       activeClaim._locked = true;
       activeClaim._decision = decision;

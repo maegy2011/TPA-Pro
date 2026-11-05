@@ -73,7 +73,7 @@ function saveReviewDraft(label){
   if(typeof showSuccess === 'function') showSuccess('مسودة محفوظة', `المعتمد في هذه المسودة: ${fmt(t.approved)}`);
   } catch(err){
     try { console.error('saveReviewDraft failed', err); } catch(e){}
-    if(typeof showWarning === 'function') showWarning('تعذّر حفظ المسودة', String((err && err.message) || err));
+    if(typeof showWarning === 'function') showWarning('تعذّر حفظ المسودة', String((err?.message) || err));
     else if(typeof showToast === 'function') showToast('⚠ تعذّر حفظ المسودة');
   }
 }

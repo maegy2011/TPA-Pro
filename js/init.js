@@ -99,7 +99,7 @@ document.addEventListener('click', e => {
   const observer = new MutationObserver(mutations => {
     mutations.forEach(m => {
       m.addedNodes && m.addedNodes.forEach(node => {
-        if(node && node.classList && node.classList.contains && node.classList.contains('modal') && node.classList.contains('open')){
+        if(node?.classList && node.classList.contains && node.classList.contains('modal') && node.classList.contains('open')){
           lastFocus = document.activeElement;
           const first = node.querySelector('input, select, textarea, button');
           if(first) setTimeout(() => first.focus(), 50);

@@ -118,7 +118,7 @@ function suggestServicesForDate(term, date, tariff){
 /* فرق الاستيراد قبل الاعتماد — منطق خالص (يُختبر آليًا). */
 function diffImportRows(incoming, tariff){
   const cur = {};
-  (tariff && tariff.services || []).forEach(s => { cur[String(s.code || '').toLowerCase()] = Number(s.currentPrice || s.basePrice || 0) || 0; });
+  (tariff?.services || []).forEach(s => { cur[String(s.code || '').toLowerCase()] = Number(s.currentPrice || s.basePrice || 0) || 0; });
   return (incoming || []).map(s => {
     const k = String(s.code || '').toLowerCase();
     const has = Object.prototype.hasOwnProperty.call(cur, k);
@@ -144,7 +144,7 @@ function resolveBulkOverrideTargets(providerIds, opts){
   return (providerIds || []).map(pid => {
     const p = _ps.find(x => x.id === pid) || null;
     const c = latestContractForProvider(pid, _cs);
-    const cur = (c && c.serviceOverrides && code && c.serviceOverrides[code]) ? c.serviceOverrides[code] : null;
+    const cur = (c?.serviceOverrides && code && c.serviceOverrides[code]) ? c.serviceOverrides[code] : null;
     return { providerId: pid, providerName: p ? p.name : pid,
       contractId: c ? c.id : null,
       hasContract: !!c,
@@ -199,7 +199,8 @@ function renderServicesTariffFilter(){
 
 function renderServices(){
   renderServicesTariffFilter();
-  let list = getAllServicesFlat();
+  const allFlat = getAllServicesFlat();
+  let list = allFlat;
   if(typeof filterServicesFlat === 'function') list = filterServicesFlat(list, { tariffId:servicesTariffFilter, validity:servicesValidityFilter, term:servicesSearchTerm, covered:servicesFilter, adv:servicesAdv });
   if(typeof sortServicesFlat === 'function') list = sortServicesFlat(list, servicesSort, servicesSortDir);
 
@@ -219,7 +220,7 @@ function renderServices(){
     <td class="act"><div style="display:flex;gap:5px;align-items:center"><button class="btn-xs" data-edit-service="${s.tariffId}|${s.index}">تعديل</button><button class="btn-xs danger" data-del-service="${s.tariffId}|${s.index}">حذف</button></div></td>
   </tr>`).join('');
   const kpi = $('#servicesKpi');
-  if(kpi){ kpi.innerHTML = `<div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الخدمات</div><div class="kpi-val">${list.length} <small>خدمة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">من أصل ${getAllServicesFlat().length}</div></div>`; }
+  if(kpi){ kpi.innerHTML = `<div class="kpi"><div class="kpi-top"><div><div class="kpi-label">الخدمات</div><div class="kpi-val">${list.length} <small>خدمة</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">من أصل ${allFlat.length}</div></div>`; }
 }
 
 /* ---------- نواة الخدمات الموحدة: مصدر واحد للتطبيع والفحص والتطبيق ---------- */
@@ -273,7 +274,7 @@ function showServiceFormPanel(tariffId, idx){
     tariffs.push(t);
   }
   const sel = $('#servicesTariffFilter');
-  const tid = tariffId || ((sel && sel.value !== 'all') ? sel.value : tariffs[0].id);
+  const tid = tariffId || ((sel?.value !== 'all') ? sel.value : tariffs[0].id);
   const t = tariffs.find(x=>x.id===tid) || tariffs[0];
   // populate tariff select
   const ts = $('#sfTariff'); if(ts){ ts.innerHTML = tariffs.map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)}</option>`).join(''); ts.value = t.id; }
@@ -537,7 +538,7 @@ function importServicesRows(rows, options={}){
     if(iCode<0||iName<0||iBase<0) throw new Error('الأعمدة المطلوبة: الكود، اسم الخدمة، السعر الأساسي');
     let tariff=options.createTariff ? null : tariffs.find(t=>t.id===options.tariffId); if(!options.createTariff && !tariff) throw new Error('اختر اللائحة المراد تحديثها');
     const eff=String(options.effectiveDate||(options.createTariff&&options.createTariff.effectiveDate)||'').slice(0,10); if(!eff) throw new Error('حدد تاريخ سريان التحديث');
-    if(tariff && tariff.effectiveDate && eff<=tariff.effectiveDate) throw new Error('يجب أن يكون تاريخ السريان بعد تاريخ النسخة الحالية لحفظ الأسعار التاريخية');
+    if(tariff?.effectiveDate && eff<=tariff.effectiveDate) throw new Error('يجب أن يكون تاريخ السريان بعد تاريخ النسخة الحالية لحفظ الأسعار التاريخية');
     const seen=new Set(), incoming=[];
     const val=(r,i)=>i<0?'':String(r[i]??'').trim();
     const num=(raw)=>Number(String(raw).replace(/[٬,،\s]/g,'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
@@ -683,8 +684,8 @@ function renderBulkOvPreview(){
   // الأثر السعري: قديم اللائحة مقابل الجديد لكل بند
   const priceLines = rc.codes.slice(0, 8).map(code => {
     const im = (typeof serviceImpact === 'function') ? serviceImpact(code, { newPrice: patch.price !== null ? patch.price : '' }) : null;
-    const oldP = im && im.oldPrice !== null ? fmt(im.oldPrice) : 'بلا سعر لائحة';
-    const diff = im && im.diff !== null && im.diff !== 0 ? ` (الفرق <b style="color:${im.diff > 0 ? 'var(--bad)' : 'var(--ok)'}">${im.diff > 0 ? '+' : ''}${fmt(im.diff)}</b>)` : '';
+    const oldP = im?.oldPrice !== null ? fmt(im.oldPrice) : 'بلا سعر لائحة';
+    const diff = im?.diff !== null && im.diff !== 0 ? ` (الفرق <b style="color:${im.diff > 0 ? 'var(--bad)' : 'var(--ok)'}">${im.diff > 0 ? '+' : ''}${fmt(im.diff)}</b>)` : '';
     return `· ${escapeHtml(code)}: ${oldP} ← <b>${priceTxt}</b>${diff}`;
   }).join('<br>');
   const targets = bulkOvProviderIds.length ? resolveBulkOverrideTargets(bulkOvProviderIds, { code: rc.codes[0] }) : [];

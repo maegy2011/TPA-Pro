@@ -6,7 +6,7 @@ let _reviewAutoSaveTimer = null;
 function markSessionDirty(){
   _sessionDirty = true;
   try { const b = document.getElementById('rvPageDirtyBadge'); if(b) b.style.display = ''; } catch(e){}
-  try { if(typeof RC !== 'undefined') RC.claimId = (typeof activeClaim !== 'undefined' && activeClaim && activeClaim.id) || null; } catch(e){}
+  try { if(typeof RC !== 'undefined') RC.claimId = (typeof activeClaim !== 'undefined' && activeClaim?.id) || null; } catch(e){}
   // Snapshot the working copy, not the live claim, so interrupted reviews can be resumed safely.
   if(_reviewAutoSaveTimer) clearTimeout(_reviewAutoSaveTimer);
   _reviewAutoSaveTimer = setTimeout(()=>{

@@ -92,9 +92,9 @@ function bindLineAutocomplete(){
   document.addEventListener('click', e => { if(!e.target.closest('#lineModal') || e.target.closest('.ln-suggest') || e.target.closest('#lnCode') || e.target.closest('#lnName')) return; suggest.innerHTML = ''; });
 }
 function openLineEditor(patIdx, lineIdx) {
-  if (activeClaim && activeClaim._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
+  if (activeClaim?._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
   const inv = workingInvoices[rvActiveInvoiceIdx];
-  const pat = inv && inv.patients ? inv.patients[patIdx] : null;
+  const pat = inv?.patients ? inv.patients[patIdx] : null;
   if (!pat) return;
 
   rvEditLineIdx = (lineIdx === undefined || lineIdx === null) ? -1 : lineIdx;
@@ -125,7 +125,7 @@ function openLineEditor(patIdx, lineIdx) {
       const svc = services.find(s => String(s.code) === String(l.code));
       applyServiceToLine(svc);
       $('#lnQty').value = l.qty;
-      const match = (Number(l.billedUnit) === Number(svc && svc.currentPrice));
+      const match = (Number(l.billedUnit) === Number(svc?.currentPrice));
       const mu = document.getElementById('lnBilledUnitMatch'); if (mu) mu.checked = match;
       const mt = document.getElementById('lnBilledTotalMatch'); if (mt) mt.checked = match;
       if (l.billedUnit !== null && l.billedUnit !== undefined) $('#lnBilledUnit').value = l.billedUnit;
@@ -170,10 +170,10 @@ function openLineEditor(patIdx, lineIdx) {
   setTimeout(() => sel.focus(), 120);
 }
 function saveLineEditor() {
-  if (activeClaim && activeClaim._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
+  if (activeClaim?._locked) { showWarning('مقفل','المطالبة موقوفة/موقعة — لا يمكن التعديل'); return; }
   markSessionDirty();
   const inv = workingInvoices[rvActiveInvoiceIdx];
-  const pat = inv && inv.patients ? inv.patients[rvActivePatientIdx] : null;
+  const pat = inv?.patients ? inv.patients[rvActivePatientIdx] : null;
   if (!pat) return;
 
   const isManual = $('#lnServiceSelect').value === '__manual__';
@@ -183,7 +183,7 @@ function saveLineEditor() {
   const qty = Math.max(1, Number($('#lnQty').value) || 1);
   const totalInput = document.getElementById('lnBilledTotal');
   const qtyInput = document.getElementById('lnQty');
-  const totalBilled = Number(totalInput && totalInput.value) || 0;
+  const totalBilled = Number(totalInput?.value) || 0;
   const bu = totalBilled > 0 && Number(qtyInput.value) > 0 ? totalBilled / Number(qtyInput.value) : (Number($('#lnBilledUnit').value) || 0);
   const tuRaw = $('#lnTariffUnit').value.trim();
   const tu = (tuRaw === '' || tuRaw === '—') ? null : Number(tuRaw);
@@ -223,7 +223,7 @@ function saveLineEditor() {
     note: '',
     approved: 0,
     _overrideMode: 'auto',
-    requiresPriorApproval: !!(tariffSvc && tariffSvc.requiresPriorApproval),
+    requiresPriorApproval: !!(tariffSvc?.requiresPriorApproval),
   };
 
   const validation = validateLine(data, {
@@ -281,7 +281,7 @@ function saveLineEditor() {
 function syncTariffMatch(){
   const matchU = document.getElementById('lnBilledUnitMatch');
   const matchT = document.getElementById('lnBilledTotalMatch');
-  const checked = !!(matchU && matchU.checked) || !!(matchT && matchT.checked);
+  const checked = !!(matchU?.checked) || !!(matchT?.checked);
   if (matchU) matchU.checked = checked;
   if (matchT) matchT.checked = checked;
   const unit = document.getElementById('lnBilledUnit');
@@ -315,7 +315,7 @@ function updateComputedPreview() {
 
   const qty = Math.max(0, Number($('#lnQty').value) || 0);
   const totalEl = document.getElementById('lnBilledTotal');
-  const billed = totalEl && totalEl.value !== '' ? (Number(totalEl.value)||0) : qty * (Number($('#lnBilledUnit').value) || 0);
+  const billed = totalEl?.value !== '' ? (Number(totalEl.value)||0) : qty * (Number($('#lnBilledUnit').value) || 0);
   const isManual = $('#lnServiceSelect').value === '__manual__';
 
   if (!qty || !billed) {

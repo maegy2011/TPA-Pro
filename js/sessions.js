@@ -54,17 +54,17 @@ function captureCurrentSessionState(){
   if(!activeClaim) return null;
   const ex = findSessionByClaim(activeClaim.id);
   // المعرف: جلسة المطالبة نفسها، أو النشطة فقط لو لنفس المطالبة — وإلا معرف جديد (لا دمج صامت).
-  let _sid = (ex && ex.id) || null;
+  let _sid = (ex?.id) || null;
   if(!_sid && activeSessionId){
     const _cur = workSessions.find(x => x.id === activeSessionId);
-    if(_cur && _cur.claimId === activeClaim.id) _sid = activeSessionId;
+    if(_cur?.claimId === activeClaim.id) _sid = activeSessionId;
   }
   if(!_sid) _sid = genSessionId();
   return {
     id:_sid,
     claimId:activeClaim.id,
     claimSnapshot:JSON.parse(JSON.stringify(activeClaim)),
-    baseClaimSnapshot:(ex && ex.baseClaimSnapshot) ? JSON.parse(JSON.stringify(ex.baseClaimSnapshot)) : JSON.parse(JSON.stringify(getClaimById(activeClaim.id) || activeClaim)),
+    baseClaimSnapshot:(ex?.baseClaimSnapshot) ? JSON.parse(JSON.stringify(ex.baseClaimSnapshot)) : JSON.parse(JSON.stringify(getClaimById(activeClaim.id) || activeClaim)),
     sessionSchemaVersion:2,
     workingInvoices:JSON.parse(JSON.stringify(workingInvoices||[])),
     rvActiveInvoiceIdx:rvActiveInvoiceIdx||0,
@@ -75,7 +75,7 @@ function captureCurrentSessionState(){
     status:(activeSessionId ? 'active' : 'paused'),
     name:(ex&&ex.name)||null,
     elapsedSeconds: (ex && typeof ex.elapsedSeconds === 'number') ? ex.elapsedSeconds : 0,
-    lastSavedPoint: (ex && ex.lastSavedPoint) ? JSON.parse(JSON.stringify(ex.lastSavedPoint)) : { invoiceIdx: rvActiveInvoiceIdx||0, patientIdx: rvActivePatientIdx||0, lineIdx: 0 }
+    lastSavedPoint: (ex?.lastSavedPoint) ? JSON.parse(JSON.stringify(ex.lastSavedPoint)) : { invoiceIdx: rvActiveInvoiceIdx||0, patientIdx: rvActivePatientIdx||0, lineIdx: 0 }
   };
 }
 function upsertCurrentSession(){
@@ -110,7 +110,7 @@ function sortSessionsByActivity(list){
 }
 /* عبء الجلسة (فواتير/مرضى/بنود/مطالب/معتمد/نسبة) — منطق خالص (يُختبر آليًا). */
 function sessionWorkload(s){
-  const wi = (s && s.workingInvoices) || [];
+  const wi = (s?.workingInvoices) || [];
   let inv = wi.length, pat = 0, lines = 0, billed = 0, appr = 0;
   wi.forEach(i => {
     (i.patients || []).forEach(p => {

@@ -183,21 +183,21 @@ function _patCacheKey(pat, claim, refDate, invoice){
   } catch(e){ return null; }
 }
 function computePatient(pat, claim, refDate, invoice){
-  refDate = refDate || (invoice && invoice.date) || claim.date || claim.receivedDate || daysFromNow(0);
+  refDate = refDate || (invoice?.date) || claim.date || claim.receivedDate || daysFromNow(0);
   try {
     const _k = _patCacheKey(pat, claim, refDate, invoice);
-    if(_k && _patCache.has(_k)){ const _hit = _patCache.get(_k); if(_hit && _hit.lines === (pat.lines||[]).length){ pat._subtotal=_hit.subtotal; pat._autoCapAmt=_hit.autoCap; pat._autoCapRule=_hit.capRule; pat._autoCopayAmt=_hit.autoCopay; pat._autoCopayRule=_hit.copayRule; pat._capAmt=_hit.capAmt; pat._copayAmt=_hit.copayAmt; pat._final=_hit.final; pat._cacheHit=true; return pat; } }
+    if(_k && _patCache.has(_k)){ const _hit = _patCache.get(_k); if(_hit?.lines === (pat.lines||[]).length){ pat._subtotal=_hit.subtotal; pat._autoCapAmt=_hit.autoCap; pat._autoCapRule=_hit.capRule; pat._autoCopayAmt=_hit.autoCopay; pat._autoCopayRule=_hit.copayRule; pat._capAmt=_hit.capAmt; pat._copayAmt=_hit.copayAmt; pat._final=_hit.final; pat._cacheHit=true; return pat; } }
   } catch(e){}
   pat._cacheHit = false;
   const allRules = deductionRules.filter(r => r.enabled !== false && r.active !== false);
   const ctx = { claim, patient: pat, invoice: invoice || null };
-  
+
   if (!Array.isArray(pat.deductionReasons)) pat.deductionReasons = [];
   // أعد بناء الأسباب التي ينشئها الحساب في كل مرة، بما فيها التخفيضات اليدوية
   // الناتجة عن override، مع الإبقاء على أسباب المراجع اليدوية المدخلة خارج الحساب.
   pat.deductionReasons = resetComputedDeductionReasons(pat.deductionReasons);
   // دعم مستندات المريض مع توافق خلفي
-  if (!pat.documents && invoice && invoice.documents) {
+  if (!pat.documents && invoice?.documents) {
     pat.documents = JSON.parse(JSON.stringify(invoice.documents));
   } else if (!pat.documents) {
     pat.documents = { patientId: false, referral: false, medicalReport: false, priorApprovalDoc: false };
@@ -214,13 +214,13 @@ function computePatient(pat, claim, refDate, invoice){
     }, entry));
   };
   (pat.lines||[]).forEach(l => {
-    const procedureDate = String(l.procedureDate || l.serviceDate || l.date || (invoice && invoice.procedureDate) || (invoice && invoice.date) || refDate).slice(0,10);
+    const procedureDate = String(l.procedureDate || l.serviceDate || l.date || (invoice?.procedureDate) || (invoice?.date) || refDate).slice(0,10);
     const lineCtx = getContractContext(claim, procedureDate);
     const lineTariff = (typeof resolveLineTariff === 'function') ? resolveLineTariff(l, lineCtx, procedureDate) : lineCtx.tariff;
     const effectiveLineCtx = { ...lineCtx, tariff:lineTariff };
     l._procedureDateUsed = procedureDate;
     if (typeof tpaBeneficiaryTypeForPatient === 'function') {
-      const letterStartDate = String((pat && pat.letterDate) || (invoice && invoice.letterDate) || claim.letterStartDate || claim.startDate || claim.date || (invoice && invoice.date) || refDate).slice(0,10);
+      const letterStartDate = String((pat?.letterDate) || (invoice?.letterDate) || claim.letterStartDate || claim.startDate || claim.date || (invoice?.date) || refDate).slice(0,10);
       const letterStatus = tpaBeneficiaryTypeForPatient(pat, letterStartDate);
       pat._letterStartDateUsed = letterStartDate;
       pat._ageAtLetterStart = letterStatus.age;
@@ -278,7 +278,7 @@ function computePatient(pat, claim, refDate, invoice){
       if(rule.isComposite){
         const cctx = { ...lctx, line: { ...l, lineBase: current } };
         const res = evaluateCompositeRule(rule, cctx, refDate);
-        if(res && res.newApproved !== undefined && res.newApproved < current){
+        if(res?.newApproved !== undefined && res.newApproved < current){
           const _dedAmt = current - res.newApproved;
           current = Math.max(0, Math.min(current, res.newApproved));
           appliedIds.add(rule.id);
@@ -307,10 +307,10 @@ function computePatient(pat, claim, refDate, invoice){
       try {
         if(rule.isComposite){
           const _r = evaluateCompositeRule(rule, { ...lctx, line: { ...l, lineBase: _baseLine } }, refDate);
-          if(_r && _r.newApproved !== undefined){ _p = Math.max(0, Math.min(_baseLine, _r.newApproved)); (_r.appliedChildRules||[]).forEach(c => _ch.push(c.id)); }
+          if(_r?.newApproved !== undefined){ _p = Math.max(0, Math.min(_baseLine, _r.newApproved)); (_r.appliedChildRules||[]).forEach(c => _ch.push(c.id)); }
         } else {
           const _r = evaluateRuleAction(rule, { ...lctx, line: { ...l, lineBase: _baseLine } }, _baseLine);
-          if(_r && _r.newApproved !== undefined) _p = Math.max(0, Math.min(_baseLine, _r.newApproved));
+          if(_r?.newApproved !== undefined) _p = Math.max(0, Math.min(_baseLine, _r.newApproved));
         }
       } catch(e){}
       if(_p !== null && _p < _baseLine) _ind.push({ rule, proposed: _p, children: _ch });
@@ -483,7 +483,7 @@ function computeInvoice(inv, claim){
 function recalcClaim(c){
   if(typeof clearValidationCache === 'function') clearValidationCache();
   // تجميد المحفوظ: مطالبة مقفولة لا تُعاد حساب أرقامها المخزنة إلا لحظة حفظ مراجعة جديدة (عبر _recalcUnlock).
-  if(c && c.reviewedDate && c._recalcUnlock !== true) return;
+  if(c?.reviewedDate && c._recalcUnlock !== true) return;
   // Preserve the amount submitted by the source system before recalculation overwrites billed.
   // Existing records are migrated on first calculation; newly created claims should set this explicitly.
   if (c.submittedBilled === undefined || c.submittedBilled === null || c.submittedBilled === '') {

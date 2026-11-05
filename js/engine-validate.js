@@ -71,7 +71,7 @@ function getContractContext(claim, effectiveDate) {
   const TAPRIO = { general:0, supplementary:1, private:2 };
   const trank = t => (t && TAPRIO[t.type] != null) ? TAPRIO[t.type] : 9;
   let directBase = null;
-  if (contract && contract.tariffId) directBase = tlist.find(t => t.id === contract.tariffId && applicable(t)) || null;
+  if (contract?.tariffId) directBase = tlist.find(t => t.id === contract.tariffId && applicable(t)) || null;
   const linked = tlist.filter(t =>
     ((contract && (t.linkedContractIds || []).includes(contract.id)) ||
      (t.linkedProviderIds || []).includes(provider.id)) && applicable(t)
@@ -91,7 +91,7 @@ function getContractContext(claim, effectiveDate) {
   let resolvedServices = mergedServices;
   const _incF = (typeof getContractIncreaseFactor === 'function') ? getContractIncreaseFactor(contract, claimDate) : 1;
   if(_incF !== 1 && Array.isArray(resolvedServices)) resolvedServices = resolvedServices.map(s => ({...s, currentPrice:(s.currentPrice===null||s.currentPrice===undefined)?s.currentPrice:(Math.round(Number(s.currentPrice)*_incF*100)/100)}));
-  const tariff = primary ? { ...primary, services: resolvedServices, _resolvedVersionEffectiveDate: resolvedVersion && resolvedVersion.effectiveDate || primary.effectiveDate, _increaseFactorApplied: _incF } : null;
+  const tariff = primary ? { ...primary, services: resolvedServices, _resolvedVersionEffectiveDate: resolvedVersion?.effectiveDate || primary.effectiveDate, _increaseFactorApplied: _incF } : null;
 
   const serviceOverrides = contract?.serviceOverrides || {};
 
@@ -100,7 +100,7 @@ function getContractContext(claim, effectiveDate) {
 
 function getContractRateForService(ctx, code) {
   const ov = ctx?.serviceOverrides?.[code];
-  if (ov && ov.discountRate !== null && ov.discountRate !== undefined) {
+  if (ov?.discountRate !== null && ov.discountRate !== undefined) {
     return Number(ov.discountRate) || 0;
   }
   return Number(ctx?.contract?.discountRate) || 0;
@@ -110,14 +110,14 @@ function getContractRateForService(ctx, code) {
    يتفوق على قائمة الاستثناءات، والمستثنى يوقف الصرف فقط عند غياب توجيه خاص. */
 function isServiceCovered(ctx, code) {
   const ov = ctx?.serviceOverrides?.[code];
-  if (ov && ov.covered === true) return true;
-  if (ov && ov.covered === false) return false;
+  if (ov?.covered === true) return true;
+  if (ov?.covered === false) return false;
   const svc = (ctx?.tariff?.services || []).find(s => String(s.code) === String(code));
-  if (svc && svc.covered === false) return false;
+  if (svc?.covered === false) return false;
   const excl = ctx?.contract?.excludedServices;
   const list = Array.isArray(excl) ? excl : (excl ? String(excl).split('، ').map(x=>x.trim()).filter(Boolean) : []);
   if (list.length) {
-    if (svc && svc.name && list.includes(svc.name)) return false;
+    if (svc?.name && list.includes(svc.name)) return false;
     if (list.includes(String(code))) return false;
   }
   return true;
@@ -145,14 +145,14 @@ function getActiveOverridePrice(entry, dateStr){
 /* ---------- مصدر الحقيقة الوحيد لحساب البند (السعر/التغطية/الخصم) ----------
 أي تعديل مستقبلي على معادلة البند يتم هنا فقط — compute-patient و validateLine يستهلكانها. */
 function resolveLineTariff(line, baseCtx, procedureDate){
-  const baseTariff = (baseCtx && baseCtx.tariff) || null;
-  if(!(line && line.tariffId && typeof tariffs !== 'undefined')) return baseTariff;
+  const baseTariff = (baseCtx?.tariff) || null;
+  if(!(line?.tariffId && typeof tariffs !== 'undefined')) return baseTariff;
   let lineTariff = null;
   const base = tariffs.find(t => t.id === line.tariffId);
   if(base && typeof isTariffApplicableForDate === 'function' && isTariffApplicableForDate(base, procedureDate)){
     const version = (typeof getTariffVersionForDate === 'function') ? getTariffVersionForDate(base, procedureDate) : null;
     let ovSvcs = version ? (version.services||[]) : (base.services||[]);
-    const _of = (typeof getContractIncreaseFactor === 'function' && baseCtx && baseCtx.contract) ? getContractIncreaseFactor(baseCtx.contract, procedureDate) : 1;
+    const _of = (typeof getContractIncreaseFactor === 'function' && baseCtx?.contract) ? getContractIncreaseFactor(baseCtx.contract, procedureDate) : 1;
     if(_of !== 1 && Array.isArray(ovSvcs)) ovSvcs = ovSvcs.map(s => ({...s, currentPrice:(s.currentPrice===null||s.currentPrice===undefined)?s.currentPrice:(Math.round(Number(s.currentPrice)*_of*100)/100)}));
     const merged = (baseTariff && Array.isArray(baseTariff.services)) ? [...baseTariff.services] : [];
     (ovSvcs||[]).forEach(s => { const i = merged.findIndex(x => String(x.code) === String(s.code)); if(i>=0) merged[i]=s; else merged.push(s); });
@@ -167,7 +167,7 @@ function computeLineAmounts(line, ctx, procedureDate){
   let tariffUnit = null;
   if(tariff){
     const svc = (tariff.services||[]).find(s => String(s.code) === String(line.code));
-    if(svc && svc.currentPrice !== undefined && svc.currentPrice !== null) tariffUnit = Number(svc.currentPrice);
+    if(svc?.currentPrice !== undefined && svc.currentPrice !== null) tariffUnit = Number(svc.currentPrice);
   }
   const _ovEntry = (ctx.serviceOverrides || {})[String(line.code)] || null;
   const _procDate = procedureDate || line.procedureDate || line.serviceDate || line.date || (ctx.claim && (ctx.claim.date || ctx.claim.receivedDate)) || '';
@@ -223,7 +223,7 @@ function validateLine(line, ctx) {
   const code = String(line.code || '').trim();
   if(!code || !(Number(line.qty) > 0) || !((Number(line.billedUnit) || 0) >= 0)) failed.push('incomplete-data');
   // نفس معادلة compute-patient — مصدر واحد للحقيقة.
-  const _procDate = String(line.procedureDate || line.serviceDate || line.date || (invoice && invoice.date) || (claim && (claim.date || claim.receivedDate)) || '').slice(0,10) || null;
+  const _procDate = String(line.procedureDate || line.serviceDate || line.date || (invoice?.date) || (claim && (claim.date || claim.receivedDate)) || '').slice(0,10) || null;
   const amounts = computeLineAmounts(line, ctxFull, _procDate);
   const billedTotal = amounts.billedTotal;
   const tariffSvc = amounts.tariff ? ((amounts.tariff.services||[]).find(s => String(s.code) === code) || null) : null;
@@ -289,7 +289,7 @@ function validateLine(line, ctx) {
     if (_sameCode > 3) failed.push('over-frequency');
     // فترة الانتظار: الإجراء قبل بداية خطاب التغطية.
     try {
-      const _letter = String((patient && patient.letterDate) || (invoice && invoice.letterDate) || (claim && claim.letterStartDate) || '').slice(0,10);
+      const _letter = String((patient?.letterDate) || (invoice?.letterDate) || (claim?.letterStartDate) || '').slice(0,10);
       const _proc = String(line.procedureDate || line.serviceDate || line.date || '').slice(0,10);
       if(_letter && _proc && _proc < _letter) failed.push('waiting-period');
     } catch(e){}
@@ -309,10 +309,10 @@ function validateLine(line, ctx) {
 
   // أي تعارض أو اعتماد دائري يُرجع بسؤال المراجع بدل الحسم الصامت.
   try {
-    const _allRules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r && r.enabled !== false && r.active !== false);
+    const _allRules = (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r?.enabled !== false && r.active !== false);
     const _lineRules = _allRules.filter(r => (typeof isLineLevelAction === 'function' ? isLineLevelAction(r.action) : true));
     const _cyc = (typeof getCyclicRuleIds === 'function') ? getCyclicRuleIds() : new Set();
-    const _refDate = (invoice && invoice.date) || (claim && (claim.date || claim.receivedDate)) || null;
+    const _refDate = (invoice?.date) || (claim && (claim.date || claim.receivedDate)) || null;
     const _lctx = { claim, patient, invoice, contract, tariff, serviceOverrides: ctxFull.serviceOverrides };
     let _cycHit = false, _missHit = false;
     for(const r of _lineRules){
@@ -361,7 +361,7 @@ function validateLine(line, ctx) {
   const lesser = amounts.lesser;
   const afterContract = amounts.afterContract;
 
-  function _mapLegalKey(r){ 
+  function _mapLegalKey(r){
     if(r === 'not-in-tariff') return 'not-in-tariff';
     if(r === 'not-covered') return 'not-covered';
     if(r === 'manual-entry') return 'not-in-tariff';
@@ -399,13 +399,19 @@ function validateLine(line, ctx) {
 }
 
 function validateInvoice(inv, ctx) {
-  const _ck = inv && inv.id ? ('VINV:'+JSON.stringify({ id: inv.id, contract: ctx.contract&&ctx.contract.id, documents: inv.documents || {} })) : null;
+  const _ck = inv?.id ? ('VINV:'+JSON.stringify({ id: inv.id, contract: ctx.contract&&ctx.contract.id, documents: inv.documents || {} })) : null;
   if (_ck && VALIDATION_CACHE.has(_ck)) { return JSON.parse(JSON.stringify(VALIDATION_CACHE.get(_ck))); }
   const passed = [];
   const failed = [];
   const missingDocs = [];
-  // مستندات مذكرة الخصم حُذفت؛ يكتفى بمستندات المريض.
-  passed.push('docs-present');
+  const docs = (inv?.documents && typeof inv.documents === 'object') ? inv.documents : {};
+  const allPresent = (typeof DOC_ITEMS !== 'undefined' ? DOC_ITEMS : []).every(d => !!docs[d.key]);
+  if (allPresent) {
+    passed.push('docs-present');
+  } else {
+    failed.push('missing-docs');
+    (typeof DOC_ITEMS !== 'undefined' ? DOC_ITEMS : []).forEach(d => { if (!docs[d.key]) missingDocs.push(d.key); });
+  }
   const _vires = { passed, failed, missingDocs };
   if (_ck) VALIDATION_CACHE.set(_ck, JSON.parse(JSON.stringify(_vires)));
   return _vires;

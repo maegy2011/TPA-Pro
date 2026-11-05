@@ -95,11 +95,11 @@ function runServicesTests(){
       providers = [{ id:'P1', name:'م', code:11 }];
       contracts = [{ id:'C1', providerId:'P1', startDate:'2025-01-01', endDate:'2027-01-01', discountRate:10, tariffId:'TG' }];
       const ctx = (typeof getContractContext === 'function') ? getContractContext({ providerCode:11, date:'2026-01-01' }) : null;
-      A('خدمات: سياق العقد يجمع اللائحة', !!(ctx && ctx.contract && ctx.tariff));
+      A('خدمات: سياق العقد يجمع اللائحة', !!(ctx?.contract && ctx.tariff));
       const svc = ctx && (ctx.tariff.services || []).find(s => s.code === 'X');
-      A('خدمات: البند موجود بسعره', svc && svc.currentPrice === 50);
+      A('خدمات: البند موجود بسعره', svc?.currentPrice === 50);
       const am = (typeof computeLineAmounts === 'function') ? computeLineAmounts({ code:'X', qty:1, billedUnit:50 }, { tariff:ctx.tariff, contract:ctx.contract, serviceOverrides:{} }, '2026-01-01') : null;
-      A('خدمات: الحساب يعكس السعر (45 بعد خصم 10%)', am && am.afterContract === 45, String(am && am.afterContract));
+      A('خدمات: الحساب يعكس السعر (45 بعد خصم 10%)', am?.afterContract === 45, String(am?.afterContract));
     } catch(e){ A('خدمات: الربط', false, e.message); }
 
     /* ---------- 7. التكامل الجديد: الأثر + التعارض + المنتقي + المعاينة + الروابط ---------- */

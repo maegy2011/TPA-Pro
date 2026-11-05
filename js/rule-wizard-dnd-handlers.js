@@ -95,7 +95,7 @@ function handleDragLeave(e){
   // small delay to avoid flicker
   setTimeout(() => {
     const t = e.target;
-    if(t && t.classList) t.classList.remove('drop-before','drop-after','drop-into','drop-before-group','drop-after-group','drop-target-end');
+    if(t?.classList) t.classList.remove('drop-before','drop-after','drop-into','drop-before-group','drop-after-group','drop-target-end');
   }, 50);
 }
 
@@ -120,7 +120,7 @@ function handleDrop(e){
   }
   // Adjust index if same container and src before target
   const srcInfo = getPathInfo(dragSrcPath);
-  if(srcInfo && srcInfo.parentPath === containerPath && srcInfo.index < insertIndex){
+  if(srcInfo?.parentPath === containerPath && srcInfo.index < insertIndex){
     insertIndex--;
   }
   // Remove source

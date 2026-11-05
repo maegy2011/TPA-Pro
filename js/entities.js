@@ -18,7 +18,7 @@ function getTariffVersionForDate(t, date){
   return matches[0] || null;
 }
 function getTariffServicesForDate(t, date){ const v=getTariffVersionForDate(t,date); return v ? (v.services||[]) : (t&&Array.isArray(t.services)?t.services:[]); }
-function isTariffApplicableForDate(t,date){ return !!(t && t.status!=='disabled' && getTariffVersionForDate(t,date)); }
+function isTariffApplicableForDate(t,date){ return !!(t?.status!=='disabled' && getTariffVersionForDate(t,date)); }
 function archiveTariffVersion(t, newEffectiveDate, action, changes){
   if(!t) throw new Error('اللائحة غير موجودة');
   const next=String(newEffectiveDate||'').slice(0,10), current=String(t.effectiveDate||'').slice(0,10);
@@ -44,7 +44,7 @@ function getContractIncreaseFactor(contract, date){
   if(!contract || !Array.isArray(contract.increaseHistory) || !contract.increaseHistory.length) return 1;
   const d = String(date||'').slice(0,10);
   let f = 1;
-  contract.increaseHistory.forEach(h => { if(h && h.date && String(h.date).slice(0,10) <= d) f *= (1 + (Number(h.rate)||0)/100); });
+  contract.increaseHistory.forEach(h => { if(h?.date && String(h.date).slice(0,10) <= d) f *= (1 + (Number(h.rate)||0)/100); });
   return Math.round(f*10000)/10000;
 }
 /** Contract-level audit trail — same pattern as appendClaimAuditEvent: operational traceability, not tamper-proof. */
@@ -122,7 +122,7 @@ function providerHasClaims(ref){
   const plist = (typeof providers !== 'undefined' ? providers : []);
   const p = (typeof getProviderById === 'function' ? getProviderById(ref) : null) || plist.find(x => x.name === ref || x.code === ref);
   const cl = (typeof claims !== 'undefined' ? claims : []);
-  if(p && p.code != null && cl.some(c => c.providerCode === p.code)) return true;
+  if(p?.code != null && cl.some(c => c.providerCode === p.code)) return true;
   const nm = p ? p.name : ref;
   return cl.some(c => c.provider === nm);
 }
@@ -153,7 +153,7 @@ function contractHasClaims(id){
 function renameProviderClaims(oldName, newName){
   claims.forEach(c => { if(c.provider === oldName) c.provider = newName; });
   workSessions.forEach(s => { if(s.claimSnapshot && s.claimSnapshot.provider === oldName) s.claimSnapshot.provider = newName; });
-  if(typeof activeClaim !== 'undefined' && activeClaim && activeClaim.provider === oldName){
+  if(typeof activeClaim !== 'undefined' && activeClaim?.provider === oldName){
     activeClaim.provider = newName;
     if($('#rvProvider')) $('#rvProvider').value = newName;
   }

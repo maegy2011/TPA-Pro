@@ -39,7 +39,7 @@ function runEngineTests(){
   // 19: التطبيع
   try {
     const c = normalizeClaim ? normalizeClaim({ id:'T', invoices:[{ id:'I', patients:[{ lines:[{code:'A'}] }] }] }).claim : null;
-    R.push(_tAssert(c && c.invoices[0].patients[0].lines[0].qty===1 && c._modelVersion===2, 'التطبيع: قيم افتراضية + إصدار'));
+    R.push(_tAssert(c?.invoices[0].patients[0].lines[0].qty===1 && c._modelVersion===2, 'التطبيع: قيم افتراضية + إصدار'));
   } catch(e){ R.push(_tAssert(false,'التطبيع',e.message)); }
   // 20: التدقيق
   try {

@@ -12,8 +12,8 @@ function openInvoiceEditor(idx){
   $('#invModalTitle').textContent = inv ? 'تعديل مذكرة الخصم' : 'إضافة مذكرة خصم';
   $('#invModalSub').textContent = inv ? (inv.debitNoteNumber||inv.number||inv.id) : '—';
   const ctype = activeClaim ? (activeClaim.type || 'employee') : 'employee';
-  if(document.getElementById('invClaimType')) document.getElementById('invClaimType').value = inv && inv.claimType ? inv.claimType : ctype;
-  if(document.getElementById('invCategory')) document.getElementById('invCategory').value = inv && (inv.category||inv.invoiceCategory) ? (inv.category||inv.invoiceCategory) : (inv && inv.type==='inpatient' ? 'internal' : 'external');
+  if(document.getElementById('invClaimType')) document.getElementById('invClaimType').value = inv?.claimType ? inv.claimType : ctype;
+  if(document.getElementById('invCategory')) document.getElementById('invCategory').value = inv && (inv.category||inv.invoiceCategory) ? (inv.category||inv.invoiceCategory) : (inv?.type==='inpatient' ? 'internal' : 'external');
   if(inv){
     $('#invType').value = inv.type; $('#invNumber').value = inv.debitNoteNumber||inv.number||inv.id; $('#invDate').value = inv.debitNoteDate||inv.date||'';
     if(document.getElementById('invLinkedInvoice')) document.getElementById('invLinkedInvoice').value = inv.linkedInvoiceNumber||inv.invoiceNumber||'';
@@ -50,7 +50,7 @@ function saveInvoiceEditor(confirmed){
     const adm = $('#invAdmission').value, dis = $('#invDischarge').value;
     if(adm && dis && new Date(dis) <= new Date(adm)){ showWarning('تنبيه','تاريخ الخروج بعد الدخول'); return; }
   }
-  if(activeClaim && activeClaim.receivedDate && new Date(date) > new Date(activeClaim.receivedDate) && confirmed !== true){
+  if(activeClaim?.receivedDate && new Date(date) > new Date(activeClaim.receivedDate) && confirmed !== true){
     showWarning('تنبيه','تاريخ مذكرة الخصم بعد الاستلام. متابعة؟', () => saveInvoiceEditor(true));
     return;
   }
@@ -99,7 +99,7 @@ function openPatientEditor(invIdx, patIdx){
       const refDate = (inv && (inv.procedureDate || inv.date)) || (activeClaim && (activeClaim.date || activeClaim.receivedDate)) || new Date().toISOString().slice(0,10);
       if(typeof tpaBeneficiaryTypeForPatient === 'function'){
         const info = tpaBeneficiaryTypeForPatient({nationalId:id}, refDate);
-        if(info && info.type) sel.value = info.type;
+        if(info?.type) sel.value = info.type;
       }
     });
   }

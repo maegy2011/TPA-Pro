@@ -69,13 +69,13 @@ function compareDates(actual, op, exp, ctx){
   ctx = ctx || {};
   const a = toDate(resolveDateKeyword(actual));
   const today = new Date(); today.setHours(0,0,0,0);
-  if(op === 'is_today') return a && a.toDateString() === today.toDateString();
+  if(op === 'is_today') return a?.toDateString() === today.toDateString();
   if(op === 'is_weekend'){ if(!a) return false; const d=a.getDay(); return d===0||d===6; }
   if(op === 'is_weekday'){ if(!a) return false; const d=a.getDay(); return d!==0&&d!==6; }
   if(op === 'is_business_day') return isBusinessDay(a);
   if(op === 'is_not_business_day') return a && !isBusinessDay(a);
-  if(op === 'is_first_day_of_month') return a && a.getDate() === 1;
-  if(op === 'is_last_day_of_month') return a && a.getDate() === getDaysInMonth(a);
+  if(op === 'is_first_day_of_month') return a?.getDate() === 1;
+  if(op === 'is_last_day_of_month') return a?.getDate() === getDaysInMonth(a);
   if(!a) return false;
   if(op === 'before_field' || op === 'after_field' || op === 'on_same_day_as' || op === 'same_week_as'){
     const ref = toDate(resolveDateKeyword(resolveFieldRef(exp, ctx)));

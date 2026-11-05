@@ -43,7 +43,7 @@ function runReportsTests(){
     try {
       const tr = reportsMonthlyTrend(C);
       A('شهري: الشهور', tr.length === 3 && tr[0].month === '2026-01');
-      A('شهري: فبراير', (() => { const f = tr.find(r => r.month === '2026-02'); return f && f.billed === 3500 && f.deduction === 1500; })(), JSON.stringify(tr));
+      A('شهري: فبراير', (() => { const f = tr.find(r => r.month === '2026-02'); return f?.billed === 3500 && f.deduction === 1500; })(), JSON.stringify(tr));
       A('شهري: بلا تاريخ صالح', reportsMonthlyTrend([{ billed:1, approved:1 }]).length === 0);
       A('شهري: آخر 6 فقط', reportsMonthlyTrend(Array.from({ length:8 }, (_,i) => ({ date:`2026-0${i+1}-05`, billed:100, approved:90 }))).length === 6);
     } catch(e){ A('تقارير: الشهري', false, e.message); }

@@ -60,7 +60,7 @@ async function fsConnect(){
     } catch(e){}
     if(typeof showSuccess==='function') showSuccess('تم', 'تم ربط مجلد القرص — الحفظ يكتب ملفًا حقيقيًا مع نسخة .bak');
   } catch(e){
-    if(e && e.name === 'AbortError') return;
+    if(e?.name === 'AbortError') return;
     FS_STORE.lastError = 'تعذر الربط'; if(typeof showWarning==='function') showWarning('تعذر الربط','اختر مجلدًا صالحًا بصلاحية كتابة.');
   }
   if(typeof renderFileStore==='function') renderFileStore();

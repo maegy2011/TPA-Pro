@@ -76,7 +76,7 @@ function runProvidersTests(){
       claims = [{ provider:'مستشفى النيل', billed:1000, approved:800 }];
       if(typeof ensureProviderCodes === 'function') ensureProviderCodes();
       const sun = providers.find(p => p.id === 'PRV-002');
-      A('جهات: ترحيل الكود (6)', sun && sun.code === 6, String(sun && sun.code));
+      A('جهات: ترحيل الكود (6)', sun?.code === 6, String(sun?.code));
       A('جهات: الربط بالاسم بعد الترحيل', claims[0].providerCode === 5);
       A('جهات: التالي = الأقصى + 1', (typeof nextProviderCode === 'function' ? nextProviderCode() : 0) === 7);
       A('جهات: لها مطالبات (بالاسم)', providerHasClaims('مستشفى النيل') === true);

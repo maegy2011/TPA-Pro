@@ -40,7 +40,7 @@ function showOnboardingError(msg){ const e = document.getElementById('onbErr'); 
 function clearOnboardingError(){ const e = document.getElementById('onbErr'); if(e){ e.classList.remove('show'); } }
 function bindOnboarding(){
   const root = document.getElementById('onboarding');
-  if(root && root.dataset.bound === '1') return;
+  if(root?.dataset.bound === '1') return;
   if(root) root.dataset.bound = '1';
   const next = document.getElementById('onbNextBtn');
   const langBtn = document.getElementById('onbLangBtn');
@@ -97,7 +97,7 @@ function bindOnboarding(){
         document.getElementById('onbStep2').style.display = 'block';
         document.querySelectorAll('.onb-dot').forEach((d,i)=>{ d.classList.toggle('active', i===1); });
       } catch(e) {
-        showOnboardingError(e && e.message ? e.message : 'تعذر إعداد كلمة المرور بأمان. تحقق من التخزين واتصال آمن ثم أعد المحاولة.');
+        showOnboardingError(e?.message ? e.message : 'تعذر إعداد كلمة المرور بأمان. تحقق من التخزين واتصال آمن ثم أعد المحاولة.');
         next.disabled = false; next.textContent = 'متابعة';
       }
     })();

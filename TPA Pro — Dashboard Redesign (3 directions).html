@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>TPA Pro — Redesign · 3 directions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/*
+  System: 3 design directions for TPA Pro dashboard
+  Canvas: 3 columns, neutral cream background, labeled cells
+  Content: representative dashboard (KPIs + claims table + modal) — placeholders for real data
+*/
+:root{--canvas-bg:#f2efe9;--ink:#111}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--canvas-bg);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#111;-webkit-font-smoothing:antialiased}
+.canvas{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;padding:40px;max-width:1800px;margin:0 auto}
+.cell{background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;flex-direction:column}
+.cell-label{padding:14px 20px;border-bottom:1px solid #e5e5e5;background:#fafafa}
+.cell-label h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#666;margin:0}
+.cell-label p{font-size:13px;color:#999;margin:4px 0 0}
+.cell-body{flex:1;overflow:hidden;min-height:720px;position:relative}
+
+/* ============ Direction A · Swiss Editorial ============ */
+.a{background:#f8f6f2;color:#111;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}
+.a .sb{background:#111;color:#f8f6f2;padding:18px 16px;display:flex;flex-direction:column;gap:6px;min-height:100%}
+.a .sb .brand{font-size:13px;font-weight:800;letter-spacing:.04em;padding-bottom:14px;border-bottom:1px solid #333;margin-bottom:10px}
+.a .sb .nav{font-size:12px;font-weight:600;color:#aaa;padding:6px 0;letter-spacing:.02em}
+.a .sb .nav.active{color:#f8f6f2}
+.a .topbar{height:52px;border-bottom:1px solid #111;display:flex;align-items:center;padding:0 20px;gap:12px}
+.a .topbar h1{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.a .content{padding:24px 20px}
+.a .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #111;border-bottom:1px solid #111;margin-bottom:24px}
+.a .kpi{padding:16px 12px;border-inline-end:1px solid #e5e5e5}
+.a .kpi:last-child{border-inline-end:0}
+.a .kpi .lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#666}
+.a .kpi .val{font-size:28px;font-weight:800;margin-top:6px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.a .kpi .foot{font-size:11px;color:#999;margin-top:4px}
+.a .section{margin-bottom:24px}
+.a .section h2{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:12px;display:flex;justify-content:space-between}
+.a .section h2 span{color:#999;font-weight:500}
+.a table{width:100%;border-collapse:collapse;font-size:12px}
+.a th{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#666;text-align:start;padding:8px 6px;border-bottom:1px solid #111}
+.a td{padding:10px 6px;border-bottom:1px solid #e5e5e5;font-variant-numeric:tabular-nums}
+.a .badge{display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:.06em;border:1px solid #111}
+.a .badge.ok{background:#111;color:#f8f6f2}
+.a .badge.warn{background:#f8f6f2;color:#111}
+.a .modal{margin-top:24px;border:1px solid #111;padding:20px;background:#f8f6f2}
+.a .modal h3{font-size:16px;font-weight:800;margin-bottom:12px}
+.a .modal .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.a .modal label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#666;display:block;margin-bottom:4px}
+.a .modal input{width:100%;padding:8px;border:1px solid #111;background:#fff;font-size:13px}
+.a .btn{background:#111;color:#f8f6f2;padding:10px 18px;font-size:12px;font-weight:700;letter-spacing:.06em;border:none;cursor:pointer}
+.a .btn.out{background:#f8f6f2;color:#111;border:1px solid #111}
+
+/* ============ Direction B · Dieter Rams ============ */
+.b{background:#f4f4f2;color:#1a1a1a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}
+.b .sb{background:#e8e8e6;color:#1a1a1a;padding:18px 14px;display:flex;flex-direction:column;gap:4px;min-height:100%;border-inline-end:1px solid #d0d0cc}
+.b .sb .brand{font-size:14px;font-weight:500;padding-bottom:14px;border-bottom:1px solid #d0d0cc;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.b .sb .brand .dot{width:10px;height:10px;background:#c0392b;border-radius:50%}
+.b .sb .nav{font-size:13px;font-weight:500;color:#666;padding:7px 8px;border-radius:4px}
+.b .sb .nav.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.b .topbar{height:56px;border-bottom:1px solid #d0d0cc;display:flex;align-items:center;padding:0 20px;gap:12px;background:#fafaf8}
+.b .topbar h1{font-size:17px;font-weight:500;letter-spacing:-.01em}
+.b .content{padding:24px 20px}
+.b .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.b .kpi{background:#fff;border:1px solid #e0e0dc;border-radius:8px;padding:18px 16px}
+.b .kpi .lbl{font-size:12px;color:#888;font-weight:500}
+.b .kpi .val{font-size:26px;font-weight:500;margin-top:6px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#1a1a1a}
+.b .kpi .foot{font-size:11px;color:#aaa;margin-top:6px}
+.b .section{margin-bottom:24px}
+.b .section h2{font-size:14px;font-weight:500;margin-bottom:12px;color:#1a1a1a;display:flex;align-items:center;gap:8px}
+.b .section h2::before{content:'';width:4px;height:4px;background:#c0392b;border-radius:50%}
+.b table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #e0e0dc;border-radius:8px;overflow:hidden}
+.b th{font-size:11px;font-weight:500;color:#888;text-align:start;padding:10px 12px;border-bottom:1px solid #e0e0dc;background:#fafaf8}
+.b td{padding:11px 12px;border-bottom:1px solid #f0f0ec;font-variant-numeric:tabular-nums}
+.b tr:last-child td{border-bottom:0}
+.b .badge{display:inline-block;padding:3px 9px;font-size:11px;font-weight:500;border-radius:4px}
+.b .badge.ok{background:#e8f2ee;color:#1f6b4a}
+.b .badge.warn{background:#faf0e3;color:#8a5a1f}
+.b .modal{margin-top:24px;background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:22px}
+.b .modal h3{font-size:16px;font-weight:500;margin-bottom:14px}
+.b .modal .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+.b .modal label{font-size:12px;color:#888;font-weight:500;display:block;margin-bottom:5px}
+.b .modal input{width:100%;padding:9px 11px;border:1px solid #d0d0cc;border-radius:6px;background:#fafaf8;font-size:13px}
+.b .btn{background:#1a1a1a;color:#fff;padding:9px 18px;font-size:13px;font-weight:500;border:none;border-radius:6px;cursor:pointer}
+.b .btn.out{background:#fff;color:#1a1a1a;border:1px solid #d0d0cc}
+
+/* ============ Direction C · Magazine Editorial ============ */
+.c{background:#fbf8f3;color:#1a1612;font-family:'Georgia','Times New Roman',serif}
+.c .sb{background:#1a1612;color:#fbf8f3;padding:20px 16px;display:flex;flex-direction:column;gap:8px;min-height:100%}
+.c .sb .brand{font-family:'Georgia',serif;font-size:20px;font-weight:700;letter-spacing:-.02em;padding-bottom:14px;border-bottom:1px solid #3a332c;margin-bottom:10px;font-style:italic}
+.c .sb .nav{font-family:'Helvetica Neue',sans-serif;font-size:12px;font-weight:500;color:#b8a99a;padding:7px 0;letter-spacing:.04em;text-transform:uppercase}
+.c .sb .nav.active{color:#f5e6d3}
+.c .topbar{height:60px;border-bottom:1px solid #e0d8cc;display:flex;align-items:center;padding:0 24px;gap:14px;background:#fbf8f3}
+.c .topbar h1{font-family:'Georgia',serif;font-size:24px;font-weight:700;letter-spacing:-.02em;font-style:italic}
+.c .content{padding:28px 24px}
+.c .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid #e0d8cc}
+.c .kpi{padding:4px 0}
+.c .kpi .lbl{font-family:'Helvetica Neue',sans-serif;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#8a7a6a}
+.c .kpi .val{font-family:'Georgia',serif;font-size:34px;font-weight:700;margin-top:6px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.c .kpi .foot{font-family:'Helvetica Neue',sans-serif;font-size:11px;color:#8a7a6a;margin-top:6px;font-style:italic}
+.c .section{margin-bottom:28px}
+.c .section h2{font-family:'Georgia',serif;font-size:22px;font-weight:700;font-style:italic;margin-bottom:14px;display:flex;justify-content:space-between;align-items:baseline}
+.c .section h2 span{font-family:'Helvetica Neue',sans-serif;font-size:11px;color:#8a7a6a;font-style:normal;letter-spacing:.1em;text-transform:uppercase}
+.c table{width:100%;border-collapse:collapse;font-size:13px}
+.c th{font-family:'Helvetica Neue',sans-serif;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8a7a6a;text-align:start;padding:10px 6px;border-bottom:1px solid #1a1612}
+.c td{padding:12px 6px;border-bottom:1px solid #e8e0d4;font-variant-numeric:tabular-nums}
+.c .badge{display:inline-block;padding:3px 10px;font-size:11px;font-weight:600;font-family:'Helvetica Neue',sans-serif;letter-spacing:.04em}
+.c .badge.ok{background:#1a1612;color:#fbf8f3}
+.c .badge.warn{background:transparent;color:#8a5a1f;border:1px solid #c9b89a}
+.c .modal{margin-top:24px;background:#f4efe7;padding:26px;border-left:3px solid #1a1612}
+.c .modal h3{font-family:'Georgia',serif;font-size:20px;font-weight:700;font-style:italic;margin-bottom:14px}
+.c .modal .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.c .modal label{font-family:'Helvetica Neue',sans-serif;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8a7a6a;display:block;margin-bottom:5px}
+.c .modal input{width:100%;padding:9px 11px;border:0;border-bottom:1px solid #1a1612;background:transparent;font-size:13px;font-family:'Georgia',serif}
+.c .btn{background:#1a1612;color:#fbf8f3;padding:10px 20px;font-size:12px;font-weight:600;font-family:'Helvetica Neue',sans-serif;letter-spacing:.08em;text-transform:uppercase;border:none;cursor:pointer}
+.c .btn.out{background:transparent;color:#1a1612;border:1px solid #1a1612}
+
+/* shared mini layout */
+.cell-body .app{display:grid;grid-template-columns:150px 1fr;height:100%}
+.cell-body .sb{overflow-y:auto}
+.cell-body .main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+</style>
+</head>
+<body>
+<main class="canvas">
+  <!-- Direction A -->
+  <section class="cell">
+    <header class="cell-label">
+      <h3>Direction A · Swiss Editorial</h3>
+      <p>Pentagram lineage — precision, grid-disciplined, data-forward</p>
+    </header>
+    <div class="cell-body a">
+      <div class="app">
+        <aside class="sb">
+          <div class="brand">TPA PRO</div>
+          <div class="nav active">لوحة التحكم</div>
+          <div class="nav">المطالبات</div>
+          <div class="nav">الجهات</div>
+          <div class="nav">الخدمات</div>
+          <div class="nav">اللوائح</div>
+          <div class="nav">التقارير</div>
+        </aside>
+        <div class="main">
+          <div class="topbar"><h1>لوحة التحكم</h1></div>
+          <div class="content">
+            <div class="kpi-row">
+              <div class="kpi"><div class="lbl">المطالبات</div><div class="val">1,284</div><div class="foot">+12% هذا الشهر</div></div>
+              <div class="kpi"><div class="lbl">قيد المراجعة</div><div class="val">47</div><div class="foot">تحتاج إجراء</div></div>
+              <div class="kpi"><div class="lbl">الجهات</div><div class="val">38</div><div class="foot">نشطة</div></div>
+              <div class="kpi"><div class="lbl">الخدمات</div><div class="val">612</div><div class="foot">في 14 لائحة</div></div>
+            </div>
+            <div class="section">
+              <h2>آخر المطالبات <span>عرض الكل →</span></h2>
+              <table>
+                <thead><tr><th>الرقم</th><th>الجهة</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+                <tbody>
+                  <tr><td>#1042</td><td>مستشفى الأمل</td><td>12,400</td><td><span class="badge ok">معتمد</span></td></tr>
+                  <tr><td>#1041</td><td>عيادة النور</td><td>3,120</td><td><span class="badge warn">مراجعة</span></td></tr>
+                  <tr><td>#1040</td><td>مختبر الفجر</td><td>890</td><td><span class="badge ok">معتمد</span></td></tr>
+                  <tr><td>#1039</td><td>مستشفى الشفاء</td><td>24,800</td><td><span class="badge warn">مراجعة</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal">
+              <h3>مراجعة مطالبة #1041</h3>
+              <div class="row">
+                <div><label>الجهة</label><input value="عيادة النور"></div>
+                <div><label>المبلغ</label><input value="3,120"></div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px">
+                <button class="btn">اعتماد</button>
+                <button class="btn out">رفض</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Direction B -->
+  <section class="cell">
+    <header class="cell-label">
+      <h3>Direction B · Dieter Rams</h3>
+      <p>Braun lineage — functional, restrained, product-first</p>
+    </header>
+    <div class="cell-body b">
+      <div class="app">
+        <aside class="sb">
+          <div class="brand"><span class="dot"></span>TPA Pro</div>
+          <div class="nav active">لوحة التحكم</div>
+          <div class="nav">المطالبات</div>
+          <div class="nav">الجهات</div>
+          <div class="nav">الخدمات</div>
+          <div class="nav">اللوائح</div>
+          <div class="nav">التقارير</div>
+        </aside>
+        <div class="main">
+          <div class="topbar"><h1>لوحة التحكم</h1></div>
+          <div class="content">
+            <div class="kpi-row">
+              <div class="kpi"><div class="lbl">المطالبات</div><div class="val">1,284</div><div class="foot">+12% هذا الشهر</div></div>
+              <div class="kpi"><div class="lbl">قيد المراجعة</div><div class="val">47</div><div class="foot">تحتاج إجراء</div></div>
+              <div class="kpi"><div class="lbl">الجهات</div><div class="val">38</div><div class="foot">نشطة</div></div>
+              <div class="kpi"><div class="lbl">الخدمات</div><div class="val">612</div><div class="foot">في 14 لائحة</div></div>
+            </div>
+            <div class="section">
+              <h2>آخر المطالبات</h2>
+              <table>
+                <thead><tr><th>الرقم</th><th>الجهة</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+                <tbody>
+                  <tr><td>#1042</td><td>مستشفى الأمل</td><td>12,400</td><td><span class="badge ok">معتمد</span></td></tr>
+                  <tr><td>#1041</td><td>عيادة النور</td><td>3,120</td><td><span class="badge warn">مراجعة</span></td></tr>
+                  <tr><td>#1040</td><td>مختبر الفجر</td><td>890</td><td><span class="badge ok">معتمد</span></td></tr>
+                  <tr><td>#1039</td><td>مستشفى الشفاء</td><td>24,800</td><td><span class="badge warn">مراجعة</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal">
+              <h3>مراجعة مطالبة #1041</h3>
+              <div class="row">
+                <div><label>الجهة</label><input value="عيادة النور"></div>
+                <div><label>المبلغ</label><input value="3,120"></div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px">
+                <button class="btn">اعتماد</button>
+                <button class="btn out">رفض</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Direction C -->
+  <section class="cell">
+    <header class="cell-label">
+      <h3>Direction C · Magazine Editorial</h3>
+      <p>Bloomberg Businessweek — opinionated, layered, type-driven</p>
+    </header>
+    <div class="cell-body c">
+      <div class="app">
+        <aside class="sb">
+          <div class="brand">TPA Pro</div>
+          <div class="nav active">لوحة التحكم</div>
+          <div class="nav">المطالبات</div>
+          <div class="nav">الجهات</div>
+          <div class="nav">الخدمات</div>
+          <div class="nav">اللوائح</div>
+          <div class="nav">التقارير</div>
+        </aside>
+        <div class="main">
+          <div class="topbar"><h1>لوحة التحكم</h1></div>
+          <div class="content">
+            <div class="kpi-row">
+              <div class="kpi"><div class="lbl">المطالبات</div><div class="val">1,284</div><div class="foot">+12% هذا الشهر</div></div>
+              <div class="kpi"><div class="lbl">قيد المراجعة</div><div class="val">47</div><div class="foot">تحتاج إجراء</div></div>
+              <div class="kpi"><div class="lbl">الجهات</div><div class="val">38</div><div class="foot">نشطة</div></div>
+              <div class="kpi"><div class="lbl">الخدمات</div><div class="val">612</div><div class="foot">في 14 لائحة</div></div>
+            </div>
+            <div class="section">
+              <h2>آخر المطالبات <span>عرض الكل →</span></h2>
+              <table>
+                <thead><tr><th>الرقم</th><th>الجهة</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+                <tbody>
+                  <tr><td>#1042</td><td>مستشفى الأمل</td><td>12,400</td><td><span class="badge ok">معتمد</span></td></tr>
+                  <tr><td>#1041</td><td>عيادة النور</td><td>3,120</td><td><span class="badge warn">مراجعة</span></td></tr>
+                  <tr><td>#1040</td><td>مختبر الفجر</td><td>890</td><td><span class="badge ok">معتمد</span></td></tr>
+                  <tr><td>#1039</td><td>مستشفى الشفاء</td><td>24,800</td><td><span class="badge warn">مراجعة</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal">
+              <h3>مراجعة مطالبة #1041</h3>
+              <div class="row">
+                <div><label>الجهة</label><input value="عيادة النور"></div>
+                <div><label>المبلغ</label><input value="3,120"></div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px">
+                <button class="btn">اعتماد</button>
+                <button class="btn out">رفض</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

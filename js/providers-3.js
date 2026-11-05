@@ -21,7 +21,7 @@ function validateTariffInput(d){
 /* بوابة النسخة الجديدة عند تعديل الأسعار — منطق خالص (يُختبر آليًا). */
 function checkTariffNewVersion(t, servicesChanged, dateChanged, newEff){
   if(!servicesChanged && !dateChanged) return { ok:true, msg:'' };
-  if(t && t.effectiveDate && newEff <= t.effectiveDate) return { ok:false, msg:'عند تغيير الأسعار أو تاريخ سريان النسخة يجب أن يكون التاريخ الجديد بعد النسخة الحالية' };
+  if(t?.effectiveDate && newEff <= t.effectiveDate) return { ok:false, msg:'عند تغيير الأسعار أو تاريخ سريان النسخة يجب أن يكون التاريخ الجديد بعد النسخة الحالية' };
   return { ok:true, msg:'' };
 }
 /* فرق الخدمات قبل/بعد — منطق خالص (يُختبر آليًا). */
@@ -96,10 +96,10 @@ function openServiceModal(i, tariffId){
   if(sel){
     sel.innerHTML = (tariffs||[]).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
     if(editingServiceTariffId) sel.value = editingServiceTariffId;
-    else if(tariffs && tariffs.length) { editingServiceTariffId = tariffs[0].id; sel.value = tariffs[0].id; }
+    else if(tariffs?.length) { editingServiceTariffId = tariffs[0].id; sel.value = tariffs[0].id; }
   }
   const t = tariffs.find(x=>x.id===editingServiceTariffId);
-  const svc = (i !== null && t && t.services && t.services[i]) ? t.services[i] : null;
+  const svc = (i !== null && t?.services && t.services[i]) ? t.services[i] : null;
   const svcEff=$('#svcEffectiveDate'); if(svcEff){ svcEff.value=tariffDatePlusOne(t&&t.effectiveDate||new Date().toISOString().slice(0,10)); }
   if(svc){ $('#svcModalTitle').textContent = 'تعديل'; $('#svcModalSub').textContent = svc.code+' — '+svc.name; $('#svcCode').value = svc.code; $('#svcCategory').value = svc.category; $('#svcName').value = svc.name; $('#svcNameEn').value = svc.nameEn||''; $('#svcBasePrice').value = svc.basePrice; $('#svcCurrentPrice').value = svc.currentPrice; $('#svcCovered').checked = !!svc.covered; $('#svcRequiresPriorApproval').checked = !!svc.requiresPriorApproval; }
   else { $('#svcModalTitle').textContent = 'إضافة'; $('#svcModalSub').textContent = '—'; $('#svcCode').value = ''; $('#svcCategory').value = 'استشارة'; $('#svcName').value = ''; $('#svcNameEn').value = ''; $('#svcBasePrice').value = ''; $('#svcCurrentPrice').value = ''; $('#svcCovered').checked = true; $('#svcRequiresPriorApproval').checked = false; }
@@ -154,7 +154,7 @@ function renderLinkLists(t){
 }
 function getAllServiceNamesDistinct(){
   const set = new Set();
-  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s && s.name) set.add(s.name); }));
+  (typeof tariffs !== 'undefined' ? tariffs : []).forEach(t => (t.services||[]).forEach(s => { if(s?.name) set.add(s.name); }));
   return [...set];
 }
 function renderTariffServicesChecklist(q){

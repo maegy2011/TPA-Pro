@@ -27,7 +27,7 @@ function runLearnTests(){
   const mkClaim = () => ({ id:'CLM-LR', patient:'مريض', provider:'مستشفى النيل', providerCode:11, type:'employee',
     date:'2026-03-02', receivedDate:'2026-03-05', receivedNumber:'RC-LR', status:'new',
     priorApproval:{ required:false, status:'not-requested', refNumber:'', date:'' }, invoices:[], billed:0 });
-  const countLearned = () => (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r && r.source === 'learned').length;
+  const countLearned = () => (typeof deductionRules !== 'undefined' ? deductionRules : []).filter(r => r?.source === 'learned').length;
   try {
     if(hadDocument){ try { document.getElementById = (id) => (id === 'deductionRulesBody' ? null : (origGID ? origGID.call(document, id) : null)); } catch(e){} }
     else { try { g.document = { getElementById:() => null }; } catch(e){} }
@@ -63,7 +63,7 @@ function runLearnTests(){
       const id = learnRuleFromReviewer('line-reduce', { claim:c, line:{ code:'LAB-9' }, base:1000, value:800, note:'مبالغ فيه' });
       const r = deductionRules[deductionRules.length - 1];
       A('تعلم: التخفيض يُنشئ مسودة', typeof id === 'string');
-      A('تعلم: النسبة 20%', r && r.action === 'reduce_by_percent' && r.rate === 20, r && String(r.rate));
+      A('تعلم: النسبة 20%', r?.action === 'reduce_by_percent' && r.rate === 20, r && String(r.rate));
       A('تعلم: التخفيض الكامل مرفوض كتخفيض', learnRuleFromReviewer('line-reduce', { claim:c, line:{ code:'LAB-9' }, base:1000, value:1000 }) === null);
       A('تعلم: بلا تخفيض = بلا مسودة', (() => { const n = countLearned(); learnRuleFromReviewer('line-reduce', { claim:c, line:{ code:'LAB-9' }, base:1000, value:1000 }); return countLearned() === n; })());
     } catch(e){ A('تعلم: التخفيض', false, e.message); }

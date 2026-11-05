@@ -84,7 +84,7 @@ function runLifecycleTests(){
       const v = getTariffVersionForDate(tariffs[0], '2026-03-01');
       A('دورة: نسخة اللائحة سارية بتاريخ الإجراء', !!v);
       const svc = getTariffServicesForDate(tariffs[0], '2026-03-01').find(s => s.code === 'LAB-1');
-      A('دورة: الخدمة بسعرها 100', svc && svc.currentPrice === 100);
+      A('دورة: الخدمة بسعرها 100', svc?.currentPrice === 100);
     } catch(e){ A('دورة: اللوائح', false, e.message); }
 
     /* ---------- 3. خمسة عقود ---------- */
@@ -94,9 +94,9 @@ function runLifecycleTests(){
       });
       A('دورة: 5 عقود', contracts.length === 5);
       const ctx = getContractContext({ providerCode:1, date:'2026-03-01' });
-      A('دورة: سياق العقد (جهة+تاريخ)', !!(ctx && ctx.contract && ctx.tariff));
+      A('دورة: سياق العقد (جهة+تاريخ)', !!(ctx?.contract && ctx.tariff));
       A('دورة: العقد يخصم 10%', ctx.contract.discountRate === 10);
-      const allCtx = providers.every(p => { const c = getContractContext({ providerCode:p.code, date:'2026-03-01' }); return !!(c && c.contract && c.tariff); });
+      const allCtx = providers.every(p => { const c = getContractContext({ providerCode:p.code, date:'2026-03-01' }); return !!(c?.contract && c.tariff); });
       A('دورة: كل جهة لها سياق عقد', allCtx);
     } catch(e){ A('دورة: العقود', false, e.message); }
 
@@ -128,10 +128,10 @@ function runLifecycleTests(){
       const c = getClaimById(claimId);
       c.invoices = [{ id:'INV-1', date:'2026-03-01', type:'lab', patients:[{ name:'مريض الدورة', nationalId:'2990101', lines:[{ code:'LAB-1', name:'تحليل دم', qty:1, billedUnit:100 }] }] }];
       const am = computeLineAmounts({ code:'LAB-1', qty:1, billedUnit:100 }, { tariff:tariffs[0], contract:contracts[0], serviceOverrides:{} }, '2026-03-01');
-      A('دورة: الحساب بعد خصم العقد = 90', am && am.afterContract === 90, String(am && am.afterContract));
+      A('دورة: الحساب بعد خصم العقد = 90', am?.afterContract === 90, String(am?.afterContract));
       const line = c.invoices[0].patients[0].lines[0];
       const vr = validateLine(line, { tariff:tariffs[0], contract:contracts[0], serviceOverrides:{}, claimDate:'2026-03-01', claimId, invoiceId:'INV-1', patientIdx:0, lineIdx:0, siblings:[] });
-      A('دورة: البند المغطى بلا رفض تلقائي', vr && vr.decision !== 'auto-rejected', String(vr && vr.decision));
+      A('دورة: البند المغطى بلا رفض تلقائي', vr?.decision !== 'auto-rejected', String(vr?.decision));
       line.approved = 90; line._decision = 'manual-approved';
       recalcClaim(c);
       A('دورة: المطالب به 100 والمعتمد 90', c.billed === 100 && c.approved === 90, `${c.billed}/${c.approved}`);

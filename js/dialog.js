@@ -69,7 +69,7 @@ function openDialog(opts){
   $('#dialogTitle').textContent = opts.title || '';
   $('#dialogMessage').innerHTML = escapeHtml(opts.message || '');
   (el => { if (el) el.style.display = opts.message ? 'block' : 'none'; })($('#dialogMessage'));
-  const dialogBody = $('#dialogBody'); dialogBody.replaceChildren(sanitizeDialogBody(opts.body || '')); 
+  const dialogBody = $('#dialogBody'); dialogBody.replaceChildren(sanitizeDialogBody(opts.body || ''));
   (el => { if (el) el.style.display = opts.body ? 'block' : 'none'; })($('#dialogBody'));
   const actions = $('#dialogActions'); actions.innerHTML = '';
   if(opts.requireCountdown){

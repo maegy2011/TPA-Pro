@@ -32,7 +32,7 @@ function openReview(id){
   }
   const existing = findSessionByClaim(id);
   const isAlreadyInThisSession = existing && activeSessionId === existing.id
-                              && activeClaim && activeClaim.id === existing.claimId;
+                              && activeClaim?.id === existing.claimId;
   if(existing && !isAlreadyInThisSession){
     if(activeSessionId && activeClaim){ upsertCurrentSession(); activeClaim = null; workingInvoices = []; }
     resumeSession(existing.id); return;
@@ -83,7 +83,7 @@ function openReview(id){
     document.querySelectorAll('#reviewModal .rv-type-btn').forEach(b => b.classList.toggle('active', b.dataset.claimType === (c.type||'employee')));
   } catch(e){}
   try {
-    if(typeof RC_cursorForClaim === 'function' && c && c.id){
+    if(typeof RC_cursorForClaim === 'function' && c?.id){
       const _cur = RC_cursorForClaim(c.id);
       if(_cur && (_cur.invoice || _cur.patient)){ rvActiveInvoiceIdx = _cur.invoice; rvActivePatientIdx = _cur.patient; }
     }
@@ -100,7 +100,7 @@ function openReview(id){
 function closeReview(opts){
   const isModalOpen = $('#reviewModal') && $('#reviewModal').classList.contains('open');
   if(!isModalOpen && currentPage !== 'review') return;
-  const discard = !!(opts && opts.discard === true);
+  const discard = !!(opts?.discard === true);
   if(!discard && _hasUnsavedChanges()){
     openDialog({
       type:'warning', title:'تعديلات غير محفوظة',

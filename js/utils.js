@@ -48,9 +48,9 @@ function loadAppSettings(){
     const raw = localStorage.getItem(APP_SETTINGS_KEY);
     if(raw){
       const p = JSON.parse(raw);
-      if(p && p.reviewer) appSettings.reviewer = { ...appSettings.reviewer, ...p.reviewer };
-      if(p && p.company) appSettings.company = { ...appSettings.company, ...p.company };
-      if(p && p.shortcuts && typeof p.shortcuts === 'object') appSettings.shortcuts = p.shortcuts;
+      if(p?.reviewer) appSettings.reviewer = { ...appSettings.reviewer, ...p.reviewer };
+      if(p?.company) appSettings.company = { ...appSettings.company, ...p.company };
+      if(p?.shortcuts && typeof p.shortcuts === 'object') appSettings.shortcuts = p.shortcuts;
       if(p && Array.isArray(p.customLineTypes)) appSettings.customLineTypes = p.customLineTypes;
     }
   } catch(e){}
@@ -120,7 +120,7 @@ async function verifyPassword(pwd){
     }
     // Legacy formats are accepted only to complete a successful login, then upgraded immediately.
     let valid = false;
-    if(stored.startsWith('sha256_') && window.crypto && crypto.subtle) valid = (await legacyPasswordHash(pwd)) === stored;
+    if(stored.startsWith('sha256_') && window.crypto?.subtle) valid = (await legacyPasswordHash(pwd)) === stored;
     else if(stored.startsWith('simple_')) valid = legacySimplePasswordHash(pwd) === stored;
     if(valid){
       const upgraded = await hashPassword(pwd);
