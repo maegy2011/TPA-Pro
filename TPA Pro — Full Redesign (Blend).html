@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<!--
+  System: "Clinical Ledger" — a blend of Swiss Editorial (structure) + Dieter Rams (comfort) + Terminal (density option)
+  Type: Tajawal 12 (body) / 11 (label) / 14 (h3) / 18 (h2) / 24 (h1) / 30 (kpi). Tabular numerals.
+  Color: warm cream #f6f3ec on ink #1a1d23. Accent #2b5a8a (primary action). Callout red #b33a2b (sparingly).
+  Grid: 220px sidebar · 56px topbar · 24px gutters · hairline rules between sections · numbered sections
+  Rhythm: left-flush headlines, 72ch body columns, 4-6px radii on cards/buttons, generous padding
+  Motion: 120ms ease on hover/focus, 180ms screen fade. No decorative animation.
+  Tweaks: theme (light/dark), density (comfortable/compact), accent (blue/red/teal), sidebar (expanded/collapsed)
+  Mobile: separate device-frame screens in the "Mobile" view.
+-->
+<head>
+<meta charset="utf-8">
+<title>TPA Pro — Full Redesign (Clinical Ledger)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --ink:#1a1d23;--ink-2:#2c313a;
+  --paper:#f6f3ec;--paper-2:#efeae0;--paper-3:#e6e0d4;
+  --rule:#d9d3c7;--rule-2:#c9c1b2;
+  --muted:#6b655a;--muted-2:#8a8378;
+  --accent:#2b5a8a;--accent-soft:#e4ecf4;
+  --callout:#b33a2b;--callout-soft:#f3e4e1;
+  --success:#2e7d4f;--success-soft:#e3efe7;
+  --warn:#a06a00;--warn-soft:#f4ecdc;
+  --danger:#b33a2b;
+  --radius:6px;--radius-sm:4px;
+  --shadow:0 1px 3px rgba(26,29,35,.06),0 4px 12px rgba(26,29,35,.04);
+  --sidebar-w:220px;
+  --topbar-h:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:'Tajawal',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+body.compact{font-size:12px}
+body.dark{--ink:#e8e4dc;--ink-2:#d4cfc3;--paper:#14161a;--paper-2:#1c1f24;--paper-3:#242830;--rule:#2e333c;--rule-2:#3a4049;--muted:#9a9388;--muted-2:#7a746a;--accent:#6fa0d4;--accent-soft:#1e2a38;--callout:#e07a6a;--callout-soft:#2a1f1c;--success:#6fc98a;--success-soft:#1a2a20;--warn:#e0b060;--warn-soft:#2a2418}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+a{color:var(--accent);text-decoration:none}
+
+/* ---------- App shell ---------- */
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--topbar-h) 1fr;height:100vh;transition:grid-template-columns .18s ease}
+.app.sidebar-collapsed{grid-template-columns:64px 1fr}
+.sidebar{background:var(--ink);color:var(--paper);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;transition:width .18s ease}
+body.dark .sidebar{background:#0c0e12}
+.sidebar .brand{padding:16px 18px 14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sidebar .brand .mark{width:28px;height:28px;background:var(--accent);color:#fff;border-radius:4px;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.sidebar .brand .name{font-size:13px;font-weight:800;letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+.sidebar .brand .sub{font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.5;margin-top:1px}
+.sidebar .nav-section{padding:14px 12px 4px;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.4}
+.sidebar .nav{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:12px;font-weight:600;color:rgba(255,255,255,.62);cursor:pointer;border-inline-start:2px solid transparent;transition:all .12s;white-space:nowrap;overflow:hidden}
+.sidebar .nav:hover{color:#fff;background:rgba(255,255,255,.04)}
+.sidebar .nav.active{color:#fff;border-inline-start-color:var(--accent);background:rgba(255,255,255,.06)}
+.sidebar .nav .ico{width:16px;height:16px;flex:none;opacity:.7}
+.sidebar .nav.active .ico{opacity:1}
+.sidebar .nav .num{font-size:9px;opacity:.35;margin-inline-start:auto;font-variant-numeric:tabular-nums}
+.app.sidebar-collapsed .sidebar .brand .name,.app.sidebar-collapsed .sidebar .brand .sub,.app.sidebar-collapsed .sidebar .nav span.txt,.app.sidebar-collapsed .sidebar .nav .num,.app.sidebar-collapsed .sidebar .nav-section{display:none}
+.app.sidebar-collapsed .sidebar .nav{justify-content:center;padding:9px 0}
+.topbar{background:var(--paper);border-bottom:1px solid var(--rule);display:flex;align-items:center;padding:0 24px;gap:16px;flex:none;z-index:5}
+.topbar .title{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.topbar .sub{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-inline-start:10px}
+.topbar .search{margin-inline-start:24px;flex:1;max-width:360px;position:relative}
+.topbar .search input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--rule);background:var(--paper-2);border-radius:var(--radius-sm);font-size:12px}
+.topbar .search input:focus{outline:none;border-color:var(--accent);background:var(--paper)}
+.topbar .search .ico{position:absolute;inset-inline-start:10px;top:50%;transform:translateY(-50%);opacity:.4;width:14px;height:14px}
+.topbar .right{margin-inline-start:auto;display:flex;gap:8px;align-items:center}
+.topbar .icon-btn{width:34px;height:34px;border:1px solid var(--rule);border-radius:var(--radius-sm);display:grid;place-items:center;cursor:pointer;background:var(--paper);transition:background .12s}
+.topbar .icon-btn:hover{background:var(--paper-2)}
+.topbar .icon-btn svg{width:16px;height:16px;opacity:.7}
+.topbar .avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px}
+.content{overflow-y:auto;padding:24px 28px 48px;background:var(--paper)}
+.screen{display:none;animation:fade .18s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- Common components ---------- */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-bottom:28px;background:var(--paper)}
+.kpi{padding:16px 14px;border-inline-end:1px solid var(--rule)}
+.kpi:last-child{border-inline-end:0}
+.kpi .lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kpi .val{font-size:28px;font-weight:800;margin-top:6px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi .foot{font-size:11px;color:var(--muted-2);margin-top:4px}
+.kpi .delta{font-size:11px;font-weight:700;margin-top:4px}
+.kpi .delta.up{color:var(--success)} .kpi .delta.down{color:var(--callout)}
+.section{margin-bottom:32px}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:14px}
+.section-head h2{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:baseline;gap:8px}
+.section-head h2 .num{font-size:10px;color:var(--callout);font-weight:800}
+.section-head .meta{font-size:11px;color:var(--muted);letter-spacing:.03em}
+.section-head .actions{display:flex;gap:8px}
+.btn{background:var(--ink);color:var(--paper);padding:9px 16px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:var(--radius-sm);cursor:pointer;transition:opacity .12s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{opacity:.88}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+.btn.ghost:hover{background:var(--paper-2)}
+.btn.accent{background:var(--accent);color:#fff}
+.btn.sm{padding:6px 12px;font-size:10px}
+.btn.danger{background:var(--callout);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:start;padding:10px 10px;border-bottom:1px solid var(--ink)}
+td{padding:11px 10px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums;vertical-align:middle}
+tbody tr:hover{background:var(--paper-2)}
+tbody tr:last-child td{border-bottom:0}
+.badge{display:inline-block;padding:2px 9px;font-size:10px;font-weight:700;letter-spacing:.06em;border-radius:3px}
+.badge.ok{background:var(--success-soft);color:var(--success)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.info{background:var(--accent-soft);color:var(--accent)}
+.badge.danger{background:var(--callout-soft);color:var(--callout)}
+.card{background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--radius);padding:18px}
+.card + .card{margin-top:12px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{padding:9px 11px;border:1px solid var(--rule);background:var(--paper);border-radius:var(--radius-sm);font-size:13px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.field.full{grid-column:1/-1}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:12px}
+.empty .ico{font-size:32px;opacity:.3;margin-bottom:8px}
+
+/* ---------- Modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,22,26,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:24px;backdrop-filter:blur(2px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--paper);width:100%;max-width:720px;max-height:90vh;overflow-y:auto;border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow)}
+.modal .head{padding:20px 24px 14px;border-bottom:1px solid var(--rule)}
+.modal .head h3{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.modal .head .sub{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.modal .body{padding:20px 24px}
+.modal .foot{padding:14px 24px;border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:flex-end;background:var(--paper-2)}
+
+/* ---------- Tweaks panel ---------- */
+.tweaks{position:fixed;bottom:20px;inset-inline-end:20px;background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);padding:16px 18px;width:260px;box-shadow:var(--shadow);z-index:200;display:none}
+.tweaks.show{display:block}
+.tweaks h4{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.tweaks .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px}
+.tweaks .seg{display:flex;border:1px solid var(--rule);border-radius:var(--radius-sm);overflow:hidden}
+.tweaks .seg button{padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--paper-2);color:var(--muted)}
+.tweaks .seg button.active{background:var(--ink);color:var(--paper)}
+
+/* ---------- Mobile view ---------- */
+.mobile-view{display:none;padding:24px 28px 48px}
+.mobile-view.show{display:block}
+.mobile-view .mv-head{margin-bottom:20px}
+.mobile-view .mv-head h2{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.mobile-view .mv-head p{font-size:12px;color:var(--muted);margin-top:4px}
+.device-row{display:flex;gap:32px;overflow-x:auto;padding-bottom:16px;align-items:flex-start}
+.device{width:320px;flex:none;background:#1a1d23;border-radius:36px;padding:10px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.device .screen{width:100%;height:640px;background:var(--paper);border-radius:28px;overflow:hidden;display:flex;flex-direction:column}
+.device .notch{height:24px;background:#1a1d23;border-radius:0 0 14px 14px;margin:0 auto;width:120px}
+.m-topbar{height:48px;background:var(--paper);border-bottom:1px solid var(--rule);display:flex;align-items:center;padding:0 14px;gap:8px;flex:none}
+.m-topbar h1{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.m-topbar .back{width:28px;height:28px;display:grid;place-items:center;border-radius:4px;background:var(--paper-2)}
+.m-content{flex:1;overflow-y:auto;padding:14px}
+.m-nav{height:56px;background:var(--paper);border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;flex:none}
+.m-nav .item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:600;color:var(--muted);padding:6px 0}
+.m-nav .item.active{color:var(--accent)}
+.m-nav .item .ico{width:18px;height:18px;opacity:.7}
+.m-nav .item.active .ico{opacity:1}
+.m-kpi{background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--radius);padding:12px;margin-bottom:10px}
+.m-kpi .lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.m-kpi .val{font-size:22px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+.m-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--rule);font-size:12px}
+.m-row .t{font-weight:600} .m-row .s{font-size:10px;color:var(--muted)}
+.m-card{background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--radius);padding:12px;margin-bottom:10px;font-size:12px}
+.m-card .h{font-weight:700;margin-bottom:4px} .m-card .b{color:var(--muted);font-size:11px}
+
+/* ---------- View switcher ---------- */
+.view-switch{position:fixed;top:12px;inset-inline-start:50%;transform:translateX(-50%);background:var(--paper);border:1px solid var(--rule);border-radius:999px;padding:4px;display:flex;gap:2px;box-shadow:var(--shadow);z-index:300}
+.view-switch button{padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;border-radius:999px;color:var(--muted)}
+.view-switch button.active{background:var(--ink);color:var(--paper)}
+</style>
+<link rel="stylesheet" href="css/fonts.css">
+</head>
+<body>
+
+<div class="view-switch">
+  <button class="active" data-view="desktop" onclick="setView('desktop')">Desktop</button>
+  <button data-view="mobile" onclick="setView('mobile')">Mobile</button>
+</div>
+
+<!-- ================= DESKTOP APP ================= -->
+<div id="desktop-app" class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">TP</div>
+      <div>
+        <div class="name">TPA PRO</div>
+        <div class="sub">v1.0 · Claims Review</div>
+      </div>
+    </div>
+    <div class="nav-section">Main</div>
+    <div class="nav active" data-screen="dashboard"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span><span class="num">01</span></div>
+    <div class="nav" data-screen="claims"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><span class="txt">Claims</span><span class="num">02</span></div>
+    <div class="nav" data-screen="review"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span class="txt">Review</span><span class="num">03</span></div>
+    <div class="nav" data-screen="inbox"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg><span class="txt">Inbox</span><span class="num">04</span></div>
+    <div class="nav-section">Master data</div>
+    <div class="nav" data-screen="providers"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg><span class="txt">Providers</span><span class="num">05</span></div>
+    <div class="nav" data-screen="contracts"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg><span class="txt">Contracts</span><span class="num">06</span></div>
+    <div class="nav" data-screen="tariffs"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span class="txt">Tariffs</span><span class="num">07</span></div>
+    <div class="nav" data-screen="services"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span class="txt">Services</span><span class="num">08</span></div>
+    <div class="nav" data-screen="deduction"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span class="txt">Deduction rules</span><span class="num">09</span></div>
+    <div class="nav-section">Insights</div>
+    <div class="nav" data-screen="reports"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span class="txt">Reports</span><span class="num">10</span></div>
+    <div class="nav" data-screen="timeline"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="txt">Timeline</span><span class="num">11</span></div>
+    <div class="nav-section">System</div>
+    <div class="nav" data-screen="sessions"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="txt">Sessions</span><span class="num">12</span></div>
+    <div class="nav" data-screen="trash"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg><span class="txt">Trash</span><span class="num">13</span></div>
+    <div class="nav" data-screen="settings"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span class="txt">Settings</span><span class="num">14</span></div>
+    <div class="nav" data-screen="help"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg><span class="txt">Help</span><span class="num">15</span></div>
+  </aside>
+
+  <header class="topbar">
+    <button class="icon-btn" onclick="toggleSidebar()" title="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <h1 id="page-title">Dashboard</h1>
+    <span class="sub" id="page-sub">Overview · 05 Nov 2026</span>
+    <div class="search"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search claims, patients, providers…"></div>
+    <div class="right">
+      <button class="icon-btn" onclick="toggleTweaks()" title="Tweaks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      <div class="avatar">م</div>
+    </div>
+  </header>
+
+  <main class="content" id="content">
+
+  <!-- ===== Dashboard ===== -->
+  <section class="screen active" data-screen="dashboard" data-title="Dashboard" data-sub="Overview · 05 Nov 2026">
+    <div class="kpi-row">
+      <div class="kpi"><div class="lbl">Total claims</div><div class="val">1,284</div><div class="foot">All statuses</div><div class="delta up">+12.3% vs last month</div></div>
+      <div class="kpi"><div class="lbl">Pending review</div><div class="val">342</div><div class="foot">26.6% of total</div><div class="delta">—</div></div>
+      <div class="kpi"><div class="lbl">Approved</div><div class="val">891</div><div class="foot">69.4% of total</div><div class="delta up">+4.1%</div></div>
+      <div class="kpi"><div class="lbl">Rejected</div><div class="val">51</div><div class="foot">4.0% of total</div><div class="delta down">-0.6%</div></div>
+    </div>
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Recent claims</h2><div class="meta">showing 8 of 1,284</div><div class="actions"><button class="btn ghost sm">Export</button><button class="btn accent sm">+ New claim</button></div></div>
+      <table>
+        <thead><tr><th>Claim</th><th>Patient</th><th>Provider</th><th>Service</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>CLM-2041</td><td>أحمد محمد الحربي</td><td>مستشفى الملك فهد</td><td>أشعة مقطعية</td><td>12,450</td><td><span class="badge ok">Approved</span></td><td><button class="btn ghost sm">View</button></td></tr>
+          <tr><td>CLM-2042</td><td>فاطمة علي القحطاني</td><td>عيادة النور</td><td>تحاليل دم</td><td>3,200</td><td><span class="badge warn">Pending</span></td><td><button class="btn ghost sm">View</button></td></tr>
+          <tr><td>CLM-2043</td><td>خالد سعيد الدوسري</td><td>مختبرات الأمل</td><td>تحاليل بول</td><td>8,900</td><td><span class="badge warn">Pending</span></td><td><button class="btn ghost sm">View</button></td></tr>
+          <tr><td>CLM-2044</td><td>نورة حسن العتيبي</td><td>مستشفى الملك فهد</td><td>عملية جراحية</td><td>22,100</td><td><span class="badge ok">Approved</span></td><td><button class="btn ghost sm">View</button></td></tr>
+          <tr><td>CLM-2045</td><td>عمر إبراهيم الشمري</td><td>مركز التشخيص</td><td>كشوفات</td><td>1,850</td><td><span class="badge warn">Pending</span></td><td><button class="btn ghost sm">View</button></td></tr>
+          <tr><td>CLM-2046</td><td>سارة عبدالله المطيري</td><td>عيادة النور</td><td>تحاليل دم</td><td>5,600</td><td><span class="badge ok">Approved</span></td><td><button class="btn ghost sm">View</button></td></tr>
+          <tr><td>CLM-2047</td><td>يوسف ناصر الغامدي</td><td>مستشفى المملكة</td><td>أشعة رنين</td><td>18,300</td><td><span class="badge danger">Rejected</span></td><td><button class="btn ghost sm">View</button></td></tr>
+          <tr><td>CLM-2048</td><td>مريم سعد البقمي</td><td>مختبرات الأمل</td><td>تحاليل هرمونات</td><td>4,100</td><td><span class="badge info">In review</span></td><td><button class="btn ghost sm">View</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-head"><h2><span class="num">02</span>Pending attention</h2><div class="meta">3 items need action</div></div>
+      <div class="card"><strong>CLM-2043</strong> — خالد سعيد الدوسري: فاتورة 8,900 ر.س تتجاوز سقف اللائحة (7,500). <button class="btn ghost sm" style="margin-inline-start:10px">Open</button></div>
+      <div class="card"><strong>CLM-2047</strong> — rejected for missing prior authorization. <button class="btn ghost sm" style="margin-inline-start:10px">Review</button></div>
+      <div class="card"><strong>Provider: عيادة النور</strong> — contract expires in 12 days. <button class="btn ghost sm" style="margin-inline-start:10px">Renew</button></div>
+    </div>
+  </section>
+
+  <!-- ===== Claims ===== -->
+  <section class="screen" data-screen="claims" data-title="Claims" data-sub="All claims · 1,284 total">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Filters</h2></div>
+      <div class="form-grid">
+        <div class="field"><label>Status</label><select><option>All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select></div>
+        <div class="field"><label>Provider</label><select><option>All providers</option><option>مستشفى الملك فهد</option><option>عيادة النور</option></select></div>
+        <div class="field"><label>From date</label><input type="date" value="2026-10-01"></div>
+        <div class="field"><label>To date</label><input type="date" value="2026-11-05"></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-head"><h2><span class="num">02</span>Claims list</h2><div class="meta">1,284 results</div><div class="actions"><button class="btn ghost sm">Export CSV</button><button class="btn accent sm">+ New</button></div></div>
+      <table>
+        <thead><tr><th>Claim</th><th>Patient</th><th>Provider</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>CLM-2048</td><td>مريم سعد البقمي</td><td>مختبرات الأمل</td><td>2026-11-04</td><td>4,100</td><td><span class="badge info">In review</span></td></tr>
+          <tr><td>CLM-2047</td><td>يوسف ناصر الغامدي</td><td>مستشفى المملكة</td><td>2026-11-03</td><td>18,300</td><td><span class="badge danger">Rejected</span></td></tr>
+          <tr><td>CLM-2046</td><td>سارة عبدالله المطيري</td><td>عيادة النور</td><td>2026-11-03</td><td>5,600</td><td><span class="badge ok">Approved</span></td></tr>
+          <tr><td>CLM-2045</td><td>عمر إبراهيم الشمري</td><td>مركز التشخيص</td><td>2026-11-02</td><td>1,850</td><td><span class="badge warn">Pending</span></td></tr>
+          <tr><td>CLM-2044</td><td>نورة حسن العتيبي</td><td>مستشفى الملك فهد</td><td>2026-11-02</td><td>22,100</td><td><span class="badge ok">Approved</span></td></tr>
+          <tr><td>CLM-2043</td><td>خالد سعيد الدوسري</td><td>مختبرات الأمل</td><td>2026-11-01</td><td>8,900</td><td><span class="badge warn">Pending</span></td></tr>
+          <tr><td>CLM-2042</td><td>فاطمة علي القحطاني</td><td>عيادة النور</td><td>2026-11-01</td><td>3,200</td><td><span class="badge warn">Pending</span></td></tr>
+          <tr><td>CLM-2041</td><td>أحمد محمد الحربي</td><td>مستشفى الملك فهد</td><td>2026-10-31</td><td>12,450</td><td><span class="badge ok">Approved</span></td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:11px;color:var(--muted)">
+        <span>Page 1 of 161</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn ghost sm">Prev</button>
+          <button class="btn ghost sm">Next</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Review ===== -->
+  <section class="screen" data-screen="review" data-title="Review" data-sub="Review queue · 342 pending">
+    <div class="kpi-row">
+      <div class="kpi"><div class="lbl">In queue</div><div class="val">342</div><div class="foot">pending review</div></div>
+      <div class="kpi"><div class="lbl">Reviewed today</div><div class="val">27</div><div class="foot">by you</div></div>
+      <div class="kpi"><div class="lbl">Avg. time</div><div class="val">4.2m</div><div class="foot">per claim</div></div>
+      <div class="kpi"><div class="lbl">Auto-approved</div><div class="val">61%</div><div class="foot">rule-based</div></div>
+    </div>
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Review queue</h2><div class="meta">342 claims</div><div class="actions"><button class="btn ghost sm" onclick="openModal('review')">Open review modal</button></div></div>
+      <table>
+        <thead><tr><th>Claim</th><th>Patient</th><th>Provider</th><th>Amount</th><th>Flags</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>CLM-2043</td><td>خالد سعيد الدوسري</td><td>مختبرات الأمل</td><td>8,900</td><td><span class="badge warn">Over limit</span></td><td><button class="btn accent sm" onclick="openModal('review')">Review</button></td></tr>
+          <tr><td>CLM-2042</td><td>فاطمة علي القحطاني</td><td>عيادة النور</td><td>3,200</td><td><span class="badge info">Docs missing</span></td><td><button class="btn accent sm" onclick="openModal('review')">Review</button></td></tr>
+          <tr><td>CLM-2045</td><td>عمر إبراهيم الشمري</td><td>مركز التشخيص</td><td>1,850</td><td><span class="badge warn">Duplicate</span></td><td><button class="btn accent sm" onclick="openModal('review')">Review</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Inbox ===== -->
+  <section class="screen" data-screen="inbox" data-title="Inbox" data-sub="Messages · 7 unread">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Messages</h2><div class="meta">7 unread</div></div>
+      <div class="card"><div style="display:flex;justify-content:space-between"><strong>Provider: عيادة النور</strong><span style="font-size:10px;color:var(--muted)">2h ago</span></div><div style="margin-top:4px;font-size:12px;color:var(--muted)">Renewal request for contract #C-204 — please review attached documents.</div></div>
+      <div class="card"><div style="display:flex;justify-content:space-between"><strong>System</strong><span style="font-size:10px;color:var(--muted)">5h ago</span></div><div style="margin-top:4px;font-size:12px;color:var(--muted)">Backup completed successfully — 1,284 claims archived.</div></div>
+      <div class="card"><div style="display:flex;justify-content:space-between"><strong>Reviewer: سارة</strong><span style="font-size:10px;color:var(--muted)">1d ago</span></div><div style="margin-top:4px;font-size:12px;color:var(--muted)">CLM-2043 needs second opinion on over-limit item.</div></div>
+    </div>
+  </section>
+
+  <!-- ===== Providers ===== -->
+  <section class="screen" data-screen="providers" data-title="Providers" data-sub="Registered providers · 48">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Providers</h2><div class="meta">48 registered</div><div class="actions"><button class="btn accent sm">+ Add provider</button></div></div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Contract</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>PRV-014</td><td>مستشفى الملك فهد</td><td>Hospital</td><td>C-201 (active)</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td>PRV-021</td><td>عيادة النور</td><td>Clinic</td><td>C-204 (expiring)</td><td><span class="badge warn">Expiring</span></td></tr>
+          <tr><td>PRV-033</td><td>مختبرات الأمل</td><td>Lab</td><td>C-211 (active)</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td>PRV-041</td><td>مركز التشخيص</td><td>Diagnostic</td><td>C-218 (active)</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td>PRV-052</td><td>مستشفى المملكة</td><td>Hospital</td><td>C-223 (suspended)</td><td><span class="badge danger">Suspended</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Contracts ===== -->
+  <section class="screen" data-screen="contracts" data-title="Contracts" data-sub="Provider contracts · 48">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Contracts</h2><div class="meta">48 total</div><div class="actions"><button class="btn accent sm">+ New contract</button></div></div>
+      <table>
+        <thead><tr><th>ID</th><th>Provider</th><th>Start</th><th>End</th><th>Tariff</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>C-201</td><td>مستشفى الملك فهد</td><td>2026-01-01</td><td>2026-12-31</td><td>T-STD</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td>C-204</td><td>عيادة النور</td><td>2026-02-15</td><td>2026-11-17</td><td>T-STD</td><td><span class="badge warn">Expiring</span></td></tr>
+          <tr><td>C-211</td><td>مختبرات الأمل</td><td>2026-03-01</td><td>2027-02-28</td><td>T-LAB</td><td><span class="badge ok">Active</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Tariffs ===== -->
+  <section class="screen" data-screen="tariffs" data-title="Tariffs" data-sub="Tariff schedules · 6">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Tariff schedules</h2><div class="meta">6 schedules</div><div class="actions"><button class="btn accent sm">+ New tariff</button></div></div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Items</th><th>Effective</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>T-STD</td><td>Standard schedule</td><td>1,240</td><td>2026-01-01</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td>T-LAB</td><td>Lab schedule</td><td>380</td><td>2026-03-01</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td>T-RAD</td><td>Radiology schedule</td><td>120</td><td>2026-06-15</td><td><span class="badge info">Draft</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Services ===== -->
+  <section class="screen" data-screen="services" data-title="Services" data-sub="Service catalog · 2,410">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Services</h2><div class="meta">2,410 items</div><div class="actions"><button class="btn accent sm">+ Add service</button></div></div>
+      <table>
+        <thead><tr><th>Code</th><th>Name (AR)</th><th>Name (EN)</th><th>Category</th><th>Price</th></tr></thead>
+        <tbody>
+          <tr><td>SRV-1001</td><td>تحليل دم كامل</td><td>CBC</td><td>Lab</td><td>45</td></tr>
+          <tr><td>SRV-2044</td><td>أشعة مقطعية (CT)</td><td>CT scan</td><td>Radiology</td><td>950</td></tr>
+          <tr><td>SRV-3102</td><td>كشف عام</td><td>General consult</td><td>Clinic</td><td>120</td></tr>
+          <tr><td>SRV-4010</td><td>تحليل هرمونات</td><td>Hormone panel</td><td>Lab</td><td>280</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Deduction rules ===== -->
+  <section class="screen" data-screen="deduction" data-title="Deduction rules" data-sub="Rule engine · 31 rules">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Active rules</h2><div class="meta">31 rules · 24 active</div><div class="actions"><button class="btn accent sm">+ New rule</button></div></div>
+      <div class="card"><strong>R-014 · Over-limit deduction</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">If amount > tariff cap → deduct difference. Status: <span class="badge ok">Active</span></div></div>
+      <div class="card"><strong>R-022 · Duplicate service</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Same service twice for same patient in 7 days → flag. Status: <span class="badge ok">Active</span></div></div>
+      <div class="card"><strong>R-031 · Missing authorization</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Radiology without prior auth → reject. Status: <span class="badge warn">Draft</span></div></div>
+    </div>
+  </section>
+
+  <!-- ===== Reports ===== -->
+  <section class="screen" data-screen="reports" data-title="Reports" data-sub="Analytics · Nov 2026">
+    <div class="kpi-row">
+      <div class="kpi"><div class="lbl">Total billed</div><div class="val">4.2M</div><div class="foot">SAR · this month</div></div>
+      <div class="kpi"><div class="lbl">Approved</div><div class="val">2.9M</div><div class="foot">69.0%</div></div>
+      <div class="kpi"><div class="lbl">Rejected</div><div class="val">0.17M</div><div class="foot">4.0%</div></div>
+      <div class="kpi"><div class="lbl">Avg claim</div><div class="val">3,270</div><div class="foot">SAR</div></div>
+    </div>
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Top providers by volume</h2><div class="meta">Nov 2026</div></div>
+      <table>
+        <thead><tr><th>Provider</th><th>Claims</th><th>Billed</th><th>Approved</th><th>Rejection %</th></tr></thead>
+        <tbody>
+          <tr><td>مستشفى الملك فهد</td><td>312</td><td>1.4M</td><td>0.98M</td><td>3.2%</td></tr>
+          <tr><td>مختبرات الأمل</td><td>287</td><td>0.95M</td><td>0.71M</td><td>5.1%</td></tr>
+          <tr><td>عيادة النور</td><td>198</td><td>0.52M</td><td>0.41M</td><td>2.8%</td></tr>
+          <tr><td>مركز التشخيص</td><td>156</td><td>0.38M</td><td>0.29M</td><td>4.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Timeline ===== -->
+  <section class="screen" data-screen="timeline" data-title="Timeline" data-sub="Activity log">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Recent activity</h2><div class="meta">last 24h</div></div>
+      <div style="border-inline-start:2px solid var(--rule);padding-inline-start:18px;margin-inline-start:8px">
+        <div style="margin-bottom:18px;position:relative"><div style="position:absolute;inset-inline-start:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--accent)"></div><div style="font-size:11px;color:var(--muted)">09:42 · Today</div><div style="font-weight:700;margin-top:2px">CLM-2048 moved to "In review"</div><div style="font-size:12px;color:var(--muted)">by you</div></div>
+        <div style="margin-bottom:18px;position:relative"><div style="position:absolute;inset-inline-start:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--success)"></div><div style="font-size:11px;color:var(--muted)">08:15 · Today</div><div style="font-weight:700;margin-top:2px">CLM-2046 approved</div><div style="font-size:12px;color:var(--muted)">auto-rule R-014</div></div>
+        <div style="margin-bottom:18px;position:relative"><div style="position:absolute;inset-inline-start:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--callout)"></div><div style="font-size:11px;color:var(--muted)">Yesterday 16:30</div><div style="font-weight:700;margin-top:2px">CLM-2047 rejected</div><div style="font-size:12px;color:var(--muted)">missing prior authorization</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Sessions ===== -->
+  <section class="screen" data-screen="sessions" data-title="Sessions" data-sub="Active sessions · 3">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Sessions</h2><div class="meta">3 active</div><div class="actions"><button class="btn accent sm">+ New session</button></div></div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Claims</th><th>Started</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>S-014</td><td>November review batch</td><td>342</td><td>2026-11-05 08:00</td><td><span class="badge info">Active</span></td></tr>
+          <tr><td>S-013</td><td>October closeout</td><td>1,284</td><td>2026-10-31</td><td><span class="badge ok">Completed</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Trash ===== -->
+  <section class="screen" data-screen="trash" data-title="Trash" data-sub="Deleted items · 12">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Trash</h2><div class="meta">12 items · auto-purge in 30d</div><div class="actions"><button class="btn danger sm">Empty trash</button></div></div>
+      <table>
+        <thead><tr><th>Type</th><th>Name</th><th>Deleted</th><th>Deleted by</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Claim</td><td>CLM-1988 (draft)</td><td>2026-11-03</td><td>you</td><td><button class="btn ghost sm">Restore</button></td></tr>
+          <tr><td>Provider</td><td>عيادة الشفاء (old)</td><td>2026-10-28</td><td>admin</td><td><button class="btn ghost sm">Restore</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Settings ===== -->
+  <section class="screen" data-screen="settings" data-title="Settings" data-sub="Configuration">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>General</h2></div>
+      <div class="form-grid">
+        <div class="field"><label>Language</label><select><option>العربية (AR)</option><option>English (EN)</option></select></div>
+        <div class="field"><label>Timezone</label><select><option>Asia/Riyadh (UTC+3)</option></select></div>
+        <div class="field"><label>Theme</label><select><option>Light</option><option>Dark</option><option>System</option></select></div>
+        <div class="field"><label>Currency</label><select><option>SAR</option><option>USD</option></select></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-head"><h2><span class="num">02</span>Security</h2></div>
+      <div class="form-grid">
+        <div class="field"><label>Session timeout (min)</label><input type="number" value="30"></div>
+        <div class="field"><label>Password policy</label><select><option>Strong (12+ chars)</option></select></div>
+      </div>
+      <div style="margin-top:14px"><button class="btn accent">Save changes</button></div>
+    </div>
+  </section>
+
+  <!-- ===== Help ===== -->
+  <section class="screen" data-screen="help" data-title="Help" data-sub="Documentation">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Getting started</h2></div>
+      <div class="card"><strong>How to review a claim</strong><div style="font-size:12px;color:var(--muted);margin-top:4px">Open Review → pick a claim → verify items → approve/reject → save.</div></div>
+      <div class="card"><strong>Keyboard shortcuts</strong><div style="font-size:12px;color:var(--muted);margin-top:4px">Ctrl+K search · ←/→ navigate · Esc close modal.</div></div>
+      <div class="card"><strong>Exporting reports</strong><div style="font-size:12px;color:var(--muted);margin-top:4px">Reports → filter → Export CSV / PDF.</div></div>
+    </div>
+  </section>
+
+  <!-- ===== Search ===== -->
+  <section class="screen" data-screen="search" data-title="Search" data-sub="Global search">
+    <div class="section">
+      <div class="section-head"><h2><span class="num">01</span>Search</h2></div>
+      <div class="field" style="max-width:480px"><label>Query</label><input placeholder="Claim ID, patient name, provider…"></div>
+      <div style="margin-top:18px;font-size:12px;color:var(--muted)">Type to search across claims, patients, providers, services.</div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<!-- ================= MOBILE VIEW ================= -->
+<div id="mobile-view" class="mobile-view">
+  <div class="mv-head">
+    <h2>Mobile — separate layouts</h2>
+    <p>Desktop-first app with dedicated mobile screens. Key flows shown in device frames.</p>
+  </div>
+  <div class="device-row">
+    <!-- Dashboard -->
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="m-topbar"><div class="back">☰</div><h1>Dashboard</h1></div>
+      <div class="m-content">
+        <div class="m-kpi"><div class="lbl">Total claims</div><div class="val">1,284</div></div>
+        <div class="m-kpi"><div class="lbl">Pending</div><div class="val">342</div></div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px">Recent</div>
+        <div class="m-row"><div><div class="t">CLM-2041</div><div class="s">أحمد محمد · مستشفى الملك</div></div><div style="font-weight:700">12,450</div></div>
+        <div class="m-row"><div><div class="t">CLM-2042</div><div class="s">فاطمة علي · عيادة النور</div></div><div style="font-weight:700">3,200</div></div>
+        <div class="m-row"><div><div class="t">CLM-2043</div><div class="s">خالد سعيد · مختبرات الأمل</div></div><div style="font-weight:700">8,900</div></div>
+      </div>
+      <div class="m-nav">
+        <div class="item active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Home</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>Claims</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>Review</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>More</div>
+      </div>
+    </div></div>
+
+    <!-- Claims -->
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="m-topbar"><div class="back">←</div><h1>Claims</h1></div>
+      <div class="m-content">
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <button class="btn ghost sm" style="flex:1">Status ▾</button>
+          <button class="btn ghost sm" style="flex:1">Provider ▾</button>
+        </div>
+        <div class="m-row"><div><div class="t">CLM-2048</div><div class="s">مريم سعد · مختبرات الأمل</div></div><div><div style="font-weight:700">4,100</div><span class="badge info" style="font-size:9px">In review</span></div></div>
+        <div class="m-row"><div><div class="t">CLM-2047</div><div class="s">يوسف ناصر · مستشفى المملكة</div></div><div><div style="font-weight:700">18,300</div><span class="badge danger" style="font-size:9px">Rejected</span></div></div>
+        <div class="m-row"><div><div class="t">CLM-2046</div><div class="s">سارة عبدالله · عيادة النور</div></div><div><div style="font-weight:700">5,600</div><span class="badge ok" style="font-size:9px">Approved</span></div></div>
+        <div class="m-row"><div><div class="t">CLM-2045</div><div class="s">عمر إبراهيم · مركز التشخيص</div></div><div><div style="font-weight:700">1,850</div><span class="badge warn" style="font-size:9px">Pending</span></div></div>
+      </div>
+      <div class="m-nav">
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Home</div>
+        <div class="item active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>Claims</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>Review</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>More</div>
+      </div>
+    </div></div>
+
+    <!-- Review -->
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="m-topbar"><div class="back">←</div><h1>Review</h1></div>
+      <div class="m-content">
+        <div class="m-card"><div class="h">CLM-2043 · خالد سعيد الدوسري</div><div class="b">مختبرات الأمل · 8,900 SAR · Over limit</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn accent sm" style="flex:1">Approve</button>
+            <button class="btn danger sm" style="flex:1">Reject</button>
+          </div>
+        </div>
+        <div class="m-card"><div class="h">CLM-2042 · فاطمة علي القحطاني</div><div class="b">عيادة النور · 3,200 SAR · Docs missing</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn accent sm" style="flex:1">Approve</button>
+            <button class="btn danger sm" style="flex:1">Reject</button>
+          </div>
+        </div>
+        <div class="m-card"><div class="h">CLM-2045 · عمر إبراهيم الشمري</div><div class="b">مركز التشخيص · 1,850 SAR · Duplicate</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn accent sm" style="flex:1">Approve</button>
+            <button class="btn danger sm" style="flex:1">Reject</button>
+          </div>
+        </div>
+      </div>
+      <div class="m-nav">
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Home</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>Claims</div>
+        <div class="item active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>Review</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>More</div>
+      </div>
+    </div></div>
+
+    <!-- Settings -->
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="m-topbar"><div class="back">←</div><h1>Settings</h1></div>
+      <div class="m-content">
+        <div class="m-card"><div class="h">Language</div><div class="b">العربية (AR)</div></div>
+        <div class="m-card"><div class="h">Theme</div><div class="b">Light · Dark · System</div></div>
+        <div class="m-card"><div class="h">Session timeout</div><div class="b">30 minutes</div></div>
+        <div class="m-card"><div class="h">Currency</div><div class="b">SAR</div></div>
+      </div>
+      <div class="m-nav">
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Home</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>Claims</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>Review</div>
+        <div class="item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</div>
+        <div class="item active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>More</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modal-overlay" id="modal-review">
+  <div class="modal">
+    <div class="head">
+      <h3>Review · CLM-2043</h3>
+      <div class="sub">خالد سعيد الدوسري · مختبرات الأمل · 8,900 SAR</div>
+    </div>
+    <div class="body">
+      <div class="form-grid">
+        <div class="field"><label>Patient</label><input value="خالد سعيد الدوسري" disabled></div>
+        <div class="field"><label>Provider</label><input value="مختبرات الأمل" disabled></div>
+        <div class="field"><label>Billed amount</label><input value="8,900"></div>
+        <div class="field"><label>Approved amount</label><input value="7,500"></div>
+        <div class="field full"><label>Notes</label><textarea rows="3" placeholder="Review notes…"></textarea></div>
+      </div>
+      <div style="margin-top:14px"><span class="badge warn">Over limit by 1,400 SAR</span></div>
+    </div>
+    <div class="foot">
+      <button class="btn ghost" onclick="closeModal('review')">Cancel</button>
+      <button class="btn danger">Reject</button>
+      <button class="btn accent">Approve 7,500</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= TWEAKS ================= -->
+<div class="tweaks" id="tweaks">
+  <h4>Tweaks</h4>
+  <div class="row"><span>Theme</span><div class="seg"><button data-tweak="theme" data-val="light" class="active" onclick="setTweak('theme','light')">Light</button><button data-tweak="theme" data-val="dark" onclick="setTweak('theme','dark')">Dark</button></div></div>
+  <div class="row"><span>Density</span><div class="seg"><button data-tweak="density" data-val="comfortable" class="active" onclick="setTweak('density','comfortable')">Comfort</button><button data-tweak="density" data-val="compact" onclick="setTweak('density','compact')">Compact</button></div></div>
+  <div class="row"><span>Accent</span><div class="seg"><button data-tweak="accent" data-val="blue" class="active" onclick="setTweak('accent','blue')">Blue</button><button data-tweak="accent" data-val="red" onclick="setTweak('accent','red')">Red</button><button data-tweak="accent" data-val="teal" onclick="setTweak('accent','teal')">Teal</button></div></div>
+  <div class="row"><span>Sidebar</span><div class="seg"><button data-tweak="sidebar" data-val="expanded" class="active" onclick="setTweak('sidebar','expanded')">Wide</button><button data-tweak="sidebar" data-val="collapsed" onclick="setTweak('sidebar','collapsed')">Narrow</button></div></div>
+</div>
+
+<script>
+const TITLES={'dashboard':'Dashboard','claims':'Claims','review':'Review','inbox':'Inbox','providers':'Providers','contracts':'Contracts','tariffs':'Tariffs','services':'Services','deduction':'Deduction rules','reports':'Reports','timeline':'Timeline','sessions':'Sessions','trash':'Trash','settings':'Settings','help':'Help','search':'Search'};
+const SUBS={'dashboard':'Overview · 05 Nov 2026','claims':'All claims · 1,284 total','review':'Review queue · 342 pending','inbox':'Messages · 7 unread','providers':'Registered providers · 48','contracts':'Provider contracts · 48','tariffs':'Tariff schedules · 6','services':'Service catalog · 2,410','deduction':'Rule engine · 31 rules','reports':'Analytics · Nov 2026','timeline':'Activity log','sessions':'Active sessions · 3','trash':'Deleted items · 12','settings':'Configuration','help':'Documentation','search':'Global search'};
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.querySelector('.screen[data-screen="'+screen+'"]');
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.screen===screen));
+  document.getElementById('page-title').textContent=TITLES[screen]||screen;
+  document.getElementById('page-sub').textContent=SUBS[screen]||'';
+  const c=document.getElementById('content'); if(c) c.scrollTop=0;
+}
+document.querySelectorAll('.nav').forEach(n=>n.addEventListener('click',()=>go(n.dataset.screen)));
+function toggleSidebar(){document.getElementById('desktop-app').classList.toggle('sidebar-collapsed')}
+function openModal(name){document.getElementById('modal-'+name).classList.add('show')}
+function closeModal(name){document.getElementById('modal-'+name).classList.remove('show')}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show')}));
+
+// Tweaks
+const ACCENTS={blue:{accent:'#2b5a8a',soft:'#e4ecf4'},red:{accent:'#b33a2b',soft:'#f3e4e1'},teal:{accent:'#1f7a6b',soft:'#e0efe9'}};
+function setTweak(key,val){
+  // update active button
+  document.querySelectorAll('[data-tweak="'+key+'"]').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
+  if(key==='theme'){document.body.classList.toggle('dark',val==='dark');}
+  if(key==='density'){document.body.classList.toggle('compact',val==='compact');}
+  if(key==='accent'){const a=ACCENTS[val];document.documentElement.style.setProperty('--accent',a.accent);document.documentElement.style.setProperty('--accent-soft',a.soft);}
+  if(key==='sidebar'){document.getElementById('desktop-app').classList.toggle('sidebar-collapsed',val==='collapsed');}
+  try{const s=JSON.parse(localStorage.getItem('tpa_tweaks')||'{}');s[key]=val;localStorage.setItem('tpa_tweaks',JSON.stringify(s));}catch(e){}
+}
+function loadTweaks(){try{const s=JSON.parse(localStorage.getItem('tpa_tweaks')||'{}');Object.entries(s).forEach(([k,v])=>setTweak(k,v));}catch(e){}}
+function toggleTweaks(){document.getElementById('tweaks').classList.toggle('show')}
+
+// View switch
+function setView(v){
+  document.querySelectorAll('.view-switch button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.getElementById('desktop-app').style.display = v==='desktop'?'':'none';
+  document.getElementById('mobile-view').classList.toggle('show',v==='mobile');
+}
+loadTweaks();
+</script>
+</body>
+</html>

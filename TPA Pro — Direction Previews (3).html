@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>TPA Pro — 3 design directions (preview)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#e8e4dc;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#111;-webkit-font-smoothing:antialiased;overflow:auto;padding:24px}
+.hdr{max-width:1680px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.hdr h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.hdr p{font-size:13px;color:#555;max-width:720px;line-height:1.5}
+.canvas{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1680px;margin:0 auto}
+.cell{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);display:flex;flex-direction:column;min-height:760px}
+.cell-label{padding:14px 18px;border-bottom:1px solid #e5e5e5;background:#fafafa}
+.cell-label .tag{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#888}
+.cell-label h2{font-size:15px;font-weight:800;margin-top:2px;letter-spacing:-.01em}
+.cell-label p{font-size:12px;color:#666;margin-top:4px;line-height:1.45}
+.cell-body{flex:1;overflow:hidden;position:relative}
+
+/* ============ A · Swiss Editorial ============ */
+.a{background:#f8f6f2;color:#111;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;height:100%;display:grid;grid-template-columns:180px 1fr}
+.a .sb{background:#111;color:#f8f6f2;padding:16px 14px;display:flex;flex-direction:column;gap:2px}
+.a .sb .brand{font-size:11px;font-weight:800;letter-spacing:.12em;padding-bottom:12px;border-bottom:1px solid #333;margin-bottom:10px}
+.a .sb .nav{font-size:11px;font-weight:600;color:#999;padding:7px 0;letter-spacing:.02em;border-bottom:1px solid transparent}
+.a .sb .nav.active{color:#f8f6f2;border-bottom-color:#f8f6f2}
+.a .main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.a .topbar{height:48px;border-bottom:1px solid #111;display:flex;align-items:center;padding:0 18px;gap:12px;flex:none}
+.a .topbar h1{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.a .topbar .sub{font-size:10px;color:#666;letter-spacing:.08em;text-transform:uppercase;margin-inline-start:10px}
+.a .topbar .right{margin-inline-start:auto;display:flex;gap:6px}
+.a .pill{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border:1px solid #111}
+.a .content{flex:1;overflow:hidden;padding:18px 20px}
+.a .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #111;border-bottom:1px solid #111;margin-bottom:18px}
+.a .kpi{padding:12px 10px;border-inline-end:1px solid #e5e5e5}
+.a .kpi:last-child{border-inline-end:0}
+.a .kpi .lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#666}
+.a .kpi .val{font-size:22px;font-weight:800;margin-top:4px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.a .kpi .foot{font-size:10px;color:#999;margin-top:3px}
+.a .section{margin-bottom:16px}
+.a .section h2{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:10px;display:flex;justify-content:space-between}
+.a .section h2 .num{color:#c0392b;font-size:9px}
+.a table{width:100%;border-collapse:collapse;font-size:11px}
+.a th{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#666;text-align:start;padding:8px 6px;border-bottom:1px solid #111}
+.a td{padding:9px 6px;border-bottom:1px solid #e5e5e5;font-variant-numeric:tabular-nums}
+.a .badge{display:inline-block;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:.06em;border:1px solid #111}
+.a .badge.ok{background:#111;color:#f8f6f2}
+.a .badge.warn{background:#f8f6f2;color:#111}
+
+/* ============ B · Dieter Rams industrial ============ */
+.b{background:#f4f3f0;color:#1c1c1c;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;height:100%;display:grid;grid-template-columns:200px 1fr}
+.b .sb{background:#2a2a2a;color:#f4f3f0;padding:20px 16px;display:flex;flex-direction:column;gap:4px}
+.b .sb .brand{font-size:12px;font-weight:500;letter-spacing:.02em;padding-bottom:14px;border-bottom:1px solid #444;margin-bottom:12px}
+.b .sb .nav{font-size:12px;font-weight:400;color:#bbb;padding:9px 10px;border-radius:4px;letter-spacing:.01em}
+.b .sb .nav.active{background:#f4f3f0;color:#1c1c1c;font-weight:600}
+.b .sb .nav:hover{background:#3a3a3a;color:#f4f3f0}
+.b .main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.b .topbar{height:52px;background:#fff;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:0 20px;gap:12px;flex:none}
+.b .topbar h1{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.b .topbar .sub{font-size:11px;color:#888;margin-inline-start:10px}
+.b .topbar .right{margin-inline-start:auto;display:flex;gap:8px}
+.b .btn{background:#1c1c1c;color:#f4f3f0;padding:7px 14px;font-size:11px;font-weight:600;border:none;border-radius:4px;cursor:pointer}
+.b .btn.ghost{background:transparent;color:#1c1c1c;border:1px solid #ccc}
+.b .content{flex:1;overflow:hidden;padding:20px 22px}
+.b .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.b .kpi{background:#fff;border:1px solid #e2e2e2;border-radius:6px;padding:14px 16px}
+.b .kpi .lbl{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#888}
+.b .kpi .val{font-size:24px;font-weight:600;margin-top:6px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#1c1c1c}
+.b .kpi .foot{font-size:10px;color:#999;margin-top:4px}
+.b .section{margin-bottom:16px}
+.b .section h2{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline}
+.b .section h2 .meta{font-size:10px;color:#888;font-weight:400}
+.b table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid #e2e2e2;border-radius:6px;overflow:hidden;font-size:11px}
+.b th{font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#888;text-align:start;padding:10px 12px;border-bottom:1px solid #e2e2e2;background:#fafafa}
+.b td{padding:11px 12px;border-bottom:1px solid #f0f0f0;font-variant-numeric:tabular-nums}
+.b tr:last-child td{border-bottom:0}
+.b .badge{display:inline-block;padding:2px 8px;font-size:9px;font-weight:600;border-radius:3px;background:#eee;color:#444}
+.b .badge.ok{background:#e6f4ea;color:#1e7a33}
+.b .badge.warn{background:#fef3e2;color:#a06000}
+
+/* ============ C · Bloomberg Terminal lite ============ */
+.c{background:#0a0e14;color:#d4d8e0;font-family:'JetBrains Mono','SF Mono',Consolas,monospace;height:100%;display:grid;grid-template-columns:210px 1fr}
+.c .sb{background:#05080d;border-inline-end:1px solid #1a2030;padding:14px 12px;display:flex;flex-direction:column;gap:1px}
+.c .sb .brand{font-size:11px;font-weight:700;letter-spacing:.06em;color:#f5a623;padding-bottom:10px;border-bottom:1px solid #1a2030;margin-bottom:8px}
+.c .sb .nav{font-size:11px;font-weight:500;color:#7a8294;padding:6px 8px;border-radius:2px;letter-spacing:.02em}
+.c .sb .nav.active{background:#1a2030;color:#f5a623}
+.c .sb .nav:hover{background:#131822;color:#d4d8e0}
+.c .main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.c .topbar{height:44px;background:#05080d;border-bottom:1px solid #1a2030;display:flex;align-items:center;padding:0 16px;gap:12px;flex:none}
+.c .topbar h1{font-size:14px;font-weight:700;letter-spacing:.04em;color:#f5a623}
+.c .topbar .sub{font-size:10px;color:#7a8294;letter-spacing:.06em;margin-inline-start:10px}
+.c .topbar .right{margin-inline-start:auto;display:flex;gap:6px}
+.c .pill{font-size:9px;font-weight:700;letter-spacing:.08em;padding:3px 7px;border:1px solid #2a3344;color:#7a8294}
+.c .content{flex:1;overflow:hidden;padding:14px 16px}
+.c .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.c .kpi{background:#0f141c;border:1px solid #1a2030;padding:10px 12px}
+.c .kpi .lbl{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a8294}
+.c .kpi .val{font-size:20px;font-weight:700;margin-top:4px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#f5a623}
+.c .kpi .foot{font-size:9px;color:#5a6274;margin-top:3px}
+.c .section{margin-bottom:14px}
+.c .section h2{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#f5a623;border-bottom:1px solid #1a2030;padding-bottom:4px;margin-bottom:8px;display:flex;justify-content:space-between}
+.c table{width:100%;border-collapse:collapse;font-size:10px}
+.c th{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7a8294;text-align:start;padding:6px 6px;border-bottom:1px solid #1a2030}
+.c td{padding:7px 6px;border-bottom:1px solid #131822;font-variant-numeric:tabular-nums}
+.c .badge{display:inline-block;padding:1px 6px;font-size:9px;font-weight:700;border:1px solid #2a3344;color:#7a8294}
+.c .badge.ok{background:#0f2a1a;color:#4ade80;border-color:#1f4a2a}
+.c .badge.warn{background:#2a1f0a;color:#f5a623;border-color:#4a3a1a}
+
+.sample-rows td:nth-child(2){font-weight:600}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div>
+    <h1>TPA Pro — 3 design directions</h1>
+    <p>Same dashboard content (KPIs + claims table + sidebar) rendered in three distinct schools. Pick a direction (or blend) and I'll build the full-app prototype rooted in it. Recommended: A for authority, B for all-day comfort, C for data-density.</p>
+  </div>
+</div>
+<div class="canvas">
+  <!-- A -->
+  <div class="cell">
+    <div class="cell-label">
+      <div class="tag">Direction A</div>
+      <h2>Swiss Editorial</h2>
+      <p>Pentagram / Vignelli lineage. Black on cream, hairline rules, numbered sections. Keywords: structural · monochrome · grid-disciplined · quiet.</p>
+    </div>
+    <div class="cell-body">
+      <div class="a">
+        <aside class="sb">
+          <div class="brand">TPA PRO</div>
+          <div class="nav active">01 Dashboard</div>
+          <div class="nav">02 Claims</div>
+          <div class="nav">03 Review</div>
+          <div class="nav">04 Providers</div>
+          <div class="nav">05 Reports</div>
+          <div class="nav">06 Settings</div>
+        </aside>
+        <main class="main">
+          <div class="topbar">
+            <h1>Dashboard</h1>
+            <span class="sub">Overview · 2026-11-05</span>
+            <div class="right"><span class="pill">Export</span><span class="pill">+ New</span></div>
+          </div>
+          <div class="content">
+            <div class="kpi-row">
+              <div class="kpi"><div class="lbl">Claims</div><div class="val">1,284</div><div class="foot">+12% MoM</div></div>
+              <div class="kpi"><div class="lbl">Pending</div><div class="val">342</div><div class="foot">26.6%</div></div>
+              <div class="kpi"><div class="lbl">Approved</div><div class="val">891</div><div class="foot">69.4%</div></div>
+              <div class="kpi"><div class="lbl">Rejected</div><div class="val">51</div><div class="foot">4.0%</div></div>
+            </div>
+            <div class="section">
+              <h2>Recent claims <span class="num">01</span><span class="meta">showing 6 of 1,284</span></h2>
+              <table>
+                <thead><tr><th>Claim</th><th>Patient</th><th>Provider</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody class="sample-rows">
+                  <tr><td>CLM-2041</td><td>أحمد محمد</td><td>مستشفى الملك</td><td>12,450</td><td><span class="badge ok">Approved</span></td></tr>
+                  <tr><td>CLM-2042</td><td>فاطمة علي</td><td>عيادة النور</td><td>3,200</td><td><span class="badge warn">Pending</span></td></tr>
+                  <tr><td>CLM-2043</td><td>خالد سعيد</td><td>مختبرات الأمل</td><td>8,900</td><td><span class="badge warn">Pending</span></td></tr>
+                  <tr><td>CLM-2044</td><td>نورة حسن</td><td>مستشفى الملك</td><td>22,100</td><td><span class="badge ok">Approved</span></td></tr>
+                  <tr><td>CLM-2045</td><td>عمر إبراهيم</td><td>مركز التشخيص</td><td>1,850</td><td><span class="badge warn">Pending</span></td></tr>
+                  <tr><td>CLM-2046</td><td>سارة عبدالله</td><td>عيادة النور</td><td>5,600</td><td><span class="badge ok">Approved</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+  <!-- B -->
+  <div class="cell">
+    <div class="cell-label">
+      <div class="tag">Direction B</div>
+      <h2>Dieter Rams industrial</h2>
+      <p>Braun / early Apple lineage. Functional, tactile, rounded cards, one accent used meaningfully. Keywords: functional · tactile · unobtrusive · long-lasting.</p>
+    </div>
+    <div class="cell-body">
+      <div class="b">
+        <aside class="sb">
+          <div class="brand">TPA Pro</div>
+          <div class="nav active">Dashboard</div>
+          <div class="nav">Claims</div>
+          <div class="nav">Review</div>
+          <div class="nav">Providers</div>
+          <div class="nav">Reports</div>
+          <div class="nav">Settings</div>
+        </aside>
+        <main class="main">
+          <div class="topbar">
+            <h1>Dashboard</h1>
+            <span class="sub">Overview · 05 Nov 2026</span>
+            <div class="right"><button class="btn ghost">Export</button><button class="btn">+ New</button></div>
+          </div>
+          <div class="content">
+            <div class="kpi-row">
+              <div class="kpi"><div class="lbl">Claims</div><div class="val">1,284</div><div class="foot">+12% vs last month</div></div>
+              <div class="kpi"><div class="lbl">Pending</div><div class="val">342</div><div class="foot">26.6% of total</div></div>
+              <div class="kpi"><div class="lbl">Approved</div><div class="val">891</div><div class="foot">69.4% of total</div></div>
+              <div class="kpi"><div class="lbl">Rejected</div><div class="val">51</div><div class="foot">4.0% of total</div></div>
+            </div>
+            <div class="section">
+              <h2>Recent claims <span class="meta">6 of 1,284</span></h2>
+              <table>
+                <thead><tr><th>Claim</th><th>Patient</th><th>Provider</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>CLM-2041</td><td>أحمد محمد</td><td>مستشفى الملك</td><td>12,450</td><td><span class="badge ok">Approved</span></td></tr>
+                  <tr><td>CLM-2042</td><td>فاطمة علي</td><td>عيادة النور</td><td>3,200</td><td><span class="badge warn">Pending</span></td></tr>
+                  <tr><td>CLM-2043</td><td>خالد سعيد</td><td>مختبرات الأمل</td><td>8,900</td><td><span class="badge warn">Pending</span></td></tr>
+                  <tr><td>CLM-2044</td><td>نورة حسن</td><td>مستشفى الملك</td><td>22,100</td><td><span class="badge ok">Approved</span></td></tr>
+                  <tr><td>CLM-2045</td><td>عمر إبراهيم</td><td>مركز التشخيص</td><td>1,850</td><td><span class="badge warn">Pending</span></td></tr>
+                  <tr><td>CLM-2046</td><td>سارة عبدالله</td><td>عيادة النور</td><td>5,600</td><td><span class="badge ok">Approved</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+  <!-- C -->
+  <div class="cell">
+    <div class="cell-label">
+      <div class="tag">Direction C</div>
+      <h2>Bloomberg Terminal lite</h2>
+      <p>Bloomberg / Palantir lineage. Dark console, monospace numerals, amber accent, dense. Keywords: raw · dense · monospace · terminal.</p>
+    </div>
+    <div class="cell-body">
+      <div class="c">
+        <aside class="sb">
+          <div class="brand">TPA PRO v1.0</div>
+          <div class="nav active">01 DASH</div>
+          <div class="nav">02 CLAIMS</div>
+          <div class="nav">03 REVIEW</div>
+          <div class="nav">04 PROV</div>
+          <div class="nav">05 REPORTS</div>
+          <div class="nav">06 SETTINGS</div>
+        </aside>
+        <main class="main">
+          <div class="topbar">
+            <h1>DASHBOARD</h1>
+            <span class="sub">OVERVIEW · 2026-11-05 09:42</span>
+            <div class="right"><span class="pill">EXPORT</span><span class="pill">+ NEW</span></div>
+          </div>
+          <div class="content">
+            <div class="kpi-row">
+              <div class="kpi"><div class="lbl">CLAIMS</div><div class="val">1,284</div><div class="foot">+12.0% MOM</div></div>
+              <div class="kpi"><div class="lbl">PENDING</div><div class="val">342</div><div class="foot">26.6%</div></div>
+              <div class="kpi"><div class="lbl">APPROVED</div><div class="val">891</div><div class="foot">69.4%</div></div>
+              <div class="kpi"><div class="lbl">REJECTED</div><div class="val">51</div><div class="foot">4.0%</div></div>
+            </div>
+            <div class="section">
+              <h2>RECENT CLAIMS <span>6 / 1,284</span></h2>
+              <table>
+                <thead><tr><th>CLAIM</th><th>PATIENT</th><th>PROVIDER</th><th>AMOUNT</th><th>STATUS</th></tr></thead>
+                <tbody>
+                  <tr><td>CLM-2041</td><td>أحمد محمد</td><td>مستشفى الملك</td><td>12,450</td><td><span class="badge ok">APPROVED</span></td></tr>
+                  <tr><td>CLM-2042</td><td>فاطمة علي</td><td>عيادة النور</td><td>3,200</td><td><span class="badge warn">PENDING</span></td></tr>
+                  <tr><td>CLM-2043</td><td>خالد سعيد</td><td>مختبرات الأمل</td><td>8,900</td><td><span class="badge warn">PENDING</span></td></tr>
+                  <tr><td>CLM-2044</td><td>نورة حسن</td><td>مستشفى الملك</td><td>22,100</td><td><span class="badge ok">APPROVED</span></td></tr>
+                  <tr><td>CLM-2045</td><td>عمر إبراهيم</td><td>مركز التش診断</td><td>1,850</td><td><span class="badge warn">PENDING</span></td></tr>
+                  <tr><td>CLM-2046</td><td>سارة عبدالله</td><td>عيادة النور</td><td>5,600</td><td><span class="badge ok">APPROVED</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
