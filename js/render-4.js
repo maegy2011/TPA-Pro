@@ -19,7 +19,7 @@ function renderReports(){
     <div class="kpi k3"><div class="kpi-top"><div><div class="kpi-label">الاستقطاع</div><div class="kpi-val">${fmt(s.deduction)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('money')}</div></div><div class="kpi-foot">فروقات</div></div>
     <div class="kpi k4"><div class="kpi-top"><div><div class="kpi-label">مخالفة</div><div class="kpi-val">${fmt(vTotal)} <small>ج.م</small></div></div><div class="kpi-ico">${kpiIcon('shield')}</div></div><div class="kpi-foot">سقف + تحمل</div></div>`;
   const total = s.total || 1;
-  const statusData = [{label:'معتمدة',n:s.approvedN,color:'#059669'},{label:'جزئياً',n:s.partialN,color:'#2563EB'},{label:'قيد',n:s.pending,color:'#D97706'},{label:'مرفوضة',n:s.rejectedN,color:'#DC2626'}];
+  const statusData = [{label:'معتمدة',n:s.approvedN,color:'#2e7d4f'},{label:'جزئياً',n:s.partialN,color:'#2b5a8a'},{label:'قيد',n:s.pending,color:'#a06a00'},{label:'مرفوضة',n:s.rejectedN,color:'#b33a2b'}];
   $('#statusBars').innerHTML = statusData.map(i => `<div class="bar-row"><div class="bar-top"><span>${i.label}</span><b>${i.n} مطالبة</b></div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(3,i.n/total*100)}%;background:${i.color}"></div></div></div>`).join('');
   $('#summaryList').innerHTML = `
     <div class="info-row"><span class="k">المطالبات</span><span class="v">${s.total}</span></div>

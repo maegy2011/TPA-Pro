@@ -3,8 +3,8 @@
   // Light indicator for the patient currently under review
   const style = document.createElement('style');
   style.textContent = `
-    .rv-patient-details.rv-patient-reviewing { box-shadow: 0 0 0 2px var(--teal, #0d9488); border-radius: 10px; background: rgba(13,148,136,0.06); }
-    .rv-patient-seq { display:inline-block; min-width:22px; text-align:center; border-radius:6px; background:rgba(13,148,136,0.12); padding:0 4px; font-size:11px; }
+    .rv-patient-details.rv-patient-reviewing { box-shadow: 0 0 0 2px var(--teal); border-radius: 6px; background: rgba(43,90,138,0.06); }
+    .rv-patient-seq { display:inline-block; min-width:22px; text-align:center; border-radius:6px; background:rgba(43,90,138,0.12); padding:0 4px; font-size:11px; }
   `;
   document.head.appendChild(style);
 

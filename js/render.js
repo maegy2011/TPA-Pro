@@ -55,7 +55,7 @@ function renderDonut(){
   setTimeout(() => { $('#donutArc').setAttribute('stroke-dasharray', `${arc} ${C}`); }, 120);
   $('#donutPct').textContent = pct.toFixed(1)+'%';
   const total = s.total || 1;
-  const items = [{label:'معتمدة',n:s.approvedN,color:'#059669'},{label:'جزئية',n:s.partialN,color:'#2563EB'},{label:'قيد',n:s.pending,color:'#D97706'},{label:'مرفوضة',n:s.rejectedN,color:'#DC2626'}];
+  const items = [{label:'معتمدة',n:s.approvedN,color:'#2e7d4f'},{label:'جزئية',n:s.partialN,color:'#2b5a8a'},{label:'قيد',n:s.pending,color:'#a06a00'},{label:'مرفوضة',n:s.rejectedN,color:'#b33a2b'}];
   $('#legendBox').innerHTML = items.map(i => `<div class="legend-row"><span class="sw" style="background:${i.color}"></span><span class="lbl">${i.label}</span><span class="val">${i.n} (${Math.round(i.n/total*100)}%)</span></div>`).join('');
 }
 function renderReasonBars(sel){

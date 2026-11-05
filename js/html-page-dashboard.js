@@ -20,7 +20,7 @@ const PAGE_DASHBOARD = `
         </div>
         <div class="panel"><div class="panel-head"><div><h2 data-i18n="dash.deductionRate">نسبة الاستقطاع</h2><p data-i18n="dash.totalDiffs">إجمالي الفروقات</p></div></div>
           <div class="panel-body"><div class="donut-wrap"><div class="donut">
-            <svg width="170" height="170" viewBox="0 0 170 170"><circle cx="85" cy="85" r="66" fill="none" stroke="#F1F5F9" stroke-width="16"/><circle id="donutArc" cx="85" cy="85" r="66" fill="none" stroke="url(#g1)" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 415" style="transition:stroke-dasharray 1s"/><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#14A3A1"/><stop offset="100%" stop-color="#C8A24A"/></linearGradient></defs></svg>
+            <svg width="170" height="170" viewBox="0 0 170 170"><circle cx="85" cy="85" r="66" fill="none" stroke="#f6f3ec" stroke-width="16"/><circle id="donutArc" cx="85" cy="85" r="66" fill="none" stroke="url(#g1)" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 415" style="transition:stroke-dasharray 1s"/><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3a7ab0"/><stop offset="100%" stop-color="#a06a00"/></linearGradient></defs></svg>
             <div class="donut-center"><b id="donutPct">0%</b><span data-i18n="dash.claimsCount">من المطالبات</span></div>
           </div></div><div class="legend" id="legendBox"></div></div>
         </div>

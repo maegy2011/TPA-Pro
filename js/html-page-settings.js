@@ -32,7 +32,7 @@ const PAGE_SETTINGS = `
       <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg><div><h2>إدارة البيانات</h2><p>مسح كل البيانات المحفوظة محلياً</p></div></div></div>
         <div class="panel-body"><div class="info-list">
           <div class="info-row"><div style="flex:1"><div class="k">مسح كل البيانات</div><div style="font-size:11px;color:var(--muted);margin-top:4px">حذف كل البيانات المحفوظة محلياً</div></div>
-            <button class="btn-sm ghost" id="resetAllDataBtn" style="flex:0 0 auto;color:var(--bad);border-color:#FECACA">مسح</button></div>
+            <button class="btn-sm ghost" id="resetAllDataBtn" style="flex:0 0 auto;color:var(--bad);border-color:#f3e4e1">مسح</button></div>
         </div></div>
       </div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V-8z"/><path d="M14 2v6h6"/></svg><div><h2>ملفات القرص (بلا سيرفر)</h2><p>كل مطالبة ملف حقيقي + .bak + بصمة</p></div></div></div>
@@ -40,7 +40,7 @@ const PAGE_SETTINGS = `
       </div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><div style="display:flex;align-items:center;gap:10px"><svg class="panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><div><h2>النسخ الاحتياطي والاستعادة</h2><p>كامل البيانات + الإعدادات + الجلسات</p></div></div></div>
         <div class="panel-body">
-          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:11px 14px;font-size:12px;color:#475569;line-height:1.9;margin-bottom:14px">
+          <div style="background:#efeae0;border:1px solid #d9d3c7;border-radius:6px;padding:11px 14px;font-size:12px;color:#6b655a;line-height:1.9;margin-bottom:14px">
             <b style="color:var(--navy)">الحالة:</b>
             <span id="backupStats">—</span>
           </div>
@@ -56,8 +56,8 @@ const PAGE_SETTINGS = `
               <input type="file" id="importBackupFile" accept=".json,application/json" style="display:none">
             </div>
           </div>
-          <div class="alert-banner show" style="margin-top:16px;margin-bottom:0;background:#FEF3C7;border-color:#FCD34D;color:#92400E;font-size:12px;padding:11px 14px;display:flex">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;stroke:#D97706;flex:none"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <div class="alert-banner show" style="margin-top:16px;margin-bottom:0;background:#f4ecdc;border-color:#a06a00;color:#a06a00;font-size:12px;padding:11px 14px;display:flex">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;stroke:#a06a00;flex:none"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
             <span style="line-height:1.6">تذكير: سيُطلب إنشاء نسخة احتياطية عند تسجيل الخروج.</span>
           </div>
         </div>

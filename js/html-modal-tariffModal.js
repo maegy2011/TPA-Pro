@@ -13,7 +13,7 @@ const MODAL_TARIFF = `
           </div>
           <div class="tf-panel active" data-tf-panel="basic">
             <div class="form-grid">
-              <div class="fg full"><label>اسم اللائحة <span style="color:var(--bad,#DC2626)">*</span></label><input id="tfName" placeholder="مثال: لائحة 2026"><div class="hint">الاسم كما يظهر في التقارير</div></div>
+              <div class="fg full"><label>اسم اللائحة <span style="color:var(--bad,#b33a2b)">*</span></label><input id="tfName" placeholder="مثال: لائحة 2026"><div class="hint">الاسم كما يظهر في التقارير</div></div>
               <div class="fg"><label>النوع</label><select id="tfType"><option value="general">عامة</option><option value="private">خاصة</option><option value="supplementary">مكملة</option></select></div>
               <div class="fg"><label>الحالة</label><select id="tfStatus"><option value="active">نشطة</option><option value="disabled">معطلة</option></select></div>
               <div class="fg"><label>السريان *</label><input id="tfEffective" type="date"></div>
@@ -28,7 +28,7 @@ const MODAL_TARIFF = `
               <button type="button" class="btn-xs" id="tfSelectVisible">تحديد الظاهر</button>
               <button type="button" class="btn-xs" id="tfClearVisible">إلغاء الظاهر</button>
             </div>
-            <div id="tfServicesChecklist" style="max-height:260px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
+            <div id="tfServicesChecklist" style="max-height:260px;overflow:auto;border:1px solid var(--line,#d9d3c7);border-radius:6px;padding:6px"></div>
           </div>
           <div class="tf-panel" data-tf-panel="links">
             <div class="link-list" id="linkContractsList"></div>

@@ -16,7 +16,7 @@ const MODAL_SERVICE = `
           <div class="fg"><label>الحالي *</label><input id="svcCurrentPrice" type="number" min="0" step="1"></div>
           <div class="fg full"><button type="button" class="btn-apply out" id="svcSyncBtn" style="width:100%;justify-content:center">احسب من النسبة</button></div>
           <div class="fg full"><label class="check-row"><input type="checkbox" id="svcCovered" checked> مغطاة</label></div>
-          <div class="fg full"><label class="check-row" style="background:#FEF3C7;border-color:#FCD34D"><input type="checkbox" id="svcRequiresPriorApproval"><span style="color:#92400E">⚠ تتطلب موافقة</span></label></div>
+          <div class="fg full"><label class="check-row" style="background:#f4ecdc;border-color:#a06a00"><input type="checkbox" id="svcRequiresPriorApproval"><span style="color:#a06a00">⚠ تتطلب موافقة</span></label></div>
           <div class="fg full"><div id="svcImpact" style="font-size:12px;color:var(--muted)"></div></div>
         </div></div>
         <div class="modal-foot"><button class="btn solid" id="saveService" data-i18n="common.save">حفظ</button><button class="btn out" data-close-service data-i18n="common.cancel">إلغاء</button></div>

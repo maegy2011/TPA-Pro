@@ -328,9 +328,9 @@ function updateComputedPreview() {
 
   if (isManual) {
     box.className = 'ln-source-result show';
-    box.style.background = '#FEF2F2';
-    box.style.borderColor = '#FECACA';
-    box.style.color = '#B91C1C';
+    box.style.background = '#f3e4e1';
+    box.style.borderColor = '#f3e4e1';
+    box.style.color = '#b33a2b';
     box.innerHTML = `⛔ <b>غير مدرجة في اللائحة</b> — المعتمد: <b>0</b> (رفض تلقائي)`;
     return;
   }
@@ -346,9 +346,9 @@ function updateComputedPreview() {
 
   if (!covered) {
     box.className = 'ln-source-result show';
-    box.style.background = '#FEF2F2';
-    box.style.borderColor = '#FECACA';
-    box.style.color = '#B91C1C';
+    box.style.background = '#f3e4e1';
+    box.style.borderColor = '#f3e4e1';
+    box.style.color = '#b33a2b';
     box.innerHTML = `⛔ <b>غير مغطاة بالعقد</b> — المعتمد: <b>0</b>`;
     return;
   }
@@ -359,14 +359,14 @@ function updateComputedPreview() {
   box.style.color = '';
 
   const exceeds = billed > tariffTotal + 0.01;
-  const exceedsBadge = exceeds ? ' · <span style="color:#B45309;font-weight:800">تجاوز اللائحة</span>' : '';
+  const exceedsBadge = exceeds ? ' · <span style="color:#a06a00;font-weight:800">تجاوز اللائحة</span>' : '';
 
   box.innerHTML = `
     فاتورة <b>${fmt(billed)}</b>
     · لائحة <b>${fmt(tariffTotal)}</b>
     · الأقل <b>${fmt(lesser)}</b>
     · خصم ${rate}%${exceedsBadge}
-    → المعتمد <b style="color:#047857;font-size:14px">${fmt(after)}</b>
+    → المعتمد <b style="color:#2e7d4f;font-size:14px">${fmt(after)}</b>
   `;
 }
 

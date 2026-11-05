@@ -210,7 +210,7 @@ function renderServices(){
     <td class="mono">${escapeHtml(s.code)}</td>
     <td>${escapeHtml(s.name)}${s.nameEn?`<div style="font-size:11px;color:var(--muted);direction:ltr;text-align:right">${escapeHtml(s.nameEn)}</div>`:''}</td>
     <td>${escapeHtml(s.category||'—')}</td>
-    <td><a href="#" data-goto-tariff="${escapeHtml(s.tariffId)}" style="color:var(--link,#2563EB)">${escapeHtml(s.tariff)}</a></td>
+    <td><a href="#" data-goto-tariff="${escapeHtml(s.tariffId)}" style="color:var(--link,#2b5a8a)">${escapeHtml(s.tariff)}</a></td>
     <td class="mono">${escapeHtml(s.effectiveDate||'—')}</td>
     <td class="mono">${escapeHtml(s.expiryDate||'مفتوح')}</td>
     <td class="mono">${s.versionCount}</td>

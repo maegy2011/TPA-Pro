@@ -1,6 +1,6 @@
 // export.js — وحدة من تطبيق TPA Pro (مراجعة مالية للمطالبات الطبية)
 const EXPORT_BRAND = { name: appSettings.company.brand, sub: appSettings.company.tagline, version: appSettings.company.version };
-const EXPORT_COLORS = { navy:'#0B2545', teal:'#0E7C7B', gold:'#C8A24A' };
+const EXPORT_COLORS = { navy:'#1a1d23', teal:'#2b5a8a', gold:'#a06a00' };
 function getExportDocStyles(){
   return `
     @page { size: A4 landscape; margin: 10mm; }
@@ -8,23 +8,23 @@ function getExportDocStyles(){
     body { font-family: 'Tajawal','Segoe UI',Tahoma,Arial,sans-serif; direction: rtl; padding: 20px; margin: 0; color: ${EXPORT_COLORS.navy}; background: #fff; font-size: 11px; line-height: 1.5; }
     .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid ${EXPORT_COLORS.teal}; padding-bottom: 12px; margin-bottom: 20px; }
     .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-icon { width: 52px; height: 52px; background: linear-gradient(135deg, ${EXPORT_COLORS.navy}, #1E4E86); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon { width: 52px; height: 52px; background: linear-gradient(135deg, ${EXPORT_COLORS.navy}, #2b5a8a); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
     .logo-icon svg { width: 30px; height: 30px; }
     .brand-name { font-size: 22px; font-weight: 800; color: ${EXPORT_COLORS.navy}; letter-spacing: -.5px; }
-    .brand-sub { font-size: 11px; color: #64748B; margin-top: 2px; }
-    .doc-info { text-align: left; font-size: 10.5px; color: #64748B; line-height: 1.7; }
+    .brand-sub { font-size: 11px; color: #6b655a; margin-top: 2px; }
+    .doc-info { text-align: left; font-size: 10.5px; color: #6b655a; line-height: 1.7; }
     .doc-info strong { color: ${EXPORT_COLORS.navy}; }
     .doc-title { font-size: 19px; font-weight: 800; color: ${EXPORT_COLORS.navy}; margin: 8px 0 4px; padding-right: 12px; border-right: 4px solid ${EXPORT_COLORS.teal}; }
-    .doc-sub { font-size: 12px; color: #64748B; margin-bottom: 18px; padding-right: 16px; }
+    .doc-sub { font-size: 12px; color: #6b655a; margin-bottom: 18px; padding-right: 16px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
-    .kpi-box { border: 1px solid #E2E8F0; padding: 12px 14px; border-radius: 8px; background: #FAFBFC; }
-    .kpi-label { font-size: 10px; color: #64748B; margin-bottom: 5px; font-weight: 600; }
+    .kpi-box { border: 1px solid #d9d3c7; padding: 12px 14px; border-radius: 6px; background: #f6f3ec; }
+    .kpi-label { font-size: 10px; color: #6b655a; margin-bottom: 5px; font-weight: 600; }
     .kpi-value { font-size: 16px; font-weight: 800; color: ${EXPORT_COLORS.navy}; font-variant-numeric: tabular-nums; }
     table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 16px; }
     th { background: ${EXPORT_COLORS.navy}; color: #fff; padding: 10px 8px; text-align: right; font-weight: 700; font-size: 10.5px; white-space: nowrap; border: 1px solid ${EXPORT_COLORS.navy}; }
-    td { padding: 8px; border: 1px solid #E2E8F0; color: #0F172A; vertical-align: top; }
-    tr:nth-child(even) td { background: #FAFBFC; }
-    .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #E2E8F0; font-size: 9.5px; color: #64748B; display: flex; justify-content: space-between; }
+    td { padding: 8px; border: 1px solid #d9d3c7; color: #1a1d23; vertical-align: top; }
+    tr:nth-child(even) td { background: #f6f3ec; }
+    .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #d9d3c7; font-size: 9.5px; color: #6b655a; display: flex; justify-content: space-between; }
     @media print { body { padding: 0; } .no-print { display: none !important; } }
   `;
 }
@@ -35,12 +35,12 @@ function buildExportHTML(data){
   const generatedAt = `${dateStr} - ${timeStr}`;
   const esc = v => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   const kpiHTML = data.kpis && data.kpis.length ? `<div class="kpi-grid">${data.kpis.map(k=>`<div class="kpi-box"><div class="kpi-label">${esc(k.label)}</div><div class="kpi-value">${esc(k.value)}</div></div>`).join('')}</div>` : '';
-  const tableHTML = data.columns && data.rows && data.rows.length ? `<table><thead><tr>${data.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${data.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p style="text-align:center;color:#64748B;padding:20px">لا بيانات</p>';
+  const tableHTML = data.columns && data.rows && data.rows.length ? `<table><thead><tr>${data.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${data.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p style="text-align:center;color:#6b655a;padding:20px">لا بيانات</p>';
   return `
     <!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>${esc(data.title)}</title>
     <style>${getExportDocStyles()}</style></head><body>
     <div class="header"><div class="logo"><div class="logo-icon">
-      <svg viewBox="0 0 48 48" fill="none"><path d="M24 4 L42 11 V24 C42 34.5 34 42.5 24 45.5 C14 42.5 6 34.5 6 24 V11 Z" fill="rgba(255,255,255,.1)" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 24 L21.5 29.5 L33 18" stroke="#C8A24A" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 48 48" fill="none"><path d="M24 4 L42 11 V24 C42 34.5 34 42.5 24 45.5 C14 42.5 6 34.5 6 24 V11 Z" fill="rgba(255,255,255,.1)" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 24 L21.5 29.5 L33 18" stroke="#a06a00" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div><div><div class="brand-name">${esc(EXPORT_BRAND.name)}</div><div class="brand-sub">${esc(EXPORT_BRAND.sub)} — ${esc(EXPORT_BRAND.version)}</div></div></div>
       <div class="doc-info"><div>الإنشاء: <strong>${generatedAt}</strong></div><div>المستخدم: <strong>${esc(appSettings.reviewer.name)}</strong></div><div>التقرير: <strong>${esc(data.title)}</strong></div></div></div>
     <div class="doc-title">${esc(data.title)}</div>

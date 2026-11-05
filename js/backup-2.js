@@ -10,18 +10,18 @@ function confirmFullImport(parsed){
   openDialog({
     type:'warning', title:'استيراد كامل', message:'سيتم استبدال كل البيانات.',
     body: `
-      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12.5px;line-height:2;text-align:right">
+      <div style="background:#efeae0;border:1px solid #d9d3c7;border-radius:6px;padding:12px 16px;font-size:12.5px;line-height:2;text-align:right">
         <div><b>التاريخ:</b> ${escapeHtml(dateStr)}</div>
         <div><b>البيانات:</b> ${(d.claims||[]).length} مطالبة · ${(d.providers||[]).length} جهة · ${(d.contracts||[]).length} عقد · ${(d.tariffs||[]).length} لائحة</div>
         ${hasS?`<div style="color:var(--teal)"><b>✓ الإعدادات:</b> ${escapeHtml(s.reviewer?.name||'—')} — ${escapeHtml(s.company?.brand||'—')}</div>`:''}
         ${hasWS?`<div style="color:var(--info)"><b>✓ جلسات:</b> ${d.workSessions.length}${stale>0?` — <span style="color:var(--bad)">${stale} مفقودة</span>`:''}</div>`:''}
         ${hasSess?`<div style="color:var(--info)"><b>✓ حالة صفحة:</b> ${parsed.session?.currentPage||'—'}</div>`:''}
       </div>
-      ${hasSess?`<label class="check-row" style="margin-top:10px;font-size:12px;background:#EFF6FF;border-color:#BFDBFE"><input type="checkbox" id="chkRSess" checked><span style="color:#1D4ED8;font-weight:700">حالة الصفحة</span></label>`:''}
-      ${hasWS?`<label class="check-row" style="margin-top:6px;font-size:12px;background:#EFF6FF;border-color:#BFDBFE"><input type="checkbox" id="chkRWS" checked><span style="color:#1D4ED8;font-weight:700">جلسات (${d.workSessions.length})</span></label>
-      <label class="check-row" style="margin-top:6px;font-size:12px;background:#F5F3FF;border-color:#DDD6FE"><input type="checkbox" id="chkRPtr" checked><span style="color:#6D28D9;font-weight:700">مؤشر الجلسة</span></label>
-      ${rec>0?`<label class="check-row" style="margin-top:6px;font-size:12px;background:#FEF2F2;border-color:#FECACA"><input type="checkbox" id="chkRRec" checked><span style="color:#B91C1C;font-weight:700">استرداد ${rec}</span></label>`:''}`:''}
-      <div style="margin-top:12px;font-size:11.5px;color:#92400E;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:10px 12px;line-height:1.7">⚠️ سيتم حذف البيانات الحالية.</div>`,
+      ${hasSess?`<label class="check-row" style="margin-top:10px;font-size:12px;background:#e4ecf4;border-color:#e4ecf4"><input type="checkbox" id="chkRSess" checked><span style="color:#2b5a8a;font-weight:700">حالة الصفحة</span></label>`:''}
+      ${hasWS?`<label class="check-row" style="margin-top:6px;font-size:12px;background:#e4ecf4;border-color:#e4ecf4"><input type="checkbox" id="chkRWS" checked><span style="color:#2b5a8a;font-weight:700">جلسات (${d.workSessions.length})</span></label>
+      <label class="check-row" style="margin-top:6px;font-size:12px;background:#f6f3ec;border-color:#e6e0d4"><input type="checkbox" id="chkRPtr" checked><span style="color:#6b5b95;font-weight:700">مؤشر الجلسة</span></label>
+      ${rec>0?`<label class="check-row" style="margin-top:6px;font-size:12px;background:#f3e4e1;border-color:#f3e4e1"><input type="checkbox" id="chkRRec" checked><span style="color:#b33a2b;font-weight:700">استرداد ${rec}</span></label>`:''}`:''}
+      <div style="margin-top:12px;font-size:11.5px;color:#a06a00;background:#f4ecdc;border:1px solid #a06a00;border-radius:6px;padding:10px 12px;line-height:1.7">⚠️ سيتم حذف البيانات الحالية.</div>`,
     confirmText:'استيراد', cancelText:'إلغاء',
     onConfirm: () => applyFullBackup(parsed, {
       restoreSess: !!document.getElementById('chkRSess')?.checked,
@@ -141,7 +141,7 @@ function confirmSettingsImport(parsed){
   const s = parsed.settings || {};
   openDialog({
     type:'warning', title:'استيراد الإعدادات', message:'سيتم استبدال الهوية والقواعد.',
-    body: `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12.5px;line-height:2;text-align:right"><div><b>المراجع:</b> ${escapeHtml(s.reviewer?.name||'—')}</div><div><b>الشركة:</b> ${escapeHtml(s.company?.name||'—')}</div><div><b>قواعد:</b> ${(s.deductionRules||[]).length}</div><div><b>إجراءات:</b> ${(s.paProcedures||[]).length}</div></div>`,
+    body: `<div style="background:#efeae0;border:1px solid #d9d3c7;border-radius:6px;padding:12px 16px;font-size:12.5px;line-height:2;text-align:right"><div><b>المراجع:</b> ${escapeHtml(s.reviewer?.name||'—')}</div><div><b>الشركة:</b> ${escapeHtml(s.company?.name||'—')}</div><div><b>قواعد:</b> ${(s.deductionRules||[]).length}</div><div><b>إجراءات:</b> ${(s.paProcedures||[]).length}</div></div>`,
     confirmText:'استيراد', cancelText:'إلغاء', onConfirm: () => applySettingsImport(parsed)
   });
 }
@@ -166,17 +166,17 @@ function confirmSessionsImport(parsed){
   openDialog({
     type:'warning', title:'استيراد جلسات', message:'اختر الطريقة',
     body: `
-      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12.5px;line-height:2;text-align:right;margin-bottom:12px">
+      <div style="background:#efeae0;border:1px solid #d9d3c7;border-radius:6px;padding:12px 16px;font-size:12.5px;line-height:2;text-align:right;margin-bottom:12px">
         <div><b>عدد:</b> ${list.length}</div>
         ${stale>0?`<div style="color:var(--bad)"><b>⚠ مفقودة:</b> ${stale}${rec>0?` (${rec} قابلة)`:''}</div>`:''}
         <div style="color:var(--muted);font-size:11px;margin-top:4px">الحالية: ${workSessions.length}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <label class="check-row" style="font-size:12px;background:#ECFDF5;border-color:#A7F3D0"><input type="radio" name="sessMode" value="merge" checked><span style="color:#047857;font-weight:800">دمج</span></label>
-        <label class="check-row" style="font-size:12px;background:#FEF2F2;border-color:#FECACA"><input type="radio" name="sessMode" value="replace"><span style="color:#B91C1C;font-weight:800">استبدال</span></label>
+        <label class="check-row" style="font-size:12px;background:#e3efe7;border-color:#2e7d4f"><input type="radio" name="sessMode" value="merge" checked><span style="color:#2e7d4f;font-weight:800">دمج</span></label>
+        <label class="check-row" style="font-size:12px;background:#f3e4e1;border-color:#f3e4e1"><input type="radio" name="sessMode" value="replace"><span style="color:#b33a2b;font-weight:800">استبدال</span></label>
       </div>
-      ${rec>0?`<label class="check-row" style="margin-top:10px;font-size:12px;background:#EFF6FF;border-color:#BFDBFE"><input type="checkbox" id="chkSRec" checked><span style="color:#1D4ED8;font-weight:700">استرداد ${rec}</span></label>`:''}
-      <label class="check-row" style="margin-top:6px;font-size:12px;background:#F5F3FF;border-color:#DDD6FE"><input type="checkbox" id="chkSPtr" checked><span style="color:#6D28D9;font-weight:700">مؤشر</span></label>`,
+      ${rec>0?`<label class="check-row" style="margin-top:10px;font-size:12px;background:#e4ecf4;border-color:#e4ecf4"><input type="checkbox" id="chkSRec" checked><span style="color:#2b5a8a;font-weight:700">استرداد ${rec}</span></label>`:''}
+      <label class="check-row" style="margin-top:6px;font-size:12px;background:#f6f3ec;border-color:#e6e0d4"><input type="checkbox" id="chkSPtr" checked><span style="color:#6b5b95;font-weight:700">مؤشر</span></label>`,
     confirmText:'استيراد', cancelText:'إلغاء',
     onConfirm: () => {
       const mode = document.querySelector('input[name="sessMode"]:checked')?.value || 'merge';

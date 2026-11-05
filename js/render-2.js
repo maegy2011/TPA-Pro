@@ -101,7 +101,7 @@ function renderView(){
         return `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)">
           <div style="font-size:11.5px;font-weight:800;color:var(--navy);margin-bottom:6px">👤 ${escapeHtml(p.name)}${p.beneficiaryType==='retiree'?' <span class="badge retiree sm">متقاعد</span>':''}</div>
           ${(p.lines||[]).map(l => `<div class="view-line"><span class="mono" style="color:var(--navy-400);font-weight:700;min-width:70px">${escapeHtml(l.code)}</span><span style="flex:1">${escapeHtml(l.name)}</span><span class="mono" style="color:var(--muted)">${l.qty}×</span><span class="mono">${fmt(l.qty*l.billedUnit)}</span><span class="mono" style="color:var(--ok);font-weight:800;min-width:70px;text-align:left">${fmt(Number(l.approved)||0)}</span></div>`).join('')}
-          <div style="display:flex;gap:10px;font-size:11px;font-weight:700;padding:6px 8px;background:#EFF6F6;border-radius:7px;margin-top:6px;flex-wrap:wrap">
+          <div style="display:flex;gap:10px;font-size:11px;font-weight:700;padding:6px 8px;background:#e4ecf4;border-radius:6px;margin-top:6px;flex-wrap:wrap">
             <span>إجمالي: <b>${fmtC(p._subtotal)}</b></span>
             ${p._capAmt?`<span style="color:var(--bad)">سقف: ${fmtC(p._capAmt)}</span>`:''}
             ${p._copayAmt?`<span style="color:var(--warn)">تحمل: ${fmtC(p._copayAmt)}</span>`:''}

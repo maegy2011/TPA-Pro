@@ -15,7 +15,7 @@ const PAGE_CLAIMS = `
           <button class="chip" data-filter="rejected">مرفوضة</button>
           <button class="chip" data-filter="pa-required">⚠ تحتاج موافقة</button>
         </div>
-        <select id="claimsSort" class="sort-select" title="فرز المطالبات" style="height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;padding:0 12px;font-size:13px;font-weight:600">
+        <select id="claimsSort" class="sort-select" title="فرز المطالبات" style="height:44px;border-radius:6px;border:1.5px solid var(--line);background:#fff;padding:0 12px;font-size:13px;font-weight:600">
           <option value="default">الترتيب الافتراضي</option>
           <option value="date-desc">الأحدث واردًا</option>
           <option value="date-asc">الأقدم واردًا</option>
@@ -31,7 +31,7 @@ const PAGE_CLAIMS = `
       </div>
       <div class="bulk-bar" id="claimsBulkBar" style="margin-bottom:12px">
         <span>تم تحديد <b id="claimsBulkCount">0</b> مطالبة</span>
-        <button type="button" id="claimsBulkReview" style="background:#EFF6F6;color:var(--teal);border-color:#C7E9E8">مراجعة الأولى</button>
+        <button type="button" id="claimsBulkReview" style="background:#e4ecf4;color:var(--teal);border-color:#e4ecf4">مراجعة الأولى</button>
         <button type="button" id="claimsBulkDelete" data-i18n="common.delete">حذف</button>
         <button type="button" class="restore-btn" id="claimsBulkClear" data-i18n="common.cancel">إلغاء</button>
       </div>

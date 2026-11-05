@@ -8,7 +8,7 @@ const MODAL_PROVIDER = `
         <div class="modal-body">
           <div class="rv-section-title">بيانات الجهة</div>
           <div class="form-grid">
-            <div class="fg full"><label>اسم الجهة <span style="color:var(--bad,#DC2626)">*</span></label><input id="pvName" required><div class="hint">اسم الجهة كما يظهر في المطالبات</div></div>
+            <div class="fg full"><label>اسم الجهة <span style="color:var(--bad,#b33a2b)">*</span></label><input id="pvName" required><div class="hint">اسم الجهة كما يظهر في المطالبات</div></div>
             <div class="fg"><label>كود الجهة</label><input id="pvCode" readonly><div class="hint">رقم فريد يُولد تلقائيًا</div></div>
             <div class="fg"><label>النوع</label><select id="pvType"><option>مستشفى</option><option>معمل تحاليل</option><option>مركز أشعة</option><option>صيدلية</option></select></div>
           </div>
@@ -20,7 +20,7 @@ const MODAL_PROVIDER = `
                 <button type="button" class="btn-xs" id="pvSelectVisible">تحديد الظاهر</button>
                 <button type="button" class="btn-xs" id="pvClearVisible">إلغاء الظاهر</button>
               </div>
-              <div id="pvProvinceList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
+              <div id="pvProvinceList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#d9d3c7);border-radius:6px;padding:6px"></div>
             </div>
           </div>
           <div class="rv-section-title">التواصل</div>

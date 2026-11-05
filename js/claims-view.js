@@ -314,8 +314,8 @@ function renderExceptions(){
     const rate = ln._contractRate || 0;
     const after = ln._contractCovered ? Math.round(lesser*(1-rate/100)) : 0;
     const sev = (ln._checksFailed||[]).some(r => isRejectReason(r)) ? 'reject' : 'attention';
-    const color = sev === 'reject' ? '#FEF2F2' : '#FFFBEB';
-    return `<details class="rv-exc-card" data-exc="${e.ii}-${e.pi}-${e.li}" style="background:${color};border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+    const color = sev === 'reject' ? '#f3e4e1' : '#f4ecdc';
+    return `<details class="rv-exc-card" data-exc="${e.ii}-${e.pi}-${e.li}" style="background:${color};border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px">
       <summary style="font-weight:800;color:var(--navy);cursor:pointer">${escapeHtml(ln.code)} · ${escapeHtml(ln.name)} <span style="font-weight:400;color:var(--muted);font-size:11px">· ${escapeHtml(e.pat.name)} · ${fmt(after)}</span> <span style="font-size:11px;font-weight:700;color:var(--warn)">⚠ ${escapeHtml(reasons.split('، ')[0]||'—')}${(ln._checksFailed||[]).length>1?` +${(ln._checksFailed||[]).length-1}`:''}</span></summary>
       <div style="font-size:11.5px;color:var(--muted);margin:6px 0 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1}</div>
       <div style="font-size:12px;margin:6px 0">فاتورة ${fmt(billed)} · لائحة ${tariffTotal!==null?fmt(tariffTotal):'—'} · الأقل ${fmt(lesser)} · خصم ${rate}% → معتمد مقترح ${fmt(after)}</div>
@@ -342,12 +342,12 @@ function renderExceptions(){
     const billed = (Number(ln.qty)||0)*(Number(ln.billedUnit)||0);
     const status = ln._decision || 'auto-approved';
     const icon = status.includes('reject') ? '⛔' : (status.includes('reduce') ? '🔻' : '✅');
-    const color = status.includes('reject') ? '#FEF2F2' : (status.includes('reduce') ? '#FFFBEB' : '#ECFDF5');
+    const color = status.includes('reject') ? '#f3e4e1' : (status.includes('reduce') ? '#f4ecdc' : '#e3efe7');
     const decided = ln._decidedAt ? new Date(ln._decidedAt).toLocaleString() : 'تلقائي';
     const by = ln._decidedBy || 'المحرك';
     const note = ln._decisionNote || ln.note || '';
     const reasons = (ln._checksFailed||[]).map(r=>reasonLabel(r)).join('، ') || '—';
-    return `<div class="rv-exc-card" style="background:${color};border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;opacity:.85">
+    return `<div class="rv-exc-card" style="background:${color};border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px;opacity:.85">
       <div style="font-weight:800;color:var(--navy)">${icon} ${escapeHtml(ln.code)} · ${escapeHtml(ln.name)}</div>
       <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1} · ${fmt(billed)}</div>
       <div style="font-size:11.5px;color:var(--muted);margin:4px 0">سبب: ${escapeHtml(reasons)}</div>
@@ -360,7 +360,7 @@ function renderExceptions(){
   function cardPA(e){
     const ln = e.ln;
     const billed = (Number(ln.qty)||0)*(Number(ln.billedUnit)||0);
-    return `<div class="rv-exc-card" style="background:#EFF6FF;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px">
+    return `<div class="rv-exc-card" style="background:#e4ecf4;border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px">
       <div style="font-weight:800;color:var(--navy)">⏳ ${escapeHtml(ln.code)} · ${escapeHtml(ln.name)}</div>
       <div style="font-size:11.5px;color:var(--muted);margin:4px 0">المريض: ${escapeHtml(e.pat.name)} · فاتورة ${e.inv.id||e.ii+1} · ${fmt(billed)}</div>
       <div style="display:flex;gap:6px;margin-top:8px">
@@ -421,7 +421,7 @@ function renderFinalSummary(){
       });
       if(_eg.size){
         const _fmtC = (arr) => arr.length > 1 ? arr.slice(0,-1).join('، ') + ' و' + arr[arr.length-1] : String(arr[0]);
-        html += '<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:#F8FAFC">';
+        html += '<div style="border:1px solid var(--line);border-radius:6px;padding:10px;margin-bottom:10px;background:#efeae0">';
         html += '<div style="font-weight:800;margin-bottom:6px">المجمع الخارجي (سبب واحد + الحالات)</div>';
         html += '<table style="width:100%;font-size:11.5px;border-collapse:collapse"><thead><tr style="background:#fff"><th style="text-align:right;padding:6px;border:1px solid var(--line)">السبب</th><th style="text-align:left;padding:6px;border:1px solid var(--line)">المبلغ</th></tr></thead><tbody>';
         [..._eg.values()].sort((a,b)=>b.amount-a.amount).forEach(g => {
@@ -436,9 +436,9 @@ function renderFinalSummary(){
         if(!drs.length) return;
         const pBilled = (p.lines||[]).reduce((s,l)=>s+(Number(l.qty)||0)*(Number(l.billedUnit)||0),0);
         const pDed = drs.reduce((s,d)=>s+(Number(d.amount)||0),0);
-        html += `<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:#fff">`;
+        html += `<div style="border:1px solid var(--line);border-radius:6px;padding:10px;margin-bottom:10px;background:#fff">`;
         html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><b>${escapeHtml(p.name)}</b> <span style="color:var(--muted);font-size:11px">مذكرة خصم ${escapeHtml(inv.debitNoteNumber||inv.number||inv.id)} | فاتورة مرتبطة ${escapeHtml(inv.linkedInvoiceNumber||inv.invoiceNumber||'—')}</span></div><div style="font-size:12px">مطالب: <b>${fmtC(pBilled)}</b> · مستقطع: <b style="color:var(--bad)">${fmtC(pDed)}</b> · معتمد: <b style="color:var(--ok)">${fmtC(p._final||0)}</b></div></div>`;
-        html += `<table style="width:100%;font-size:11.5px;border-collapse:collapse"><thead><tr style="background:#F8FAFC"><th style="text-align:right;padding:6px;border:1px solid var(--line)">السبب</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المصدر</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المستوى</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">مرجع</th><th style="text-align:left;padding:6px;border:1px solid var(--line)">المبلغ</th></tr></thead><tbody>`;
+        html += `<table style="width:100%;font-size:11.5px;border-collapse:collapse"><thead><tr style="background:#efeae0"><th style="text-align:right;padding:6px;border:1px solid var(--line)">السبب</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المصدر</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">المستوى</th><th style="text-align:center;padding:6px;border:1px solid var(--line)">مرجع</th><th style="text-align:left;padding:6px;border:1px solid var(--line)">المبلغ</th></tr></thead><tbody>`;
         drs.forEach(dr => {
           const amt = Number(dr.amount)||0;
           if(amt <= 0) return;
@@ -471,7 +471,7 @@ function renderFinalSummary(){
       { key:'pa', ok: paPending === 0, text: `لا توجد بنود بانتظار موافقة PA (${paPending})` },
       { key:'docs', ok: missingDocs === 0, text: `المستندات مكتملة (${missingDocs} ناقصة)` },
     ];
-    cb.innerHTML = '<div class="rv-section-title">قائمة التحقق الإلزامية</div>' + items.map(it => `<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;cursor:pointer"><input type="checkbox" class="final-check" data-final-check="${it.key}" ${it.ok?'checked':''} ${it.ok?'':'disabled'}> <span style="color:${it.ok?'var(--text,#111)':'var(--bad,#dc2626)'}">${escapeHtml(it.text)}</span></label>`).join('');
+    cb.innerHTML = '<div class="rv-section-title">قائمة التحقق الإلزامية</div>' + items.map(it => `<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;cursor:pointer"><input type="checkbox" class="final-check" data-final-check="${it.key}" ${it.ok?'checked':''} ${it.ok?'':'disabled'}> <span style="color:${it.ok?'var(--text,#1a1d23)':'var(--bad,#b33a2b)'}">${escapeHtml(it.text)}</span></label>`).join('');
     // gate finalize button
     const finBtn = document.getElementById('finalizeReviewBtn') || document.getElementById('rvPageFinalizeBtn');
     if (finBtn) {

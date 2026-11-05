@@ -109,7 +109,7 @@ function renderReviewDrafts(){
   const cnt = document.getElementById('rvDraftsCount'); if(cnt) cnt.textContent = String(drafts.length);
   if(!drafts.length){ box.innerHTML = '<div style="font-size:11px;color:var(--muted)">لا مسودات بعد — احفظ نسخة قبل التجربة.</div>'; return; }
   box.innerHTML = drafts.map(d => `
-    <div class="rv-draft-row" style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px">
+    <div class="rv-draft-row" style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px">
       <div style="flex:1;min-width:0">
         <b>${escapeHtml(d.label || 'مسودة بلا اسم')}</b>
         <span style="color:var(--muted)"> · ${escapeHtml((d.at||'').slice(0,16).replace('T',' '))} · ${escapeHtml(d.actor||'')}</span>

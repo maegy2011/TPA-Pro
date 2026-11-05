@@ -14,14 +14,14 @@ const MODAL_CONTRACT = `
           <div class="fg"><label>سريان النسخة المالية من</label><input id="ctrVersionEffective" type="date"><small class="fg-hint">يُستخدم لتغيير الخصم والخدمات دون محو القيم التاريخية</small></div>
           <div class="fg"><label>الزيادة السنوية %</label><input id="ctrIncreaseRate" type="number" min="0" step="0.5"></div>
           <div class="fg"><label>&nbsp;</label><button type="button" class="btn-apply" id="ctrApplyIncrease">تطبيق الزيادة</button></div>
-          <div class="fg full"><div id="ctrIncreaseHistory" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:8px">لا زيادات مسجلة</div><small class="fg-hint">تُطبق الزيادات على أسعار اللائحة في المراجعة من تاريخ تطبيقها — بأثر مركب</small></div>
+          <div class="fg full"><div id="ctrIncreaseHistory" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:6px">لا زيادات مسجلة</div><small class="fg-hint">تُطبق الزيادات على أسعار اللائحة في المراجعة من تاريخ تطبيقها — بأثر مركب</small></div>
           <div class="fg full"><label>خدمات غير متعاقد عليها</label><small class="fg-hint" style="display:block;margin-bottom:6px">بنود اللائحة العامة المستثناة من هذا العقد — تُخصم تلقائيًا في المراجعة</small>
             <div style="display:flex;gap:6px;margin-bottom:6px">
               <input id="ctrServicesSearch" placeholder="بحث في الخدمات..." style="flex:1">
               <button type="button" class="btn-xs" id="ctrSelectVisible">تحديد الظاهر</button>
               <button type="button" class="btn-xs" id="ctrClearVisible">إلغاء الظاهر</button>
             </div>
-            <div id="ctrServicesList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:6px"></div>
+            <div id="ctrServicesList" style="max-height:160px;overflow:auto;border:1px solid var(--line,#d9d3c7);border-radius:6px;padding:6px"></div>
           </div>
           <div class="fg full"><label>بنود بأسعار/تغطية خاصة</label><small class="fg-hint" style="display:block;margin-bottom:6px">خصم أو تغطية مختلفة لبند معين داخل هذا العقد — الخصم الفارغ = خصم العقد العام</small>
             <div style="display:flex;gap:6px;margin-bottom:6px">
@@ -29,10 +29,10 @@ const MODAL_CONTRACT = `
               <select id="ctrOvService" style="flex:2"></select>
               <button type="button" class="btn-apply" id="ctrOvAdd">إضافة</button>
             </div>
-            <div id="ctrOvList" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:8px">لا بنود خاصة — يُطبق خصم العقد العام</div>
+            <div id="ctrOvList" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:6px">لا بنود خاصة — يُطبق خصم العقد العام</div>
           </div>
           <div class="fg full"><label>ملاحظات</label><textarea id="ctrNotes"></textarea></div>
-          <div class="fg full"><label>السجل التاريخي للخصومات</label><div id="ctrRateHistory" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:8px">لا توجد نسخ تاريخية بعد</div></div>
+          <div class="fg full"><label>السجل التاريخي للخصومات</label><div id="ctrRateHistory" style="font-size:12px;color:var(--muted);padding:8px;border:1px solid var(--line);border-radius:6px">لا توجد نسخ تاريخية بعد</div></div>
         </div></div>
         <div class="modal-foot"><button class="btn solid" id="saveContract" data-i18n="common.save">حفظ</button><button class="btn danger" id="deleteContract" style="display:none" data-i18n="common.delete">حذف</button><button class="btn out" data-close-contract data-i18n="common.cancel">إلغاء</button></div>
       </div>

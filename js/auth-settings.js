@@ -7,7 +7,7 @@ function logoutWithReminder(){
   }
   openDialog({
     type:'warning', title:'نسخة احتياطية', message:'لم تُنشئ نسخة حديثة.',
-    body: `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12.5px;line-height:1.9;text-align:center"><div><b style="color:var(--navy);font-size:15px">${claims.length}</b> مطالبة · <b style="color:var(--navy);font-size:15px">${providers.length}</b> جهة · <b style="color:var(--navy);font-size:15px">${workSessions.length}</b> جلسة</div><div style="color:var(--muted);font-size:11px;margin-top:4px">آخر: ${getLastBackupAgo() || 'لم'}</div></div><div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">يمكنك إلغاء العملية أو تصدير نسخة قبل الخروج.</div>`,
+    body: `<div style="background:#efeae0;border:1px solid #d9d3c7;border-radius:6px;padding:12px 16px;font-size:12.5px;line-height:1.9;text-align:center"><div><b style="color:var(--navy);font-size:15px">${claims.length}</b> مطالبة · <b style="color:var(--navy);font-size:15px">${providers.length}</b> جهة · <b style="color:var(--navy);font-size:15px">${workSessions.length}</b> جلسة</div><div style="color:var(--muted);font-size:11px;margin-top:4px">آخر: ${getLastBackupAgo() || 'لم'}</div></div><div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">يمكنك إلغاء العملية أو تصدير نسخة قبل الخروج.</div>`,
     confirmText:'تصدير وخروج', cancelText:'إلغاء',
     onConfirm: () => { doExportBackup(true); setTimeout(() => { performLogout(); setTimeout(()=>$('#pwd').focus(),300); }, 500); }
   });
