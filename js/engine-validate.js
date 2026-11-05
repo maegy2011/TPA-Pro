@@ -100,7 +100,7 @@ function getContractContext(claim, effectiveDate) {
 
 function getContractRateForService(ctx, code) {
   const ov = ctx?.serviceOverrides?.[code];
-  if (ov?.discountRate !== null && ov.discountRate !== undefined) {
+  if (ov && ov.discountRate !== null && ov.discountRate !== undefined) {
     return Number(ov.discountRate) || 0;
   }
   return Number(ctx?.contract?.discountRate) || 0;

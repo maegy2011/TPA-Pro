@@ -55,7 +55,7 @@ function setDialogButtonLabel(button, label, countdown){
 function openDialog(opts){
   opts = opts || {};
   if(dialogState.interval){ clearInterval(dialogState.interval); dialogState.interval = null; }
-  const _dShell = (typeof document !== 'undefined') ? document.getElementById('dialog') : null;
+  const _dShell = (typeof document !== 'undefined') ? document.getElementById('unifiedDialog') : null;
   if(!_dShell){
     try { if(typeof alert === 'function') alert(String(opts.title || 'تنبيه') + '\n' + String(opts.message || '')); } catch(e){}
     try { console.error('openDialog: dialog shell missing', opts.title, opts.message); } catch(e){}
