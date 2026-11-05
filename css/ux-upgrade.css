@@ -87,7 +87,7 @@ button, .btn, .btn-sm{
               transform var(--transition-fast,150ms) ease, box-shadow var(--transition-fast,150ms) ease;
 }
 .btn-primary, .btn.solid{ background: var(--teal); color: #FFFFFF; }
-.btn-primary:hover, .btn.solid:hover{ background: var(--teal-400,#14A3A1); transform: translateY(-1px); }
+.btn-primary:hover, .btn.solid:hover{ background: var(--teal-400); transform: translateY(-1px); }
 .btn-ghost, .btn.ghost{ background: transparent; border-color: var(--line); color: var(--text,var(--text)); }
 .btn-ghost:hover, .btn.ghost:hover{ background: rgba(43,90,138,.08); }
 .btn-danger{ background: var(--bad,var(--callout)); color: #FFFFFF; }
